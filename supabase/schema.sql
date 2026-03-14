@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
   cliente_telefone TEXT NOT NULL,
   itens JSONB NOT NULL,
   valor_total NUMERIC(10,2) NOT NULL CHECK (valor_total >= 0),
-  status TEXT NOT NULL CHECK (status IN ('pendente','concluido','cancelado','devolvido')),
+  status TEXT NOT NULL CHECK (status IN ('pendente','concluido','cancelado','devolvido','parcialmente_devolvido')),
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

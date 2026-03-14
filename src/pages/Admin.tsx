@@ -12,7 +12,13 @@ import { supabase } from "@/lib/supabase";
 import { Pencil, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatBRL } from "@/lib/utils";
+import { formatBRL, parseSupabaseError, normalizePhone, formatPhoneMask, sortSizes, rankSize, normalizeCategory } from "@/lib/utils";
+import CustomersTab from "@/components/admin/tabs/CustomersTab";
+import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
+import SizesTab from "@/components/admin/tabs/SizesTab";
+import ImagesTab from "@/components/admin/tabs/ImagesTab";
+import ProductsTab from "@/components/admin/tabs/ProductsTab";
+import StockTab from "@/components/admin/tabs/StockTab";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 // Modelo de produto
@@ -48,59 +54,44 @@ async function uploadToCloudinary(file: File): Promise<{ secure_url: string; pub
   return { secure_url: data.secure_url as string, public_id: data.public_id as string };
 }
 
-const normalizeCategory = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\x00-\x7F]/g, '').replace(/[\u0300-\u036f]/g, '');
-
-// Helpers de ordenação de tamanhos
-const sizeOrder = ["PP", "P", "M", "G", "GG", "XG"];
-const rankSize = (s: string) => {
-  const idx = sizeOrder.indexOf((s || "").toUpperCase());
-  return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
-};
-const sortSizes = (arr: string[]) => [...(arr || [])].sort((a, b) => {
-  const ra = rankSize(a);
-  const rb = rankSize(b);
-  if (ra !== rb) return ra - rb;
-  return (a || "").localeCompare(b || "");
-});
-
 const Admin = () => {
   // Auth: verificação de acesso é feita pelo AdminGuard em App.tsx
   // Removido checkAuth local para evitar redirecionamentos duplicados.
 
-  const [product, setProduct] = useState<AdminProduct>({
-    name: "",
-    category: "",
-    price: 0,
-    sizes: [], // default: nenhum tamanho selecionado
-    stock: 0,
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [storedProducts, setStoredProducts] = useState<any[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({});
-  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-  const [editFields, setEditFields] = useState<Record<number, { name: string; category: string; price: number; stock?: number }>>({});
+  
+  // Função para normalizar e calcular estoque total dos produtos
+  const normalizeProduct = (p: any) => {
+    const stockBySizeObj = p.stockBySize && typeof p.stockBySize === 'object'
+      ? Object.fromEntries(Object.entries(p.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
+      : undefined;
+    
+    const totalFromSizes = stockBySizeObj
+      ? Object.values(stockBySizeObj).reduce((sum: number, n: any) => sum + (Number(n) || 0), 0)
+      : undefined;
+
+    return {
+      ...p,
+      stockBySize: stockBySizeObj,
+      // Prioriza a soma dos tamanhos se disponível, senão usa o campo stock legado
+      stock: totalFromSizes !== undefined ? totalFromSizes : (Number(p.stock) || 0),
+    };
+  };
+
   // Distribuição de estoque por tamanho (para cadastro de produto)
   const [distribution, setDistribution] = useState<Record<string, number>>({});
 
-  // Categorias
   const [categories, setCategories] = useState<string[]>([]);
-  const [newCategory, setNewCategory] = useState("");
-  // Lista global de tamanhos (independente de produtos)
   const [globalSizes, setGlobalSizes] = useState<string[]>([]);
-  const [newGlobalSize, setNewGlobalSize] = useState("");
-  const [newSizeInput, setNewSizeInput] = useState("");
-  const [replaceFiles, setReplaceFiles] = useState<Record<number, File | null>>({});
-  const [confirmReplaceForId, setConfirmReplaceForId] = useState<number | null>(null);
-  const [confirmReplacePreview, setConfirmReplacePreview] = useState<string | null>(null);
-  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
-  // Edição inline (tamanhos e categorias)
-  const [editingSize, setEditingSize] = useState<string | null>(null);
-  const [sizeEditValue, setSizeEditValue] = useState("");
-  const [editingCategory, setEditingCategory] = useState<string | null>(null);
-const [categoryEditValue, setCategoryEditValue] = useState("");
+  
+  // Estados para abas e busca
+  const [productQuery, setProductQuery] = useState("");
+  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
+  const [editFields, setEditFields] = useState<Record<number, any>>({});
+  const [stockQuery, setStockQuery] = useState(""); // Adicionado para StockTab
+  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({}); // Adicionado para StockTab
 
+  
 // Pedidos: estados
 const [pedidos, setPedidos] = useState<any[]>([]);
 const [pedidoStatusFilter, setPedidoStatusFilter] = useState<string>("todos");
@@ -137,9 +128,6 @@ type AdminCartItem = { id: number; name: string; size: string; quantity: number;
 const [adminCart, setAdminCart] = useState<AdminCartItem[]>([]);
 
 // Seleção do produto/tamanho
-const [productQuery, setProductQuery] = useState("");
-const [stockQuery, setStockQuery] = useState("");
-const [imagesQuery, setImagesQuery] = useState("");
 const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 const [selectedSize, setSelectedSize] = useState<string | null>(null);
 const [quantity, setQuantity] = useState<string>('1');
@@ -148,110 +136,6 @@ const [quantity, setQuantity] = useState<string>('1');
 const [informarCliente, setInformarCliente] = useState(true);
 const [clienteNome, setClienteNome] = useState("");
 const [clienteTelefone, setClienteTelefone] = useState("");
-
-// Clientes: estados e utilitários
-const [clientes, setClientes] = useState<any[]>([]);
-const [clientesQuery, setClientesQuery] = useState("");
-const [editingClienteId, setEditingClienteId] = useState<number | null>(null);
-const [editingClienteNome, setEditingClienteNome] = useState("");
-const [editingClienteTelefone, setEditingClienteTelefone] = useState("");
-const normalizePhone = (raw: string) => raw.replace(/\D+/g, "");
-const formatPhoneMask = (value: string) => {
-  const digits = value.replace(/\D+/g, "").slice(0, 11);
-  const part1 = digits.slice(0, 2);
-  const part2 = digits.slice(2, 7);
-  const part3 = digits.slice(7, 11);
-  if (digits.length <= 2) return part1 ? `(${part1}` : "";
-  if (digits.length <= 7) return `(${part1}) ${part2}`;
-  return `(${part1}) ${part2}-${part3}`;
-};
-const clientesFiltered = clientes.filter((c) => {
-  const term = clientesQuery.toLowerCase().trim();
-  return term === "" || c.nome?.toLowerCase().includes(term) || String(c.telefone || "").toLowerCase().includes(term);
-});
-
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-  const fetchClientes = async () => {
-    const { data, error } = await supabase
-      .from("clientes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setClientes(data as any[]);
-  };
-  void fetchClientes();
-}, []);
-
-const handleAddCliente = async () => {
-  try {
-    const nome = clienteNome.trim();
-    const telRaw = clienteTelefone.trim();
-    if (nome === "" || telRaw === "") {
-      toast.error("Informe nome e telefone");
-      return;
-    }
-    const tel = normalizePhone(telRaw);
-    if (tel.length < 10) {
-      toast.error("Telefone inválido");
-      return;
-    }
-    if (!IS_SUPABASE_READY) {
-      toast.error("Supabase não configurado");
-      return;
-    }
-    const { error } = await supabase
-      .from("clientes")
-      .insert({ nome, telefone: tel }, { ignoreDuplicates: true });
-    if (error) throw error;
-
-    const { data } = await supabase
-      .from("clientes")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) setClientes(data as any[]);
-
-    toast.success("Cliente salvo!");
-    setClienteNome("");
-    setClienteTelefone("");
-  } catch (e: any) {
-    toast.error("Falha ao salvar cliente", { description: e?.message });
-  }
-};
-
-const handleSaveCliente = async () => {
-  try {
-    const id = editingClienteId;
-    if (id == null) return;
-    const nome = editingClienteNome.trim();
-    const telRaw = editingClienteTelefone.trim();
-    if (nome === "" || telRaw === "") {
-      toast.error("Informe nome e contato");
-      return;
-    }
-    const tel = normalizePhone(telRaw);
-    if (tel.length < 10) {
-      toast.error("Contato inválido");
-      return;
-    }
-    if (!IS_SUPABASE_READY) {
-      toast.error("Supabase não configurado");
-      return;
-    }
-    const { error } = await supabase
-      .from("clientes")
-      .update({ nome, telefone: tel })
-      .eq("id", id);
-    if (error) throw error;
-
-    setClientes((prev) => prev.map((c) => c.id === id ? { ...c, nome, telefone: tel } : c));
-    toast.success("Cliente atualizado");
-    setEditingClienteId(null);
-    setEditingClienteNome("");
-    setEditingClienteTelefone("");
-  } catch (e: any) {
-    toast.error("Falha ao atualizar cliente", { description: e?.message });
-  }
-};
 
 const addToAdminCart = () => {
   const qty = Math.max(1, parseInt(quantity || '1') || 1);
@@ -357,7 +241,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
           const current = Math.max(0, Number(stockBySize[it.size] || 0));
           const next = Math.max(0, current - it.quantity);
           const nextStockBySize = { ...stockBySize, [it.size]: next };
-          const nextTotal = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+          const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
           const { error: updErr } = await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', it.id);
           if (updErr) {
             // Reverter atualizações de estoque se houver falha
@@ -374,16 +258,9 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
           : generateUUID();
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) }, { ignoreDuplicates: true });
+          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) });
         } catch {}
-        // Atualiza lista de clientes imediatamente
-        try {
-          const { data: clientesData } = await supabase
-            .from("clientes")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (clientesData) setClientes(clientesData as any[]);
-        } catch {}
+        
 
         const { error } = await supabase
           .from("pedidos")
@@ -414,7 +291,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
                 const cur = Math.max(0, Number(base[it.size] || 0));
                 const novo = Math.max(0, cur - it.quantity);
                 const nextStockBySize = { ...base, [it.size]: novo };
-                const nextTotal = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+                const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
                 return { ...p, stockBySize: nextStockBySize, stock: nextTotal } as any;
               }
               return p;
@@ -429,16 +306,9 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
           : generateUUID();
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) }, { ignoreDuplicates: true });
+          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) });
         } catch {}
-        // Atualiza lista de clientes imediatamente
-        try {
-          const { data: clientesData } = await supabase
-            .from("clientes")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (clientesData) setClientes(clientesData as any[]);
-        } catch {}
+        
 
         const { error } = await supabase
           .from("pedidos")
@@ -465,7 +335,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
     setNewPedidoOpen(false);
     setActiveTab("pedidos");
   } catch (e: any) {
-    toast.error("Falha ao criar pedido", { description: e?.message });
+    toast.error("Falha ao criar pedido", { description: parseSupabaseError(e) });
   }
 };
 
@@ -519,35 +389,11 @@ useEffect(() => {
   };
 }, []);
 
-// Realtime de clientes
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-  const channel = supabase
-    .channel("clientes-realtime")
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, async () => {
-      const { data } = await supabase.from('clientes').select('*').order('created_at', { ascending: false });
-      if (data) setClientes(data as any[]);
-    })
-    .subscribe();
-  return () => { try { supabase.removeChannel(channel); } catch {} };
-}, []);
+// Realtime de clientes removido daqui pois está no componente CustomersTab
 
 // Realtime de produtos
 useEffect(() => {
   if (!IS_SUPABASE_READY) return;
-  const normalizeProduct = (p: any) => {
-    const stockBySizeObj = p.stockBySize && typeof p.stockBySize === 'object'
-      ? Object.fromEntries(Object.entries(p.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
-      : undefined;
-    const totalFromSizes = stockBySizeObj
-      ? Object.values(stockBySizeObj).reduce((sum, n) => sum + Number(n ?? 0), 0)
-      : undefined;
-    return {
-      ...p,
-      stockBySize: stockBySizeObj,
-      stock: totalFromSizes !== undefined && totalFromSizes > 0 ? totalFromSizes : (typeof p.stock === 'number' ? p.stock : 0),
-    };
-  };
   const channel = supabase
     .channel('products-realtime-admin')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
@@ -671,7 +517,7 @@ const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) 
       const current = Number(stockBySize[tamanho] || 0);
       const next = Math.max(0, current + qty);
       const nextStockBySize = { ...stockBySize, [tamanho]: next };
-      const nextTotal = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+      const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
       await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', productId);
     }
 
@@ -707,7 +553,7 @@ const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) 
             const cur = Math.max(0, Number(base[it.tamanho] || 0));
             const novo = Math.max(0, cur + qty);
             const nextStockBySize = { ...base, [it.tamanho]: novo };
-            const nextTotal = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+            const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
             return { ...p, stockBySize: nextStockBySize, stock: nextTotal } as any;
           }
           return p;
@@ -726,7 +572,7 @@ const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) 
 
     toast.success('Devolução aplicada e estoque atualizado');
   } catch (e: any) {
-    toast.error('Falha ao aplicar devolução', { description: e?.message });
+    toast.error('Falha ao aplicar devolução', { description: parseSupabaseError(e) });
   }
 };
 
@@ -747,7 +593,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     });
     toast.success(action === 'concluir' ? 'Pedido concluído' : 'Pedido cancelado');
   } catch (e: any) {
-    toast.error('Falha ao atualizar pedido', { description: e?.message });
+    toast.error('Falha ao atualizar pedido', { description: parseSupabaseError(e) });
   }
 };
 
@@ -767,7 +613,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             .select("*")
             .order("id", { ascending: false });
           if (!prodErr && prodData) {
-            setStoredProducts(prodData);
+            setStoredProducts(prodData.map(normalizeProduct));
           }
 
           // Carregar lista global de tamanhos
@@ -794,11 +640,18 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             if (derived.length > 0) {
               setGlobalSizes(derived);
               // Persistir na tabela sizes para futura edição
-              await saveGlobalSizes(derived);
+              if (IS_SUPABASE_READY) {
+                try {
+                  const rows = derived.map((name) => ({ name }));
+                  await supabase.from("sizes").upsert(rows, { onConflict: "name" });
+                } catch (err) {
+                  console.error("Erro ao persistir tamanhos derivados:", err);
+                }
+              }
             }
           }
         } catch (e: any) {
-          toast.error("Falha ao carregar dados do Supabase", { description: e?.message });
+          toast.error("Falha ao carregar dados do Supabase", { description: parseSupabaseError(e) });
         }
       } else {
         toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
@@ -807,94 +660,19 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     void init();
   }, []);
 
-  // Sincroniza distribuição com tamanhos selecionados
-  useEffect(() => {
-    setDistribution((prev) => {
-      const next: Record<string, number> = {};
-      for (const s of product.sizes) {
-        next[s] = Number(prev[s] ?? 0);
-      }
-      return next;
-    });
-  }, [product.sizes]);
-
   // Ajuste: não auto-selecionar tamanhos conforme categoria
   useEffect(() => {
     // Mantemos intencionalmente sem auto-ajuste para permitir o usuário escolher manualmente os tamanhos
-  }, [product.category]);
+  }, []);
 
-  const distributionTotal = (product.sizes || []).reduce((acc, s) => acc + (Number(distribution[s] || 0)), 0);
-  const distributionRemaining = Math.max(0, (product.stock || 0) - distributionTotal);
-  const setDistributionForSize = (size: string, value: number) => {
-    const safeVal = Math.max(0, Number.isFinite(value) ? value : 0);
-    const current = Number(distribution[size] || 0);
-    const delta = safeVal - current;
-    // Não permitir ultrapassar o total
-    if (delta > distributionRemaining) {
-      const clamped = current + distributionRemaining;
-      setDistribution((prev) => ({ ...prev, [size]: clamped }));
-    } else {
-      setDistribution((prev) => ({ ...prev, [size]: safeVal }));
-    }
-  };
-
-  // Salva categorias
-  const saveCategories = async (next: string[]) => {
-    const removed = categories.filter((c) => !next.includes(c));
-    setCategories(next);
-    if (IS_SUPABASE_READY) {
-      try {
-        // Inserir/atualizar categorias por nome (UNIQUE)
-        const rows = next.map((name) => ({ name }));
-        const { error: upsertErr } = await supabase.from("categories").upsert(rows, { onConflict: "name" });
-        if (upsertErr) throw upsertErr;
-
-        // Remover categorias que não existem mais
-        if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("categories").delete().in("name", removed);
-          if (delErr) throw delErr;
-        }
-
-        toast.success("Categorias atualizadas");
-      } catch (e: any) {
-        toast.error("Falha ao salvar categorias no Supabase", { description: e?.message });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
-
-  // Salva tamanhos globais
-  const saveGlobalSizes = async (next: string[]) => {
-    const removed = globalSizes.filter((s) => !next.includes(s));
-    const normalized = sortSizes(next);
-    setGlobalSizes(normalized);
-    if (IS_SUPABASE_READY) {
-      try {
-        const rows = normalized.map((name) => ({ name }));
-        const { error: upsertErr } = await supabase.from("sizes").upsert(rows, { onConflict: "name" });
-        if (upsertErr) throw upsertErr;
-
-        if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("sizes").delete().in("name", removed);
-          if (delErr) throw delErr;
-        }
-
-        toast.success("Tamanhos atualizados");
-      } catch (e: any) {
-        toast.error("Falha ao salvar tamanhos no Supabase", { description: e?.message });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
+  // Categorias e Tamanhos gerenciados nos componentes especializados
 
 
   const handleStockBySizeChange = async (id: number, size: string, newStock: number) => {
     const target = storedProducts.find((p) => p.id === id);
     const base = target?.stockBySize || {};
     const nextStockBySize = { ...base, [size]: newStock };
-    const total = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n as any) || 0), 0);
+    const total = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
     if (IS_SUPABASE_READY) {
       try {
         const { error } = await supabase.from("products").update({ stockBySize: nextStockBySize, stock: total }).eq("id", id);
@@ -902,173 +680,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stockBySize: nextStockBySize, stock: total } : p)));
         toast.success(`Estoque atualizado para tamanho ${size}`);
       } catch (e: any) {
-        toast.error("Falha ao atualizar estoque no Supabase", { description: e?.message });
+        toast.error("Falha ao atualizar estoque no Supabase", { description: parseSupabaseError(e) });
       }
     } else {
       toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
-
-  const handleDeleteProduct = async (id: number) => {
-    if (IS_SUPABASE_READY) {
-      try {
-        const { error } = await supabase.from("products").delete().eq("id", id);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.filter((p) => p.id !== id));
-        toast.success("Produto removido");
-        return;
-      } catch (e: any) {
-        toast.error("Falha ao remover no Supabase", { description: e?.message });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-
-  };
-
-  const handleChange = (field: keyof AdminProduct, value: any) => {
-    setProduct((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSelectReplaceFile = (id: number, file?: File) => {
-    if (!file) {
-      setReplaceFiles((prev) => ({ ...prev, [id]: null }));
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      toast.error(`Arquivo muito grande (>${MAX_FILE_SIZE_MB}MB)`);
-      return;
-    }
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Formato não permitido. Use JPG, PNG ou WEBP.");
-      return;
-    }
-    setReplaceFiles((prev) => ({ ...prev, [id]: file }));
-    setConfirmReplaceForId(id);
-    setConfirmReplacePreview(URL.createObjectURL(file));
-  };
-  
-  const triggerFilePickerForProduct = (id: number) => {
-    const input = fileInputRefs.current[id];
-    if (input) input.click();
-  };
-  
-  const handleCancelReplace = (id: number) => {
-    setReplaceFiles((prev) => ({ ...prev, [id]: null }));
-    const input = fileInputRefs.current[id];
-    if (input) input.value = "";
-  };
-  const handleImage = (file?: File) => {
-    if (!file) return;
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      toast.error(`Arquivo muito grande (>${MAX_FILE_SIZE_MB}MB)`);
-      return;
-    }
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Formato não permitido. Use JPG, PNG ou WEBP.");
-      return;
-    }
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-  };
-
-  // Substituir imagem do produto
-  const handleReplaceProductImage = async (id: number) => {
-    const file = replaceFiles[id];
-    if (!file) {
-      toast.error("Selecione um arquivo para substituir");
-      return;
-    }
-    setUploading(true);
-    try {
-      const uploaded = await uploadToCloudinary(file);
-      const payload = { image: uploaded.secure_url, publicId: uploaded.public_id };
-
-      if (IS_SUPABASE_READY) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
-        if (error) throw error;
-      }
-
-      setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, image: payload.image, publicId: payload.publicId } : p)));
-      setReplaceFiles((prev) => { const next = { ...prev }; delete next[id]; return next; });
-      toast.success("Imagem atualizada");
-    } catch (e: any) {
-      toast.error("Falha ao atualizar imagem", { description: e?.message });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Remover imagem do produto (somente referência)
-  const handleRemoveProductImage = async (id: number) => {
-    setUploading(true);
-    try {
-      const payload: any = { image: null, publicId: null };
-
-      if (IS_SUPABASE_READY) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
-        if (error) throw error;
-      }
-
-      setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, image: null, publicId: null } : p)));
-      toast.success("Imagem removida do produto");
-    } catch (e: any) {
-      toast.error("Falha ao remover imagem", { description: e?.message });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    let imageUrl = product.imageUrl;
-    let publicId: string | undefined;
-
-    if (imageFile) {
-      setUploading(true);
-      try {
-        const uploaded = await uploadToCloudinary(imageFile);
-        imageUrl = uploaded.secure_url;
-        publicId = uploaded.public_id;
-      } catch (err: any) {
-        toast.error("Falha no upload para Cloudinary", {
-          description: err?.message ?? "Verifique o upload preset e o cloud name",
-        });
-        setUploading(false);
-        return;
-      }
-      setUploading(false);
-    }
-
-    const allocatedTotal = (product.sizes || []).reduce((acc, s) => acc + (Number(distribution[s] || 0)), 0);
-    const totalStock = Number(product.stock || 0);
-
-    const baseProductForSupabase = {
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      sizes: product.sizes,
-      stock: allocatedTotal > 0 ? allocatedTotal : totalStock,
-      image: imageUrl || "",
-      publicId,
-      stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
-    } as const;
-
-    if (!IS_SUPABASE_READY) {
-      toast.error("Supabase não configurado. Salvamento indisponível.");
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
-      if (error) throw error;
-      setStoredProducts((prev) => [...prev, data]);
-      toast.success("Produto cadastrado", { description: `${product.name} - ${formatBRL(product.price)}` });
-      setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0, imageUrl });
-      setImageFile(null);
-      setImagePreview(null);
-      setDistribution({});
-    } catch (e: any) {
-      toast.error("Falha ao salvar no Supabase", { description: e?.message });
     }
   };
 
@@ -1083,7 +698,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     const nextSizes = [...sizes, newSize];
     const nextStockBySize = { ...(target?.stockBySize || {}) } as Record<string, number>;
     nextStockBySize[newSize] = 0;
-    const total = Object.values(nextStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+    const total = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
 
     if (IS_SUPABASE_READY) {
       try {
@@ -1096,7 +711,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         toast.success(`Tamanho ${newSize} adicionado`);
         return;
       } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: e?.message });
+        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
       }
     } else {
       toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
@@ -1115,7 +730,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     const nextSizes = sizes.filter((s) => s !== size);
     const baseStockBySize = { ...(target?.stockBySize || {}) } as Record<string, number>;
     delete baseStockBySize[size];
-    const total = Object.values(baseStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
+    const total = Object.values(baseStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
     if (IS_SUPABASE_READY) {
       try {
         const { error } = await supabase
@@ -1127,34 +742,32 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         toast.success(`Tamanho ${size} removido`);
         return;
       } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: e?.message });
+        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
       }
     } else {
       toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
     }
   };
 
-  const handleUpdateProductFields = async (id: number) => {
-    const fields = editFields[id];
+  const handleUpdateProductFields = async (id: number, manualFields?: any) => {
+    const fields = manualFields || editFields[id];
     if (!fields) return;
-    const { name, category, price, stock } = fields as { name?: string; category?: string; price?: number; stock?: number };
 
     const payload: any = {};
-    if (typeof name !== "undefined") payload.name = name;
-    if (typeof category !== "undefined") payload.category = category;
-    if (typeof price !== "undefined") payload.price = price;
-    if (typeof stock === "number" && Number.isFinite(stock)) payload.stock = stock;
+    if (typeof fields.name !== "undefined") payload.name = fields.name;
+    if (typeof fields.category !== "undefined") payload.category = fields.category;
+    if (typeof fields.price !== "undefined") payload.price = fields.price;
+    if (typeof fields.stock === "number" && Number.isFinite(fields.stock)) payload.stock = fields.stock;
 
     if (IS_SUPABASE_READY) {
       try {
         const { error } = await supabase.from("products").update(payload).eq("id", id);
         if (error) throw error;
         setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...payload } : p)));
-        setEditFields((prev) => { const next = { ...prev }; delete next[id]; return next; });
         toast.success("Produto atualizado");
         return;
       } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: e?.message });
+        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
       }
     } else {
       toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
@@ -1213,7 +826,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                       value={pedidoStatusFilter}
                       onChange={(e) => setPedidoStatusFilter(e.target.value)}
                     >
-                      <option value="todos">Todos</option>
+                      <option value="">Todos</option>
                       <option value="pendente">Pendente</option>
                       <option value="concluido">Concluído</option>
                       <option value="devolvido">Devolvido</option>
@@ -1348,713 +961,68 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
           {/* Produtos */}
           <TabsContent value="products" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Adicionar Produto</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Nome</Label>
-                    <Input value={product.name} onChange={(e) => handleChange("name", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Categoria</Label>
-                    {/* Select de categorias cadastradas */}
-                    <select
-                      className="w-full rounded-md border px-3 py-2 bg-background text-foreground"
-                      value={product.category}
-                      onChange={(e) => handleChange("category", e.target.value)}
-                    >
-                      <option value="">Selecione uma categoria</option>
-                      {categories.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-muted-foreground mt-1">Cadastre novas categorias na aba "Categorias"</p>
-                  </div>
-                  <div>
-                    <Label>Preço (R$)</Label>
-                    <Input type="number" value={product.price} onChange={(e) => handleChange("price", parseFloat(e.target.value))} />
-                  </div>
-                  <div>
-                    <Label>Estoque (total)</Label>
-                    <Input type="number" value={product.stock ?? 0} onChange={(e) => handleChange("stock", parseInt(e.target.value))} />
-                  </div>
-                </div>
-
-                {/* Tamanhos */}
-                <div>
-                  <Label>Tamanhos</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {(
-                      ["bone", "meia", "relogio"].includes(normalizeCategory(product.category || ""))
-                        ? ["U"]
-                        : ["PP", "P", "M", "G", "GG", "XG"]
-                    ).map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        className={`px-3 py-2 rounded-md border ${
-                          product.sizes.includes(s)
-                            ? "bg-primary/90 text-primary-foreground border-primary"
-                            : "border-border hover:border-primary/50 bg-background text-foreground"
-                        }`}
-                        onClick={() => {
-                          setProduct((prev) => {
-                            const includes = prev.sizes.includes(s);
-                            return {
-                              ...prev,
-                              sizes: includes ? prev.sizes.filter((x) => x !== s) : sortSizes([...prev.sizes, s]),
-                            };
-                          });
-                        }}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Selecione os tamanhos aplicáveis ao produto.
-                  </p>
-                </div>
-
-                {/* Distribuição do estoque por tamanho */}
-                <div>
-                  <Label>Distribuir estoque por tamanho</Label>
-                  <p className="text-xs text-muted-foreground mt-1">Total: {product.stock ?? 0} &nbsp;•&nbsp; Restante: {distributionRemaining}</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                    {sortSizes(product.sizes || []).map((s) => (
-                      <div key={s} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
-                        <span className="font-medium mr-2">{s}</span>
-                        <Input
-                          type="number"
-                          value={Number(distribution[s] ?? 0)}
-                          onChange={(e) => setDistributionForSize(s, parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {distributionRemaining > 0 ? (
-                    <p className="text-xs text-destructive mt-1">Ainda faltam {distributionRemaining} unidades para alocar.</p>
-                  ) : (
-                    <p className="text-xs text-emerald-500 mt-1">Distribuição concluída.</p>
-                  )}
-                </div>
-
-                {/* Imagem */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                  <div>
-                    <Label>Foto do produto</Label>
-                    <Input type="file" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0] ?? undefined)} />
-                    {imagePreview && (
-                      <div className="mt-2">
-                        <img src={imagePreview} alt="Preview" className="rounded-md border" />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <Label>URL da imagem (opcional)</Label>
-                    <Input value={product.imageUrl ?? ""} onChange={(e) => handleChange("imageUrl", e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0 });
-                      setImageFile(null);
-                      setImagePreview(null);
-                      setDistribution({});
-                    }}
-                  >
-                    Limpar
-                  </Button>
-                  <Button onClick={handleSubmit} disabled={uploading}>{uploading ? "Enviando imagem..." : "Salvar Produto"}</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProductsTab 
+              storedProducts={storedProducts}
+              setStoredProducts={setStoredProducts}
+              categories={categories}
+              globalSizes={globalSizes}
+              distribution={distribution}
+              setDistribution={setDistribution}
+              uploadToCloudinary={uploadToCloudinary}
+              IS_SUPABASE_READY={IS_SUPABASE_READY}
+              MAX_FILE_SIZE_MB={MAX_FILE_SIZE_MB}
+              ALLOWED_TYPES={ALLOWED_TYPES}
+              handleStockBySizeChange={handleStockBySizeChange}
+            />
           </TabsContent>
 
-          {/* Estoque - formato lista com expansão */}
+          {/* Estoque */}
           <TabsContent value="stock" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Estoque</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {storedProducts.length === 0 ? (
-                  <p className="text-muted-foreground">Nenhum produto cadastrado ainda.</p>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Input value={stockQuery} onChange={(e) => setStockQuery(e.target.value)} placeholder="Buscar por nome ou categoria..." />
-                    </div>
-                    {storedProducts
-                      .filter((p) => `${p.name} ${p.category || ''}`.toLowerCase().includes(stockQuery.toLowerCase()))
-                      .map((p) => {
-                      const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ["U"];  
-                      const selected = selectedSizes[p.id] || sizes[0];
-                      const currentStockBySize = p.stockBySize || {};
-                      const computedTotal = (() => {
-                        const sum = Object.values(currentStockBySize).reduce((acc, n) => acc + (Number(n) || 0), 0);
-                        return sum > 0 ? sum : Number(p.stock || 0);
-                      })();
-                      const isExpanded = expandedProductId === p.id;
-                      return (
-                        <div key={p.id} className="rounded-md border border-border/50 bg-background">
-                          <button
-                            className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/50"
-                            onClick={() => setExpandedProductId((prev) => (prev === p.id ? null : p.id))}
-                          >
-                            <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                            <div className="flex-1">
-                              <div className="font-medium">{p.name}</div>
-                              <div className="text-xs text-muted-foreground">{p.category}</div>
-                            </div>
-                            <Badge className="bg-primary/90 text-primary-foreground">{computedTotal} un.</Badge>
-                          </button>
-                          {isExpanded && (
-                            <div className="p-3 border-t border-border/50 space-y-4">
-                              {/* Substituir bloco de edição por opções completas */}
-                              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 scrollbar-hide">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <div>
-                                    <Label>Nome</Label>
-                                    <Input
-                                      value={editFields[p.id]?.name ?? p.name}
-                                      onChange={(e) =>
-                                        setEditFields((prev) => ({
-                                          ...prev,
-                                          [p.id]: {
-                                            ...(prev[p.id] || { name: p.name, category: p.category, price: Number(p.price || 0), stock: Number(p.stock || 0) }),
-                                            name: e.target.value,
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Categoria</Label>
-                                    <select
-                                      className="w-full rounded-md border px-2 py-2 bg-background text-foreground"
-                                      value={editFields[p.id]?.category ?? p.category}
-                                      onChange={(e) =>
-                                        setEditFields((prev) => ({
-                                          ...prev,
-                                          [p.id]: {
-                                            ...(prev[p.id] || { name: p.name, category: p.category, price: Number(p.price || 0), stock: Number(p.stock || 0) }),
-                                            category: e.target.value,
-                                          },
-                                        }))
-                                      }
-                                    >
-                                      {categories.map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <Label>Preço (R$)</Label>
-                                    <Input
-                                      type="number"
-                                      value={Number(editFields[p.id]?.price ?? p.price)}
-                                      onChange={(e) =>
-                                        setEditFields((prev) => ({
-                                          ...prev,
-                                          [p.id]: {
-                                            ...(prev[p.id] || { name: p.name, category: p.category, price: Number(p.price || 0), stock: Number(p.stock || 0) }),
-                                            price: parseFloat(e.target.value) || 0,
-                                          },
-                                        }))
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                              
-                              {/* Chips de tamanhos para adicionar/remover */}
-                              <div>
-                                <Label>Tamanhos</Label>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {(
-                                    ["bone", "meia", "relogio"].includes(normalizeCategory((editFields[p.id]?.category ?? p.category) || ""))
-                                      ? ["U"]
-                                      : ["PP", "P", "M", "G", "GG", "XG"]
-                                  ).map((s) => (
-                                    <button
-                                      key={s}
-                                      type="button"
-                                      className={`px-3 py-2 rounded-md border ${
-                                        p.sizes.includes(s)
-                                          ? "bg-primary/90 text-primary-foreground border-primary"
-                                          : "border-border hover:border-primary/50 bg-background text-foreground"
-                                      }`}
-                                      onClick={() => {
-                                        if (p.sizes.includes(s)) {
-                                          void handleRemoveSizeFromModel(p.id, s);
-                                        } else {
-                                          void handleAddSizeToModel(p.id, sortSizes([s])[0]);
-                                        }
-                                      }}
-                                    >
-                                      {s}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              
-                              {/* Distribuição por tamanho */}
-                              <div>
-                                <Label>Distribuir estoque por tamanho</Label>
-                                {(() => {
-                                  const currentStockBySize = p.stockBySize || {};
-                                  const editedTotal = Number(editFields[p.id]?.stock ?? computedTotal);
-                                  const distributionTotal = (p.sizes || []).reduce((acc, s) => acc + Number(currentStockBySize[s] || 0), 0);
-                                  const remaining = Math.max(0, editedTotal - distributionTotal);
-                                  return (
-                                    <>
-                                      <p className="text-xs text-muted-foreground mt-1">Total: {editedTotal} &nbsp;•&nbsp; Restante: {remaining}</p>
-                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                                        {(p.sizes || []).map((s: string) => (
-                                          <div key={s} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
-                                            <span className="font-medium mr-2">{s}</span>
-                                            <Input
-                                              type="number"
-                                              value={Number(currentStockBySize[s] ?? 0)}
-                                              onChange={(e) => handleStockBySizeChange(p.id, s, parseInt(e.target.value) || 0)}
-                                            />
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </>
-                                  );
-                                })()}
-                              </div>
-                              
-                              {/* Estoque total */}
-                              <div>
-                                <Label>Estoque (total)</Label>
-                                <Input
-                                  type="number"
-                                  value={Number(editFields[p.id]?.stock ?? computedTotal)}
-                                  onChange={(e) =>
-                                    setEditFields((prev) => ({
-                                      ...prev,
-                                      [p.id]: {
-                                        ...(prev[p.id] || { name: p.name, category: p.category, price: Number(p.price || 0), stock: computedTotal }),
-                                        stock: parseInt(e.target.value) || 0,
-                                      },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              
-                              <div className="flex items-end justify-end">
-                                <Button variant="outline" onClick={() => handleUpdateProductFields(p.id)}>Salvar alterações</Button>
-                              </div>
-                            </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StockTab 
+              storedProducts={storedProducts}
+              globalSizes={globalSizes}
+              expandedProductId={expandedProductId}
+              setExpandedProductId={setExpandedProductId}
+              handleStockBySizeChange={handleStockBySizeChange}
+              editFields={editFields}
+              setEditFields={setEditFields}
+              handleUpdateProductFields={handleUpdateProductFields}
+              handleAddSizeToModel={handleAddSizeToModel}
+              handleRemoveSizeFromModel={handleRemoveSizeFromModel}
+            />
           </TabsContent>
 
           {/* Tamanhos */}
           <TabsContent value="sizes" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Tamanhos (Global)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Novo tamanho (Ex: PP, P, M, G, GG, XG, U...)"
-                    value={newGlobalSize}
-                    onChange={(e) => setNewGlobalSize(e.target.value)}
-                  />
-                  <Button
-                    onClick={() => {
-                      const raw = newGlobalSize.trim().toUpperCase();
-                      if (!raw) return;
-                      if (globalSizes.includes(raw)) {
-                        toast.error("Tamanho já existe");
-                        return;
-                      }
-                      const next = sortSizes([...globalSizes, raw]);
-                      saveGlobalSizes(next);
-                      setNewGlobalSize("");
-                      toast.success("Tamanho adicionado");
-                    }}
-                  >
-                    Adicionar
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-                  {globalSizes.map((s) => (
-                    <div key={s} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
-                      {editingSize === s ? (
-                        <div className="flex items-center gap-2 w-full">
-                          <Input
-                            value={sizeEditValue}
-                            onChange={(e) => setSizeEditValue(e.target.value)}
-                            placeholder="Editar tamanho"
-                          />
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              const raw = sizeEditValue.trim().toUpperCase();
-                              if (!raw) return;
-                              if (raw === s) {
-                                setEditingSize(null);
-                                setSizeEditValue("");
-                                return;
-                              }
-                              if (globalSizes.includes(raw)) {
-                                toast.error("Tamanho já existe");
-                                return;
-                              }
-                              const next = sortSizes([...globalSizes.filter((x) => x !== s), raw]);
-                              saveGlobalSizes(next);
-                              setEditingSize(null);
-                              setSizeEditValue("");
-                              toast.success("Tamanho atualizado");
-                            }}
-                            title="Salvar"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingSize(null);
-                              setSizeEditValue("");
-                            }}
-                            title="Cancelar"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span>{s}</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingSize(s);
-                                setSizeEditValue(s);
-                              }}
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                const next = globalSizes.filter((x) => x !== s);
-                                saveGlobalSizes(next);
-                              }}
-                            >
-                              Remover
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <SizesTab globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
           {/* Categorias */}
           <TabsContent value="categories" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Categorias</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Input placeholder="Nova categoria" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
-                  <Button
-                    onClick={() => {
-                      const val = newCategory.trim();
-                      if (!val) return;
-                      if (categories.includes(val)) {
-                        toast.error("Categoria já existe");
-                        return;
-                      }
-                      const next = [...categories, val];
-                      saveCategories(next);
-                      setNewCategory("");
-                      toast.success("Categoria adicionada");
-                    }}
-                  >
-                    Adicionar
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-                  {categories.map((c) => (
-                    <div key={c} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
-                      {editingCategory === c ? (
-                        <div className="flex items-center gap-2 w-full">
-                          <Input
-                            value={categoryEditValue}
-                            onChange={(e) => setCategoryEditValue(e.target.value)}
-                            placeholder="Editar categoria"
-                          />
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              const val = categoryEditValue.trim();
-                              if (!val) return;
-                              if (val === c) {
-                                setEditingCategory(null);
-                                setCategoryEditValue("");
-                                return;
-                              }
-                              if (categories.includes(val)) {
-                                toast.error("Categoria já existe");
-                                return;
-                              }
-                              const next = [...categories.filter((x) => x !== c), val];
-                              saveCategories(next);
-                              setEditingCategory(null);
-                              setCategoryEditValue("");
-                              toast.success("Categoria atualizada");
-                            }}
-                            title="Salvar"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingCategory(null);
-                              setCategoryEditValue("");
-                            }}
-                            title="Cancelar"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span>{c}</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingCategory(c);
-                                setCategoryEditValue(c);
-                              }}
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="text-destructive hover:bg-destructive/10"
-                              onClick={() => {
-                                const next = categories.filter((x) => x !== c);
-                                saveCategories(next);
-                              }}
-                            >
-                              Remover
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <CategoriesTab categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
           {/* Imagens */}
           <TabsContent value="images" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Imagens</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {storedProducts.filter((p) => p.image || p.publicId).length === 0 ? (
-                  <p className="text-muted-foreground">Nenhuma imagem vinculada a itens.</p>
-                ) : (
-                  <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Input value={imagesQuery} onChange={(e) => setImagesQuery(e.target.value)} placeholder="Buscar por nome, categoria ou ID..." />
-                  </div>
-                  {(() => {
-                    const images = storedProducts
-                      .filter((p) => p.image || p.publicId)
-                      .filter((p) => `${p.name} ${p.category || ''} ${String(p.id ?? '')}`.toLowerCase().includes(imagesQuery.toLowerCase()));
-                    return (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {images.map((p) => (
-                          <div key={p.id} className="rounded-md border p-3 flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={p.publicId ? `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${p.publicId}` : p.image}
-                                alt={p.name}
-                                className="w-20 h-20 object-cover rounded"
-                              />
-                              <div>
-                                <div className="font-medium">{p.name}</div>
-                                <div className="text-sm text-muted-foreground">ID: {p.id}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {/* input de arquivo oculto, acionado pelo botão Alterar imagem */}
-                              <input
-                                ref={(el) => { fileInputRefs.current[p.id] = el; }}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleSelectReplaceFile(p.id, e.target.files?.[0] ?? undefined)}
-                              />
-                              <Button variant="outline" onClick={() => triggerFilePickerForProduct(p.id)} disabled={uploading}>Alterar imagem</Button>
-                              <Button
-                                variant="ghost"
-                                className="text-destructive hover:bg-destructive/10"
-                                onClick={() => handleRemoveProductImage(p.id)}
-                              >
-                                Remover imagem
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ImagesTab 
+              storedProducts={storedProducts} 
+              setStoredProducts={setStoredProducts}
+              uploadToCloudinary={uploadToCloudinary}
+              CLOUD_NAME={CLOUD_NAME}
+              IS_SUPABASE_READY={IS_SUPABASE_READY}
+              MAX_FILE_SIZE_MB={MAX_FILE_SIZE_MB}
+              ALLOWED_TYPES={ALLOWED_TYPES}
+            />
           </TabsContent>
 
           {/* Clientes */}
           <TabsContent value="clientes" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Clientes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-3 md:items-end">
-                  <div className="flex-1">
-                    <Label>Nome</Label>
-                    <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do cliente" />
-                  </div>
-                  <div className="flex-1">
-                    <Label>Contato</Label>
-                    <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
-                  </div>
-                  <Button onClick={handleAddCliente}>Adicionar</Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input value={clientesQuery} onChange={(e) => setClientesQuery(e.target.value)} placeholder="Buscar cliente por nome ou telefone" />
-                  <Button variant="outline" onClick={() => setClientesQuery("")}>Limpar</Button>
-                </div>
-                <div className="rounded-md border">
-                  {clientesFiltered.length === 0 ? (
-                    <p className="p-4 text-muted-foreground">Nenhum cliente encontrado</p>
-                  ) : (
-                    <div className="divide-y">
-                      {clientesFiltered.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between px-3 py-2">
-                          <div className="flex-1">
-                            {editingClienteId === c.id ? (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <Label>Nome</Label>
-                                  <Input value={editingClienteNome} onChange={(e) => setEditingClienteNome(e.target.value)} />
-                                </div>
-                                <div>
-                                  <Label>Contato</Label>
-                                  <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div>
-                                <div className="font-medium">{c.nome}</div>
-                                <div className="text-sm text-muted-foreground">{c.telefone}</div>
-                              </div>
-                            )}
-                          </div>
-                          {editingClienteId === c.id ? (
-                            <div className="flex items-center gap-2">
-                              <Button variant="outline" onClick={() => { setEditingClienteId(null); setEditingClienteNome(""); setEditingClienteTelefone(""); }}>Cancelar</Button>
-                              <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveCliente}>Salvar</Button>
-                            </div>
-                          ) : (
-                            <Button variant="ghost" onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome || ""); setEditingClienteTelefone(c.telefone || ""); }}>Editar</Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <CustomersTab IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
         </Tabs>
       </div>
 
-      <Dialog open={!!confirmReplaceForId} onOpenChange={(open) => {
-        if (!open) {
-          if (confirmReplaceForId != null) handleCancelReplace(confirmReplaceForId);
-          setConfirmReplaceForId(null);
-          setConfirmReplacePreview(null);
-        }
-      }}>
-        <DialogContent className="bg-[#141414] text-green-400 border border-green-600">
-          <DialogHeader>
-            <DialogTitle className="text-green-500">Confirmar alteração de imagem</DialogTitle>
-            <DialogDescription className="text-green-400">
-              Esta ação irá substituir a imagem atual do produto. Confirme para continuar.
-            </DialogDescription>
-          </DialogHeader>
-          {confirmReplacePreview && (
-            <div className="mt-4">
-              <img src={confirmReplacePreview} alt="Prévia da nova imagem" className="w-full max-h-64 object-contain rounded border border-green-700" />
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              className="border-green-600 text-green-400 hover:bg-green-950"
-              onClick={() => {
-                if (confirmReplaceForId != null) handleCancelReplace(confirmReplaceForId);
-                setConfirmReplaceForId(null);
-                setConfirmReplacePreview(null);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700 text-black"
-              onClick={() => {
-                if (confirmReplaceForId != null) {
-                  handleReplaceProductImage(confirmReplaceForId);
-                  setConfirmReplaceForId(null);
-                  setConfirmReplacePreview(null);
-                }
-              }}
-            >
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       <Dialog open={!!confirmAction} onOpenChange={(open) => setConfirmAction(open ? confirmAction : null)}>
         <DialogContent className="bg-[#141414] text-green-400 border border-green-600">
@@ -2455,3 +1423,4 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 };
 
 export default Admin;
+

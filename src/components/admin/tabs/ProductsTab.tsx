@@ -1,0 +1,373 @@
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { Pencil, Trash2 } from "lucide-react";
+import { formatBRL, parseSupabaseError, normalizeCategory, sortSizes } from "@/lib/utils";
+
+interface ProductsTabProps {
+  storedProducts: any[];
+  setStoredProducts: React.Dispatch<React.SetStateAction<any[]>>;
+  categories: string[];
+  globalSizes: string[];
+  distribution: Record<string, number>;
+  setDistribution: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
+  IS_SUPABASE_READY: boolean;
+  MAX_FILE_SIZE_MB: number;
+  ALLOWED_TYPES: string[];
+  handleStockBySizeChange: (id: number, size: string, newStock: number) => void;
+}
+
+const ProductsTab = ({
+  storedProducts,
+  setStoredProducts,
+  categories,
+  globalSizes,
+  distribution,
+  setDistribution,
+  uploadToCloudinary,
+  IS_SUPABASE_READY,
+  MAX_FILE_SIZE_MB,
+  ALLOWED_TYPES,
+  handleStockBySizeChange,
+}: ProductsTabProps) => {
+  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], stock: 0, imageUrl: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [productQuery, setProductQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
+
+  const filteredProducts = storedProducts.filter((p) =>
+    `${p.name} ${p.category || ""} ${String(p.id ?? "")}`
+      .toLowerCase()
+      .includes(productQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const visibleProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
+
+  const handleQueryChange = (val: string) => {
+    setProductQuery(val);
+    setCurrentPage(1);
+  };
+
+  const handleChange = (field: string, value: any) => {
+    setProduct((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImage = (file?: File) => {
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      toast.error(`Arquivo muito grande (>${MAX_FILE_SIZE_MB}MB)`);
+      return;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Formato não permitido. Use JPG, PNG ou WEBP.");
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleSizeToggle = (size: string) => {
+    const next = product.sizes.includes(size)
+      ? product.sizes.filter((s) => s !== size)
+      : [...product.sizes, size];
+    handleChange("sizes", sortSizes(next));
+  };
+
+  const handleSubmit = async () => {
+    if (!product.name || !product.category || product.price <= 0) {
+      toast.error("Preencha os campos obrigatórios");
+      return;
+    }
+
+    let imageUrl = product.imageUrl;
+    let publicId: string | undefined;
+
+    if (imageFile) {
+      setUploading(true);
+      try {
+        const uploaded = await uploadToCloudinary(imageFile);
+        imageUrl = uploaded.secure_url;
+        publicId = uploaded.public_id;
+      } catch (err: any) {
+        toast.error("Falha no upload para Cloudinary");
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+
+    const allocatedTotal = (product.sizes || []).reduce((acc, s) => acc + (Number(distribution[s] || 0)), 0);
+    const totalStock = Number(product.stock || 0);
+
+    const baseProductForSupabase = {
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      sizes: product.sizes,
+      stock: allocatedTotal > 0 ? allocatedTotal : totalStock,
+      image: imageUrl || "",
+      publicId,
+      stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
+    };
+
+    if (IS_SUPABASE_READY) {
+      try {
+        const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
+        if (error) throw error;
+        setStoredProducts((prev) => [...prev, data]);
+        toast.success("Produto cadastrado");
+        setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0, imageUrl: "" });
+        setImageFile(null);
+        setImagePreview(null);
+        setDistribution({});
+      } catch (e: any) {
+        toast.error("Falha ao salvar no Supabase", { description: parseSupabaseError(e) });
+      }
+    }
+  };
+
+  const handleRemoveProduct = async (id: number) => {
+    if (!confirm("Deseja realmente excluir este produto?")) return;
+    if (IS_SUPABASE_READY) {
+      try {
+        const { error } = await supabase.from("products").delete().eq("id", id);
+        if (error) throw error;
+        setStoredProducts((prev) => prev.filter((p) => p.id !== id));
+        toast.success("Produto removido");
+      } catch (e: any) {
+        toast.error("Falha ao remover no Supabase");
+      }
+    }
+  };
+
+
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Adicionar Produto</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Nome</Label>
+              <Input value={product.name} onChange={(e) => handleChange("name", e.target.value)} />
+            </div>
+            <div>
+              <Label>Categoria</Label>
+              <select
+                className="w-full rounded-md border px-3 py-2 bg-background text-foreground"
+                value={product.category}
+                onChange={(e) => handleChange("category", e.target.value)}
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Preço (R$)</Label>
+              <Input type="number" value={product.price} onChange={(e) => handleChange("price", parseFloat(e.target.value))} />
+            </div>
+            <div>
+              <Label>Estoque Inicial Total</Label>
+              <Input type="number" value={product.stock} onChange={(e) => handleChange("stock", parseInt(e.target.value))} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Tamanhos Disponíveis</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {globalSizes.map((s) => (
+                <Badge
+                  key={s}
+                  variant={product.sizes.includes(s) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => handleSizeToggle(s)}
+                >
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {product.sizes.length > 0 && (
+            <div className="space-y-2">
+              <Label>Distribuição de Estoque</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {product.sizes.map((s) => (
+                  <div key={s} className="space-y-1">
+                    <Label className="text-[10px] uppercase">{s}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={distribution[s] || ""}
+                      onChange={(e) => setDistribution((prev) => ({ ...prev, [s]: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label>Imagem</Label>
+            <Input type="file" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} />
+            {imagePreview && (
+              <img src={imagePreview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded border" />
+            )}
+          </div>
+
+          <Button className="w-full" onClick={handleSubmit} disabled={uploading}>
+            {uploading ? "Fazendo upload..." : "Cadastrar Produto"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Produtos Cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Input
+              value={productQuery}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              placeholder="Buscar produtos..."
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleProducts.map((p) => (
+              <div key={p.id} className="border rounded-lg p-3 space-y-3 bg-card text-card-foreground shadow-sm">
+                <div className="flex items-center gap-3">
+                  {p.image && (
+                    <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{p.name}</div>
+                    <div className="text-xs text-muted-foreground">{p.category}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(p.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-bold">{formatBRL(p.price)}</span>
+                  <span>Estoque: {p.stock}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {filteredProducts.length > 0 && (
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                <span>Mostrando {pageSize} por página</span>
+                <select
+                  className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  {[9, 18, 36, 72].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  className="h-8 text-xs font-bold uppercase tracking-wider"
+                >
+                  Anterior
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const windowSize = 5;
+                    const pages: (number | "ellipsis")[] = [];
+                    const start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+                    const end = Math.min(totalPages, start + windowSize - 1);
+                    const adjustedStart = Math.max(1, end - windowSize + 1);
+
+                    if (adjustedStart > 1) {
+                      pages.push(1);
+                      if (adjustedStart > 2) pages.push("ellipsis");
+                    }
+
+                    for (let n = adjustedStart; n <= end; n++) {
+                      pages.push(n);
+                    }
+
+                    if (end < totalPages) {
+                      if (end < totalPages - 1) pages.push("ellipsis");
+                      pages.push(totalPages);
+                    }
+
+                    return pages.map((item, idx) =>
+                      item === "ellipsis" ? (
+                        <span key={`el-${idx}`} className="px-1 text-muted-foreground">
+                          ...
+                        </span>
+                      ) : (
+                        <Button
+                          key={item}
+                          variant={currentPage === item ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(item as number)}
+                          className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
+                            currentPage === item
+                              ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
+                              : ""
+                          }`}
+                        >
+                          {item}
+                        </Button>
+                      )
+                    );
+                  })()}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  className="h-8 text-xs font-bold uppercase tracking-wider"
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ProductsTab;

@@ -1,0 +1,263 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { Pencil, Check, X } from "lucide-react";
+import { parseSupabaseError } from "@/lib/utils";
+
+interface CategoriesTabProps {
+  categories: string[];
+  setCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  IS_SUPABASE_READY: boolean;
+}
+
+const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: CategoriesTabProps) => {
+  const [newCategory, setNewCategory] = useState("");
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [categoryEditValue, setCategoryEditValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+
+  const totalPages = Math.ceil(categories.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const visibleCategories = categories.slice(startIndex, startIndex + pageSize);
+
+  const saveCategories = async (next: string[]) => {
+    const removed = categories.filter((c) => !next.includes(c));
+    setCategories(next);
+    if (IS_SUPABASE_READY) {
+      try {
+        const rows = next.map((name) => ({ name }));
+        const { error: upsertErr } = await supabase.from("categories").upsert(rows, { onConflict: "name" });
+        if (upsertErr) throw upsertErr;
+
+        if (removed.length > 0) {
+          const { error: delErr } = await supabase.from("categories").delete().in("name", removed);
+          if (delErr) throw delErr;
+        }
+
+        toast.success("Categorias atualizadas");
+      } catch (e: any) {
+        toast.error("Falha ao salvar categorias no Supabase", { description: parseSupabaseError(e) });
+      }
+    } else {
+      toast.error("Supabase não configurado.");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Gerenciar Categorias</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Nova categoria" 
+            value={newCategory} 
+            onChange={(e) => setNewCategory(e.target.value)} 
+          />
+          <Button
+            onClick={() => {
+              const val = newCategory.trim();
+              if (!val) return;
+              if (categories.includes(val)) {
+                toast.error("Categoria já existe");
+                return;
+              }
+              const next = [...categories, val];
+              saveCategories(next);
+              setNewCategory("");
+              toast.success("Categoria adicionada");
+            }}
+          >
+            Adicionar
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {visibleCategories.map((c) => (
+            <div key={c} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
+              {editingCategory === c ? (
+                <div className="flex items-center gap-2 w-full">
+                  <Input
+                    value={categoryEditValue}
+                    onChange={(e) => setCategoryEditValue(e.target.value)}
+                    placeholder="Editar categoria"
+                    className="h-8"
+                  />
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-green-500"
+                      onClick={() => {
+                        const val = categoryEditValue.trim();
+                        if (!val) return;
+                        if (val === c) {
+                          setEditingCategory(null);
+                          setCategoryEditValue("");
+                          return;
+                        }
+                        if (categories.includes(val)) {
+                          toast.error("Categoria já existe");
+                          return;
+                        }
+                        const next = [...categories.filter((x) => x !== c), val];
+                        saveCategories(next);
+                        setEditingCategory(null);
+                        setCategoryEditValue("");
+                        toast.success("Categoria atualizada");
+                      }}
+                      title="Salvar"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() => {
+                        setEditingCategory(null);
+                        setCategoryEditValue("");
+                      }}
+                      title="Cancelar"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className="truncate flex-1">{c}</span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        setEditingCategory(c);
+                        setCategoryEditValue(c);
+                      }}
+                      title="Editar"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        if (confirm(`Deseja remover a categoria "${c}"?`)) {
+                          const next = categories.filter((x) => x !== c);
+                          saveCategories(next);
+                        }
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {categories.length > 0 && (
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+              <span>Mostrando {pageSize} por página</span>
+              <select
+                className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                {[12, 24, 48, 96].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                className="h-8 text-xs font-bold uppercase tracking-wider"
+              >
+                Anterior
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const windowSize = 5;
+                  const pages: (number | "ellipsis")[] = [];
+                  const start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+                  const end = Math.min(totalPages, start + windowSize - 1);
+                  const adjustedStart = Math.max(1, end - windowSize + 1);
+
+                  if (adjustedStart > 1) {
+                    pages.push(1);
+                    if (adjustedStart > 2) pages.push("ellipsis");
+                  }
+
+                  for (let n = adjustedStart; n <= end; n++) {
+                    pages.push(n);
+                  }
+
+                  if (end < totalPages) {
+                    if (end < totalPages - 1) pages.push("ellipsis");
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((item, idx) =>
+                    item === "ellipsis" ? (
+                      <span key={`el-${idx}`} className="px-1 text-muted-foreground">
+                        ...
+                      </span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={currentPage === item ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(item as number)}
+                        className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
+                          currentPage === item
+                            ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
+                            : ""
+                        }`}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  );
+                })()}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                className="h-8 text-xs font-bold uppercase tracking-wider"
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default CategoriesTab;
