@@ -1,13 +1,11 @@
 import { MapPin, Instagram, Phone, Clock } from "lucide-react";
-import logoDefault from "@/assets/logo.png";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Footer = () => {
   const { settings } = useStoreSettings();
-  const logo = settings?.logo_url || logoDefault;
-  const storeName = settings?.store_name || "FUT75 Store";
-  const address = settings?.address || "Adenil Falcão Nº1887";
-  const whatsapp = settings?.whatsapp || "(XX) XXXXX-XXXX";
+  const storeName = settings?.store_name || "Loja";
+  const address = settings?.address || "";
+  const whatsapp = settings?.whatsapp || "";
   const heroPhrase = settings?.hero_phrase || "As melhores camisas de time do mundo. Qualidade garantida.";
   const footerInfo = settings?.footer_info || `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.`;
 
@@ -19,7 +17,11 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <img src={logo} alt={storeName} className="h-14 sm:h-16 md:h-20 w-auto object-contain" />
+              {settings?.logo_url ? (
+                <img src={settings.logo_url} alt={storeName} className="h-14 sm:h-16 md:h-20 w-auto object-contain" />
+              ) : (
+                <span className="font-display text-xl text-primary font-bold">{storeName}</span>
+              )}
             </div>
             <p className="text-muted-foreground">
               {heroPhrase}

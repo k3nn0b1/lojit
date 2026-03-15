@@ -74,6 +74,17 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
   const fetchSettings = async () => {
+    // Tentar carregar do cache primeiro
+    const cached = localStorage.getItem("store_settings_cache");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setSettings(parsed);
+        applyColors(parsed);
+        updateMetadata(parsed);
+      } catch (e) {}
+    }
+
     try {
       const { data, error } = await supabase
         .from("store_settings")
@@ -83,7 +94,6 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
           if (error.code === 'PGRST116') {
-              // Table might not exist yet or row missing, use defaults
               return;
           }
           throw error;
@@ -92,6 +102,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       setSettings(data);
       applyColors(data);
       updateMetadata(data);
+      // Salvar no cache
+      localStorage.setItem("store_settings_cache", JSON.stringify(data));
 
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -113,6 +125,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       setSettings(updated);
       applyColors(updated);
       updateMetadata(updated);
+      // Atualizar cache
+      localStorage.setItem("store_settings_cache", JSON.stringify(updated));
 
     } catch (error) {
       console.error("Error updating settings:", error);

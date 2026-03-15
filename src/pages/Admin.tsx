@@ -88,7 +88,8 @@ const Admin = () => {
   const [productQuery, setProductQuery] = useState("");
   const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
   const [editFields, setEditFields] = useState<Record<number, any>>({});
-  const [stockQuery, setStockQuery] = useState(""); // Adicionado para StockTab
+  const [stockQuery, setStockQuery] = useState(""); 
+  const [stockPage, setStockPage] = useState(1);
   const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({}); // Adicionado para StockTab
 
   
@@ -136,6 +137,13 @@ const [quantity, setQuantity] = useState<string>('1');
 const [informarCliente, setInformarCliente] = useState(true);
 const [clienteNome, setClienteNome] = useState("");
 const [clienteTelefone, setClienteTelefone] = useState("");
+
+const handleNavigateStock = (id: number, name: string) => {
+  setStockQuery(name);
+  setStockPage(1);
+  setExpandedProductId(id);
+  setActiveTab("stock");
+};
 
 const addToAdminCart = () => {
   const qty = Math.max(1, parseInt(quantity || '1') || 1);
@@ -765,6 +773,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         if (error) throw error;
         setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...payload } : p)));
         toast.success("Produto atualizado");
+        setStockQuery(""); 
         return;
       } catch (e: any) {
         toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
@@ -990,6 +999,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               MAX_FILE_SIZE_MB={MAX_FILE_SIZE_MB}
               ALLOWED_TYPES={ALLOWED_TYPES}
               handleStockBySizeChange={handleStockBySizeChange}
+              navigateStock={handleNavigateStock}
             />
           </TabsContent>
 
@@ -1006,6 +1016,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               handleUpdateProductFields={handleUpdateProductFields}
               handleAddSizeToModel={handleAddSizeToModel}
               handleRemoveSizeFromModel={handleRemoveSizeFromModel}
+              stockQuery={stockQuery}
+              setStockQuery={setStockQuery}
+              currentPage={stockPage}
+              setCurrentPage={setStockPage}
             />
           </TabsContent>
 

@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
-import logoDefault from "@/assets/logo.png";
 import { useEffect, useRef, useState } from "react";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Hero = () => {
   const { settings } = useStoreSettings();
-  const logo = settings?.logo_url || logoDefault;
   const storeName = settings?.store_name || "FUT75 Store";
   const heroPhrase = settings?.hero_phrase || "Seleções, clubes europeus e brasileiros, edições retrô e muito mais. A melhor coleção de camisas de futebol, bermudas e caisas de basquete em um só lugar.";
 
@@ -66,11 +64,13 @@ const Hero = () => {
             maxHeight: "24vh",
           }}
         >
-          <img
-            src={logo}
-            alt={storeName}
-            className="w-full h-full object-contain"
-          />
+          {settings?.logo_url && (
+            <img
+              src={settings.logo_url}
+              alt={storeName}
+              className="w-full h-full object-contain"
+            />
+          )}
 
         </div>
         <div

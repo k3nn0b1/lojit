@@ -25,6 +25,10 @@ interface StockTabProps {
   handleUpdateProductFields: (id: number, manualFields?: any) => void;
   handleAddSizeToModel: (id: number, newSize: string) => void;
   handleRemoveSizeFromModel: (id: number, size: string) => void;
+  stockQuery: string;
+  setStockQuery: (query: string) => void;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const StockTab = ({
@@ -38,9 +42,11 @@ const StockTab = ({
   handleUpdateProductFields,
   handleAddSizeToModel,
   handleRemoveSizeFromModel,
+  stockQuery,
+  setStockQuery,
+  currentPage,
+  setCurrentPage,
 }: StockTabProps) => {
-  const [stockQuery, setStockQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
   const filteredStock = storedProducts.filter((p) =>

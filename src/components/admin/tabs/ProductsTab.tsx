@@ -28,6 +28,7 @@ interface ProductsTabProps {
   MAX_FILE_SIZE_MB: number;
   ALLOWED_TYPES: string[];
   handleStockBySizeChange: (id: number, size: string, newStock: number) => void;
+  navigateStock?: (id: number, name: string) => void;
 }
 
 const ProductsTab = ({
@@ -42,6 +43,7 @@ const ProductsTab = ({
   MAX_FILE_SIZE_MB,
   ALLOWED_TYPES,
   handleStockBySizeChange,
+  navigateStock,
 }: ProductsTabProps) => {
   const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], stock: 0, imageUrl: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -263,7 +265,11 @@ const ProductsTab = ({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {visibleProducts.map((p) => (
-              <div key={p.id} className="border rounded-lg p-3 space-y-3 bg-card text-card-foreground shadow-sm">
+              <div 
+                key={p.id} 
+                className="border rounded-lg p-3 space-y-3 bg-card text-card-foreground shadow-sm hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer group/card"
+                onClick={() => navigateStock?.(p.id, p.name)}
+              >
                 <div className="flex items-center gap-3">
                   {p.image && (
                     <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
@@ -273,7 +279,15 @@ const ProductsTab = ({
                     <div className="text-xs text-muted-foreground">{p.category}</div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(p.id)} className="group">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveProduct(p.id);
+                      }} 
+                      className="group"
+                    >
                       <Trash2 className="h-4 w-4 text-destructive group-hover:text-foreground" />
                     </Button>
                   </div>

@@ -1,7 +1,6 @@
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import logoDefault from "@/assets/logo.png";
 import * as React from "react";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
@@ -14,23 +13,34 @@ interface HeaderProps {
 
 const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true }: HeaderProps) => {
   const { settings } = useStoreSettings();
-  const logo = settings?.logo_url || logoDefault;
   const storeName = settings?.store_name || "FUT75 Store";
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
-            src={logo}
-            alt={storeName}
-            className="h-10 md:h-14 w-auto object-contain cursor-pointer"
-            onClick={() =>
-              document
-                .getElementById("hero")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-          />
+          {settings?.logo_url ? (
+            <img
+              src={settings.logo_url}
+              alt={storeName}
+              className="h-10 md:h-14 w-auto object-contain cursor-pointer"
+              onClick={() =>
+                document
+                  .getElementById("hero")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            />
+          ) : (
+            <span className="font-display text-xl md:text-2xl text-primary font-bold cursor-pointer"
+              onClick={() =>
+                document
+                  .getElementById("hero")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            >
+              {storeName}
+            </span>
+          )}
         </div>
 
         {rightAction ? (

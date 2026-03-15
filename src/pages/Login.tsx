@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { setAdminSessionValid } from "@/App";
 
 const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -39,6 +40,7 @@ const Login = () => {
             await supabase.auth.signOut();
           } else {
             sessionStorage.setItem("admin_auth", "true");
+            setAdminSessionValid(true);
             toast.success("Autenticado");
             navigate("/admin");
           }
@@ -46,6 +48,7 @@ const Login = () => {
       } else {
         if (user === "admin" && pass === "nimda") {
           sessionStorage.setItem("admin_auth", "true");
+          setAdminSessionValid(true);
           toast.success("Autenticado");
           navigate("/admin");
         } else {

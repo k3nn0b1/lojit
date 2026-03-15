@@ -96,10 +96,19 @@ const Index = () => {
     AOS.refresh();
   }, []);
 
-  const { settings } = useStoreSettings();
+  const { settings, loading: settingsLoading } = useStoreSettings();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
+
+  if (settingsLoading && !settings) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <span className="text-primary/70 font-display tracking-widest text-sm animate-pulse">CARREGANDO...</span>
+      </div>
+    );
+  }
 
 
   // Ordena produtos colocando esgotados (stock <= 0) por último e, dentro dos grupos, por id desc
@@ -355,9 +364,7 @@ const Index = () => {
         >
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Sobre nós</h2>
           <div className="max-w-3xl mx-auto text-muted-foreground text-center leading-relaxed space-y-4">
-            {(settings?.about_us || `Somos uma loja especializada na venda de camisas de times tailandesas e de primeira linha, perfeitas para quem ama futebol e quer vestir sua paixão com estilo. Trabalhamos com produtos de alta qualidade, confortáveis e fiéis aos modelos originais — tudo com ótimo custo-benefício.
-
-Aqui, você encontra camisas dos maiores clubes do mundo, com atendimento rápido, envio seguro e aquele cuidado especial em cada detalhe. Nosso objetivo é que cada cliente vista o manto do seu time com orgulho e confiança!`).split('\n').map((text, i) => (
+            {(settings?.about_us || "").split('\n').map((text, i) => (
               <p key={i}>{text}</p>
             ))}
           </div>

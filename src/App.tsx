@@ -15,6 +15,13 @@ import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
 const queryClient = new QueryClient();
 
 
+// Variável global que reseta em cada refresh da página (segurança solicitada)
+let isSessionValid = false;
+
+export const setAdminSessionValid = (valid: boolean) => {
+  isSessionValid = valid;
+};
+
 const AdminGuard = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
@@ -25,6 +32,17 @@ const AdminGuard = () => {
   useEffect(() => {
     const verify = async () => {
       try {
+        // Se não houver a flag global, desloga (limpa inclusive o sessionStorage pra garantir)
+        if (!isSessionValid) {
+          sessionStorage.removeItem("admin_auth");
+          if (IS_SUPABASE_READY) {
+            await supabase.auth.signOut();
+          }
+          setIsAuth(false);
+          navigate("/login", { replace: true });
+          return;
+        }
+
         const sessionFlag = sessionStorage.getItem("admin_auth") === "true";
 
         if (IS_SUPABASE_READY) {
@@ -36,11 +54,10 @@ const AdminGuard = () => {
             navigate("/login", { replace: true });
             return;
           }
-          const ok = !!user || sessionFlag;
+          const ok = !!user && sessionFlag; // Exige os dois agora
           setIsAuth(ok);
           if (!ok) navigate("/login", { replace: true });
         } else {
-          // Modo desenvolvimento: sem Supabase, valida apenas pelo flag de sessão
           const ok = sessionFlag;
           setIsAuth(ok);
           if (!ok) navigate("/login", { replace: true });
@@ -60,7 +77,10 @@ const AdminGuard = () => {
   if (!checked) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ opacity: 0.7 }}>Verificando acesso...</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <span style={{ opacity: 0.7, fontSize: '14px' }}>Verificando segurança...</span>
+        </div>
       </div>
     );
   }
