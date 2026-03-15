@@ -8,13 +8,71 @@ import { toast } from "sonner";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { hexToHSL, hslStringToHex } from "@/lib/colors";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Instagram } from "lucide-react";
+import { WhatsappIcon } from "../../icons/WhatsappIcon";
+import { YoutubeIcon } from "../../icons/YoutubeIcon";
+import { Switch } from "@/components/ui/switch";
 
 
 export default function SettingsTab() {
   const { settings, loading, updateSettings } = useStoreSettings();
   const [formData, setFormData] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const [suggestedColors, setSuggestedColors] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (formData?.logo_url) {
+      extractColors(formData.logo_url);
+    }
+  }, [formData?.logo_url]);
+
+  const extractColors = (url: string) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = url;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Reduz a imagem para processar mais rápido e agrupar cores
+      canvas.width = 50;
+      canvas.height = 50;
+      ctx.drawImage(img, 0, 0, 50, 50);
+
+      const imageData = ctx.getImageData(0, 0, 50, 50).data;
+      const colorCounts: Record<string, number> = {};
+
+      for (let i = 0; i < imageData.length; i += 4) {
+        const r = imageData[i];
+        const g = imageData[i + 1];
+        const b = imageData[i + 2];
+        const a = imageData[i + 3];
+
+        if (a < 128) continue; // ignora transparente
+
+        // Arredonda para reduzir variações sutis e agrupar cores similares
+        const roundedR = Math.round(r / 15) * 15;
+        const roundedG = Math.round(g / 15) * 15;
+        const roundedB = Math.round(b / 15) * 15;
+
+        // Ignora cores muito próximas de preto ou branco (opcional, mas geralmente melhor para temas)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        if (luminance < 0.1 || luminance > 0.9) continue;
+
+        const hex = `#${((1 << 24) + (roundedR << 16) + (roundedG << 8) + roundedB).toString(16).slice(1)}`;
+        colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+      }
+
+      // Ordena por frequência e pega a cor predominante
+      const sorted = Object.entries(colorCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 1) // Apenas a mais frequente
+        .map(entry => entry[0]);
+
+      setSuggestedColors(sorted);
+    };
+  };
 
   useEffect(() => {
     if (settings) {
@@ -115,22 +173,66 @@ export default function SettingsTab() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="whatsapp">Número de WhatsApp</Label>
-                <Input 
-                    id="whatsapp" 
-                    value={formData.whatsapp} 
-                    onChange={e => setFormData({...formData, whatsapp: e.target.value})}
-                    placeholder="Ex: 5575981284738"
-                />
+                <Label htmlFor="instagram">Instagram (Link ou @)</Label>
+                <div className="flex items-center gap-4">
+                  <Input 
+                      id="instagram" 
+                      value={formData.instagram_url} 
+                      onChange={e => setFormData({...formData, instagram_url: e.target.value})}
+                      placeholder="Ex: @fut75store"
+                      className="flex-1"
+                  />
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                    <Switch 
+                      id="show_instagram" 
+                      checked={formData.show_instagram} 
+                      onCheckedChange={checked => setFormData({...formData, show_instagram: checked})}
+                    />
+                    <Label htmlFor="show_instagram" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                  </div>
+                </div>
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="instagram">Link do Instagram</Label>
-                <Input 
-                    id="instagram" 
-                    value={formData.instagram_url} 
-                    onChange={e => setFormData({...formData, instagram_url: e.target.value})}
-                    placeholder="Ex: @fut75store ou link completo"
-                />
+                <Label htmlFor="whatsapp">WhatsApp (Número com DDD)</Label>
+                <div className="flex items-center gap-4">
+                  <Input 
+                      id="whatsapp" 
+                      value={formData.whatsapp} 
+                      onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                      placeholder="Ex: 5575981284738"
+                      className="flex-1"
+                  />
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                    <Switch 
+                      id="show_whatsapp" 
+                      checked={formData.show_whatsapp} 
+                      onCheckedChange={checked => setFormData({...formData, show_whatsapp: checked})}
+                    />
+                    <Label htmlFor="show_whatsapp" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="youtube">YouTube (Link do Canal)</Label>
+                <div className="flex items-center gap-4">
+                  <Input 
+                      id="youtube" 
+                      value={formData.youtube_url} 
+                      onChange={e => setFormData({...formData, youtube_url: e.target.value})}
+                      placeholder="Ex: https://youtube.com/@seucanal"
+                      className="flex-1"
+                  />
+                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                    <Switch 
+                      id="show_youtube" 
+                      checked={formData.show_youtube} 
+                      onCheckedChange={checked => setFormData({...formData, show_youtube: checked})}
+                    />
+                    <Label htmlFor="show_youtube" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                  </div>
+                </div>
               </div>
           </div>
 
@@ -162,6 +264,17 @@ export default function SettingsTab() {
                 value={formData.address} 
                 onChange={e => setFormData({...formData, address: e.target.value})}
                 placeholder="Rua, Número, Bairro, Cidade - UF"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="opening_hours">Horário de Funcionamento</Label>
+            <Textarea 
+                id="opening_hours" 
+                value={formData.opening_hours} 
+                onChange={e => setFormData({...formData, opening_hours: e.target.value})}
+                placeholder="Ex: Segunda a Sexta: 9h às 18h&#10;Sábado: 9h às 14h"
+                rows={3}
             />
           </div>
         </CardContent>
@@ -227,7 +340,28 @@ export default function SettingsTab() {
 
           <div className="pt-4 border-t border-border/50 space-y-8">
             <div>
-              <h4 className="text-sm font-medium mb-4">Cores do Sistema (HEX)</h4>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium">Cores do Sistema (HEX)</h4>
+                {suggestedColors.length > 0 && (
+                  <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
+                    <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
+                    <div className="flex gap-1.5">
+                      {suggestedColors.map(color => (
+                        <button
+                          key={color}
+                          onClick={() => {
+                            setFormData({ ...formData, primary_hex: color, secondary_hex: color });
+                            toast.info(`Cor predominante ${color} aplicada!`);
+                          }}
+                          className="w-5 h-5 rounded-full border border-white/20 hover:scale-110 transition-smooth shadow-sm"
+                          style={{ backgroundColor: color }}
+                          title={`Aplicar ${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="grid gap-2">
                       <Label htmlFor="primary_color" className="text-xs uppercase text-muted-foreground">Cor Primária (Temas e Botões)</Label>

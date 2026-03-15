@@ -13,12 +13,17 @@ export interface StoreSettings {
   hero_title_l2?: string;
   hero_title_l3?: string;
   instagram_url?: string;
+  youtube_url?: string;
+  show_instagram?: boolean;
+  show_whatsapp?: boolean;
+  show_youtube?: boolean;
   about_us: string;
   footer_info: string;
   primary_color: string;
   secondary_color: string;
   background_color: string;
   background_url: string | null;
+  opening_hours?: string;
   updated_at?: string;
 }
 
@@ -44,7 +49,12 @@ const defaultSettings: StoreSettings = {
   primary_color: "142 100% 50%",
   secondary_color: "142 100% 50%",
   background_color: "0 0% 5%",
-  background_url: null
+  background_url: null,
+  opening_hours: "Segunda a Sexta: 9h às 18h\nSábado: 9h às 14h",
+  show_instagram: true,
+  show_whatsapp: true,
+  show_youtube: false,
+  youtube_url: ""
 };
 
 export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

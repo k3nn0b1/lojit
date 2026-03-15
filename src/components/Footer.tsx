@@ -1,4 +1,6 @@
 import { MapPin, Instagram, Phone, Clock } from "lucide-react";
+import { WhatsappIcon } from "./icons/WhatsappIcon";
+import { YoutubeIcon } from "./icons/YoutubeIcon";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Footer = () => {
@@ -6,8 +8,15 @@ const Footer = () => {
   const storeName = settings?.store_name || "Loja";
   const address = settings?.address || "";
   const whatsapp = settings?.whatsapp || "";
-  const heroPhrase = settings?.hero_phrase || "As melhores camisas de time do mundo. Qualidade garantida.";
-  const footerInfo = settings?.footer_info || `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.`;
+  const youtube = settings?.youtube_url || "";
+  const footerInfo = settings?.footer_info 
+    ? settings.footer_info.replace("FUT75 Store", storeName) 
+    : `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.`;
+
+  // Flags de visibilidade (default para true se não existirem nas configurações antigas)
+  const showInsta = settings?.show_instagram !== false;
+  const showWhats = settings?.show_whatsapp !== false;
+  const showYoutube = settings?.show_youtube === true;
 
   return (
 
@@ -33,16 +42,13 @@ const Footer = () => {
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <span>{address}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-primary shrink-0" />
-                <span>{whatsapp}</span>
-              </div>
-
+              
               <div className="flex items-start gap-2">
                 <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p>Segunda a Sexta: 9h às 18h</p>
-                  <p>Sábado: 9h às 14h</p>
+                  {(settings?.opening_hours || "Segunda a Sexta: 9h às 18h\nSábado: 9h às 14h").split('\n').map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
                 </div>
               </div>
             </div>
@@ -51,21 +57,47 @@ const Footer = () => {
           {/* Social */}
           <div className="space-y-4">
             <h4 className="font-display text-xl text-foreground">REDES SOCIAIS</h4>
-            <a
-              href={settings?.instagram_url || "https://instagram.com/fut75store"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
-            >
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/30 group-hover:glow-soft transition-smooth">
-                <Instagram className="w-5 h-5" />
-              </div>
-              <span className="font-medium">
-                @{settings?.instagram_url 
-                  ? settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0] 
-                  : "fut75store"}
-              </span>
-            </a>
+            <div className="flex flex-col gap-3">
+              {showInsta && (
+                <a
+                  href={settings?.instagram_url || "https://instagram.com/fut75store"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                >
+                  <Instagram className="w-5 h-5 text-primary shrink-0" />
+                  <span className="font-medium">
+                    @{settings?.instagram_url 
+                      ? settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0] 
+                      : "fut75store"}
+                  </span>
+                </a>
+              )}
+
+              {showWhats && (
+                <a
+                  href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                >
+                  <WhatsappIcon className="w-5 h-5 text-primary shrink-0" />
+                  <span className="font-medium">{whatsapp}</span>
+                </a>
+              )}
+
+              {showYoutube && youtube && (
+                <a
+                  href={youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                >
+                  <YoutubeIcon className="w-5 h-5 text-primary shrink-0" />
+                  <span className="font-medium">YouTube</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
