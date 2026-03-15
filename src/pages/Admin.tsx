@@ -29,6 +29,7 @@ import StockTab from "@/components/admin/tabs/StockTab";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 
 // Modelo de produto
@@ -55,6 +56,14 @@ const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.e
 
 
 const Admin = () => {
+  const { settings } = useStoreSettings();
+
+  useEffect(() => {
+    if (settings?.store_name) {
+      document.title = `${settings.store_name} - Painel`;
+    }
+  }, [settings?.store_name]);
+
   // Auth: verificação de acesso é feita pelo AdminGuard em App.tsx
   // Removido checkAuth local para evitar redirecionamentos duplicados.
 
