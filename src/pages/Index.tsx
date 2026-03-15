@@ -101,14 +101,7 @@ const Index = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
 
-  if (settingsLoading && !settings) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-        <span className="text-primary/70 font-display tracking-widest text-sm animate-pulse">CARREGANDO...</span>
-      </div>
-    );
-  }
+
 
 
   // Ordena produtos colocando esgotados (stock <= 0) por último e, dentro dos grupos, por id desc
@@ -122,6 +115,7 @@ const Index = () => {
   };
 
   useEffect(() => {
+    let channel: any;
     const load = async () => {
       const hasSupabase = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (hasSupabase) {
@@ -131,7 +125,6 @@ const Index = () => {
             .select("*")
             .order("id", { ascending: false });
           if (!error && data) {
-            // Normaliza stockBySize (cast para number) e recalcula stock quando necessário
             const normalized = (data as any[]).map((p) => {
               const stockBySizeObj = p.stockBySize && typeof p.stockBySize === "object"
                 ? Object.fromEntries(
@@ -153,8 +146,8 @@ const Index = () => {
             setProducts(sortProducts(normalized));
           }
         } catch {}
-        // Subscrição realtime de produtos
-        const channel = supabase
+        
+        channel = supabase
           .channel("products-realtime-index")
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
             const newRow = payload.new;
@@ -194,14 +187,23 @@ const Index = () => {
             setProducts(prev => sortProducts(prev.filter(p => p.id !== oldRow.id)));
           })
           .subscribe();
-        return () => { try { supabase.removeChannel(channel); } catch {} };
+      } else {
+        setProducts(sortProducts(mockProducts));
       }
-      // Sem Supabase: usar apenas produtos mockados
-      setProducts(sortProducts(mockProducts));
     };
-    const unsub = load();
-    return () => { /* caso load tenha retornado uma cleanup de canal */ };
+    load();
+    return () => { 
+      if (channel) supabase.removeChannel(channel); 
+    };
   }, []);
+
+  useEffect(() => {
+    if (!settingsLoading) {
+      setTimeout(() => {
+        AOS.refresh();
+      }, 500); // 500ms para garantir que o DOM renderizou
+    }
+  }, [settingsLoading]);
 
   const getMaxStockFor = (product: Product, size: string) => {
     const bySize = product.stockBySize?.[size];
@@ -348,7 +350,7 @@ const Index = () => {
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative bg-background">
       <FootballBackground />
 
       <div className="relative z-10">

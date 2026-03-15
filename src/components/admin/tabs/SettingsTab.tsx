@@ -98,8 +98,8 @@ export default function SettingsTab() {
 
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
-      <Card className="border-primary/20 bg-card/50 backdrop-blur-sm">
+    <div className="space-y-6">
+      <Card>
         <CardHeader>
           <CardTitle>Dados da Loja</CardTitle>
         </CardHeader>
@@ -167,7 +167,7 @@ export default function SettingsTab() {
         </CardContent>
       </Card>
 
-      <Card className="border-primary/20 bg-card/50 backdrop-blur-sm">
+      <Card>
         <CardHeader>
           <CardTitle>Personalização do Site</CardTitle>
         </CardHeader>

@@ -23,10 +23,6 @@ const Footer = () => {
                 <span className="font-display text-xl text-primary font-bold">{storeName}</span>
               )}
             </div>
-            <p className="text-muted-foreground">
-              {heroPhrase}
-            </p>
-
           </div>
 
           {/* Contact Info */}

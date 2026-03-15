@@ -32,8 +32,23 @@ interface StoreSettingsContextType {
 
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
+const defaultSettings: StoreSettings = {
+  id: 1,
+  store_name: "FUT75 Store",
+  logo_url: null,
+  address: "",
+  whatsapp: "",
+  hero_phrase: "A melhor coleção de camisas de futebol.",
+  about_us: "",
+  footer_info: "© 2024 FUT75 Store. Todos os direitos reservados.",
+  primary_color: "142 100% 50%",
+  secondary_color: "142 100% 50%",
+  background_color: "0 0% 5%",
+  background_url: null
+};
+
 export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
+  const [settings, setSettings] = useState<StoreSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
 
   const applyColors = (s: StoreSettings) => {
@@ -94,6 +109,7 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
           if (error.code === 'PGRST116') {
+              if (!settings) setSettings(defaultSettings);
               return;
           }
           throw error;
@@ -107,6 +123,7 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     } catch (error) {
       console.error("Error fetching settings:", error);
+      if (!settings) setSettings(defaultSettings);
     } finally {
       setLoading(false);
     }

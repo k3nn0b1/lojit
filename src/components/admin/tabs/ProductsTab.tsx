@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Trash2, Plus, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, Trash2, Plus, Image as ImageIcon, ChevronDown, ChevronUp, Loader2, Upload, X } from "lucide-react";
 import { formatBRL, parseSupabaseError, normalizeCategory, sortSizes } from "@/lib/utils";
 import {
   Select,
@@ -237,12 +237,40 @@ const ProductsTab = ({
             </div>
           )}
 
-          <div>
-            <Label>Imagem</Label>
-            <Input type="file" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} />
-            {imagePreview && (
-              <img src={imagePreview} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded border" />
-            )}
+          <div className="grid gap-2">
+            <Label>Imagem do Produto</Label>
+            <div className="flex flex-col gap-4">
+                {imagePreview ? (
+                    <div className="relative w-full aspect-video md:aspect-auto md:h-48 rounded-lg border-2 border-primary/20 bg-muted/30 overflow-hidden flex items-center justify-center group">
+                        <img src={imagePreview} alt="Preview" className="h-full w-full object-contain" />
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(null);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+                ) : (
+                    <Label 
+                        htmlFor="product-image-upload" 
+                        className="flex flex-col items-center justify-center gap-3 h-32 w-full rounded-lg border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth group"
+                    >
+                        <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-smooth">
+                          <Upload className="w-6 h-6 text-primary" />
+                        </div>
+                        <div className="text-center">
+                          <span className="block font-bold text-primary">Escolher imagem do produto</span>
+                          <span className="text-xs text-muted-foreground font-normal">PNG, JPG ou WEBP até 8MB</span>
+                        </div>
+                    </Label>
+                )}
+                <input id="product-image-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} />
+            </div>
           </div>
 
           <Button className="w-full" onClick={handleSubmit} disabled={uploading}>
