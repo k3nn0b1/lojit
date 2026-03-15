@@ -1,8 +1,9 @@
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import logo from "@/assets/logo.png";
+import logoDefault from "@/assets/logo.png";
 import * as React from "react";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -12,13 +13,17 @@ interface HeaderProps {
 }
 
 const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true }: HeaderProps) => {
+  const { settings } = useStoreSettings();
+  const logo = settings?.logo_url || logoDefault;
+  const storeName = settings?.store_name || "FUT75 Store";
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
             src={logo}
-            alt="FUT75 Store"
+            alt={storeName}
             className="h-10 md:h-14 w-auto object-contain cursor-pointer"
             onClick={() =>
               document
@@ -35,7 +40,7 @@ const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCa
             onClick={onCartClick}
             variant="outline"
             size="lg"
-            className="relative border-primary/30 hover:border-primary hover:bg-primary/10 transition-smooth"
+            className="relative border-primary/30 hover:border-primary hover:bg-primary/10 hover:text-foreground transition-smooth"
           >
             <ShoppingCart className="w-5 h-5" />
             {cartItemCount > 0 && (

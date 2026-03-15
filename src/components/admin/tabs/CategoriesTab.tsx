@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Pencil, Check, X } from "lucide-react";
 import { parseSupabaseError } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CategoriesTabProps {
   categories: string[];
@@ -93,7 +100,8 @@ const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: Categor
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-green-500"
+                      className="h-8 w-8 text-primary"
+
                       onClick={() => {
                         const val = categoryEditValue.trim();
                         if (!val) return;
@@ -149,7 +157,7 @@ const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: Categor
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-foreground"
                       onClick={() => {
                         if (confirm(`Deseja remover a categoria "${c}"?`)) {
                           const next = categories.filter((x) => x !== c);
@@ -170,20 +178,24 @@ const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: Categor
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
             <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
               <span>Mostrando {pageSize} por página</span>
-              <select
-                className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
+              <Select
+                value={String(pageSize)}
+                onValueChange={(val) => {
+                  setPageSize(Number(val));
                   setCurrentPage(1);
                 }}
               >
-                {[12, 24, 48, 96].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-[70px] bg-background">
+                  <SelectValue placeholder={String(pageSize)} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[12, 24, 48, 96].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2">
@@ -232,8 +244,8 @@ const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: Categor
                         onClick={() => setCurrentPage(item as number)}
                         className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
                           currentPage === item
-                            ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
-                            : ""
+                            ? "bg-primary text-primary-foreground shadow-primary/30"
+                            : "hover:bg-primary/10 hover:text-foreground"
                         }`}
                       >
                         {item}

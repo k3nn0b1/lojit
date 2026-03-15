@@ -168,22 +168,27 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           <div className="mt-3 p-3 rounded-md border border-border/50 bg-muted/50">
             <p className="text-sm text-muted-foreground mb-2">Estoque por tamanho</p>
             <ul className="grid grid-cols-2 gap-2">
-              {sortedSizes.map((size) => {
-                const key = size.trim();
-                const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
-                const isZero = qty !== undefined && qty <= 0;
-                return (
-                  <li
-                    key={key}
-                    className="flex items-center justify-between rounded-md bg-background/60 px-3 py-2 border border-border/50"
-                  >
-                    <span className="font-medium">{key}</span>
-                    <span className={`text-sm ${isZero ? "text-destructive" : "text-foreground"}`}>
-                      {qty !== undefined ? qty : "N/D"}
-                    </span>
-                  </li>
-                );
-              })}
+              {sortedSizes
+                .filter((size) => {
+                  const key = size.trim();
+                  const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
+                  return qty === undefined || qty > 0;
+                })
+                .map((size) => {
+                  const key = size.trim();
+                  const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
+                  return (
+                    <li
+                      key={key}
+                      className="flex items-center justify-between rounded-md bg-background/60 px-3 py-2 border border-border/50"
+                    >
+                      <span className="font-medium">{key}</span>
+                      <span className="text-sm text-foreground">
+                        {qty !== undefined ? qty : "N/D"}
+                      </span>
+                    </li>
+                  );
+                })}
             </ul>
           </div>
         )}

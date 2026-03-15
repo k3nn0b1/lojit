@@ -12,6 +12,13 @@ import { supabase } from "@/lib/supabase";
 import { Pencil, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatBRL, parseSupabaseError, normalizePhone, formatPhoneMask, sortSizes, rankSize, normalizeCategory } from "@/lib/utils";
 import CustomersTab from "@/components/admin/tabs/CustomersTab";
 import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
@@ -20,6 +27,9 @@ import ImagesTab from "@/components/admin/tabs/ImagesTab";
 import ProductsTab from "@/components/admin/tabs/ProductsTab";
 import StockTab from "@/components/admin/tabs/StockTab";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import SettingsTab from "@/components/admin/tabs/SettingsTab";
+
 
 // Modelo de produto
 interface AdminProduct {
@@ -35,6 +45,7 @@ interface AdminProduct {
 }
 
 // Cloudinary envs e upload helpers permanecem iguais
+
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dlmkynuni";
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "";
 const DEFAULT_FOLDER = "fut75/products";
@@ -42,17 +53,6 @@ const MAX_FILE_SIZE_MB = 8;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-async function uploadToCloudinary(file: File): Promise<{ secure_url: string; public_id: string }> {
-  if (!UPLOAD_PRESET) throw new Error("Upload preset não configurado. Defina VITE_CLOUDINARY_UPLOAD_PRESET no .env");
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
-  formData.append("folder", DEFAULT_FOLDER);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: "POST", body: formData });
-  if (!res.ok) throw new Error(`Falha no upload Cloudinary: ${await res.text()}`);
-  const data = await res.json();
-  return { secure_url: data.secure_url as string, public_id: data.public_id as string };
-}
 
 const Admin = () => {
   // Auth: verificação de acesso é feita pelo AdminGuard em App.tsx
@@ -805,7 +805,9 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               <TabsTrigger value="images">Imagens</TabsTrigger>
               <TabsTrigger value="clientes">Clientes</TabsTrigger>
               <TabsTrigger value="categories">Categorias</TabsTrigger>
+              <TabsTrigger value="config">Configurações</TabsTrigger>
             </TabsList>
+
 
           {/* Pedidos */}
           <TabsContent value="pedidos" className="mt-6">
@@ -881,11 +883,11 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                                 {p.status === 'pendente' ? (
                                   <>
                                     <button
-                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-green-600 bg-black disabled:opacity-50"
+                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-green-500 bg-black disabled:opacity-50"
                                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
                                     >
                                       <span className="relative z-10 transition-colors duration-300 group-hover:text-white">Confirmar</span>
-                                      <span className="absolute inset-0 z-0 scale-x-0 bg-green-600 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
+                                      <span className="absolute inset-0 z-0 scale-x-0 bg-green-500 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
                                     </button>
                                     <button
                                       className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-red-600 bg-black disabled:opacity-50"
@@ -913,15 +915,21 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                     <div className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">Mostrando {pageSize} por página</span>
-                        <select
-                          className="rounded-md border px-2 py-1 text-xs bg-background text-foreground"
-                          value={pageSize}
-                          onChange={(e) => setPageSize(Number(e.target.value))}
+                        <Select
+                          value={String(pageSize)}
+                          onValueChange={(val) => setPageSize(Number(val))}
                         >
-                          <option value={15}>15</option>
-                          <option value={30}>30</option>
-                          <option value={50}>50</option>
-                        </select>
+                          <SelectTrigger className="h-7 w-[65px] text-xs bg-background">
+                            <SelectValue placeholder={String(pageSize)} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[15, 30, 50].map((size) => (
+                              <SelectItem key={size} value={String(size)}>
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" disabled={pedidoPage <= 1} onClick={() => setPedidoPage((p) => Math.max(1, p - 1))}>Anterior</Button>
@@ -944,7 +952,16 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                             item === 'ellipsis' ? (
                               <span key={`el-${idx}`} className="px-1 text-xs text-muted-foreground">…</span>
                             ) : (
-                              <Button key={item} variant={item === pedidoPage ? "default" : "outline"} onClick={() => setPedidoPage(item as number)} className="h-8 px-2 text-xs">
+                               <Button 
+                                 key={item} 
+                                 variant={item === pedidoPage ? "default" : "outline"} 
+                                 onClick={() => setPedidoPage(item as number)} 
+                                 className={`h-8 px-2 text-xs font-bold transition-all ${
+                                   item === pedidoPage 
+                                     ? "bg-primary text-primary-foreground shadow-primary/30" 
+                                     : "hover:bg-primary/10 hover:text-foreground"
+                                 }`}
+                               >
                                 {item}
                               </Button>
                             )
@@ -1019,16 +1036,22 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           <TabsContent value="clientes" className="mt-6">
             <CustomersTab IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
+
+          {/* Configurações */}
+          <TabsContent value="config" className="mt-6">
+            <SettingsTab />
+          </TabsContent>
         </Tabs>
+
       </div>
 
 
 
       <Dialog open={!!confirmAction} onOpenChange={(open) => setConfirmAction(open ? confirmAction : null)}>
-        <DialogContent className="bg-[#141414] text-green-400 border border-green-600">
+        <DialogContent className="bg-card text-primary/90 border border-primary">
           <DialogHeader>
-            <DialogTitle className="text-green-500">Confirmar {confirmAction?.action === 'concluir' ? 'conclusão' : 'cancelamento'} do pedido</DialogTitle>
-            <DialogDescription className="text-green-400">
+            <DialogTitle className="text-primary">Confirmar {confirmAction?.action === 'concluir' ? 'conclusão' : 'cancelamento'} do pedido</DialogTitle>
+            <DialogDescription className="text-primary/90">
               Revise os itens e o impacto no estoque antes de confirmar.
             </DialogDescription>
           </DialogHeader>
@@ -1050,7 +1073,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancelar</Button>
-            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => { if (confirmAction) handleConfirmAction(confirmAction.id, confirmAction.action); setConfirmAction(null); }}>
+            <Button 
+              className={confirmAction?.action === 'concluir' ? "bg-green-600 hover:bg-green-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"} 
+              onClick={() => { if (confirmAction) handleConfirmAction(confirmAction.id, confirmAction.action); setConfirmAction(null); }}
+            >
               Confirmar
             </Button>
           </DialogFooter>
@@ -1058,7 +1084,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       </Dialog>
 
       <Dialog open={pedidoDetalhesId != null} onOpenChange={(open) => setPedidoDetalhesId(open ? pedidoDetalhesId : null)}>
-        <DialogContent className="bg-black text-green-400 border border-green-600">
+        <DialogContent className="bg-black text-primary/90 border border-primary">
           <DialogHeader>
             <DialogTitle className="text-white text-xl sm:text-2xl">Detalhes do pedido</DialogTitle>
             <DialogDescription className="text-white">ID: {pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}</DialogDescription>
@@ -1077,24 +1103,24 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             return (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-md border border-green-600/40 p-3 bg-black/40">
-                    <p className="text-sm"><span className="text-white">Cliente:</span> <span className="text-green-500">{pedido?.cliente_nome || '—'}</span></p>
-                    <p className="text-sm"><span className="text-white">Telefone:</span> <span className="text-green-500">{pedido?.cliente_telefone || '—'}</span></p>
-                    <p className="text-sm"><span className="text-white">Data/Hora:</span> <span className="text-green-500">{pedido?.data_criacao ? new Date(pedido.data_criacao).toLocaleString() : '—'}</span></p>
+                  <div className="rounded-md border border-primary/40 p-3 bg-black/40">
+                    <p className="text-sm"><span className="text-white">Cliente:</span> <span className="text-primary">{pedido?.cliente_nome || '—'}</span></p>
+                    <p className="text-sm"><span className="text-white">Telefone:</span> <span className="text-primary">{pedido?.cliente_telefone || '—'}</span></p>
+                    <p className="text-sm"><span className="text-white">Data/Hora:</span> <span className="text-primary">{pedido?.data_criacao ? new Date(pedido.data_criacao).toLocaleString() : '—'}</span></p>
                   </div>
-                  <div className="rounded-md border border-green-600/40 p-3 bg-black/40">
-                    <p className="text-sm"><span className="text-white">Status:</span> <span className={pedido?.status === 'pendente' ? 'text-amber-500' : pedido?.status === 'cancelado' ? 'text-white' : pedido?.status === 'devolvido' ? 'text-amber-400' : pedido?.status === 'parcialmente_devolvido' ? 'text-amber-300' : 'text-green-500'}>{pedido?.status === 'parcialmente_devolvido' ? 'Parcialmente Devolvido' : (pedido?.status || '—')}</span></p>
-                    <p className="text-sm"><span className="text-white">Total:</span> <span className="text-green-500">{formatBRL(Number(pedido?.valor_total || 0))}</span></p>
+                  <div className="rounded-md border border-primary/40 p-3 bg-black/40">
+                    <p className="text-sm"><span className="text-white">Status:</span> <span className={pedido?.status === 'pendente' ? 'text-amber-500' : pedido?.status === 'cancelado' ? 'text-white' : pedido?.status === 'devolvido' ? 'text-amber-400' : pedido?.status === 'parcialmente_devolvido' ? 'text-amber-300' : 'text-primary'}>{pedido?.status === 'parcialmente_devolvido' ? 'Parcialmente Devolvido' : (pedido?.status || '—')}</span></p>
+                    <p className="text-sm"><span className="text-white">Total:</span> <span className="text-primary">{formatBRL(Number(pedido?.valor_total || 0))}</span></p>
                   </div>
                 </div>
                 <div>
                    <p className="text-white text-sm mb-2">Itens detalhados</p>
                    <div className="space-y-2">
                      {itens.map((it: any, i: number) => (
-                       <div key={i} className="rounded-md border border-green-600 bg-black/40 p-2 grid grid-cols-[auto_2rem_auto_auto] items-center gap-2">
+                       <div key={i} className="rounded-md border border-primary bg-black/40 p-2 grid grid-cols-[auto_2rem_auto_auto] items-center gap-2">
                          <span className="text-white">{it.produto}</span>
                         <Badge variant="outline" className="w-8 justify-center text-xs">{it.tamanho}</Badge>
-                        <span className="text-green-500">x{it.quantidade}</span>
+                        <span className="text-primary">x{it.quantidade}</span>
                         {Number(it.devolvido || 0) > 0 && (
                           <span className="text-amber-400 text-xs">Devolvido: {it.devolvido}</span>
                         )}
@@ -1125,7 +1151,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
       {devolucaoPedidoId && (
         <Dialog open={true} onOpenChange={(o) => { if (!o) { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); } }}>
-          <DialogContent className="bg-black text-green-400 border border-green-600">
+          <DialogContent className="bg-black text-primary/90 border border-primary">
             <DialogHeader>
               <DialogTitle className="text-white">Devolução do pedido #{pedidoSeq[String(devolucaoPedidoId)] ?? '—'}</DialogTitle>
               <DialogDescription className="text-white/70">Escolha devolução total ou parcial.</DialogDescription>
@@ -1187,7 +1213,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
       {devolucaoPedidoId && (
         <AlertDialog open={confirmTotalOpen} onOpenChange={setConfirmTotalOpen}>
-          <AlertDialogContent className="bg-black text-green-400 border border-green-600">
+          <AlertDialogContent className="bg-black text-primary/90 border border-primary">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-white">Confirmar devolução total</AlertDialogTitle>
               <AlertDialogDescription className="text-white/70">Tem certeza que deseja devolver todos os itens da compra?</AlertDialogDescription>
@@ -1214,18 +1240,18 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       <div className="fixed bottom-6 right-6 z-50">
         <button
           type="button"
-          className="group relative overflow-hidden rounded-md px-4 py-3 font-semibold text-white bg-green-600 shadow-lg hover:bg-green-700 transition-colors"
+          className="group relative overflow-hidden rounded-md px-4 py-3 font-semibold text-white bg-primary shadow-lg hover:bg-primary/90 transition-colors"
           onClick={() => setNewPedidoOpen(true)}
           title="Criar novo pedido"
         >
-          <span className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-green-500/30 transition-transform"></span>
+          <span className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-primary/30 transition-transform"></span>
           <span className="relative">NOVO PEDIDO</span>
         </button>
       </div>
 
       {/* Modal de novo pedido */}
       <Dialog open={newPedidoOpen} onOpenChange={setNewPedidoOpen}>
-        <DialogContent className="bg-[#141414] text-green-400 border border-green-600 max-w-2xl">
+        <DialogContent className="bg-card text-primary/90 border border-primary max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Novo pedido</DialogTitle>
             <DialogDescription className="text-white/70">Pesquise o produto, selecione tamanho e quantidade, e conclua o pedido.</DialogDescription>
@@ -1240,7 +1266,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                 placeholder="Digite o nome do produto"
                 className="mt-1"
               />
-              <div className="mt-2 max-h-40 overflow-auto rounded border border-green-700/40 scrollbar-hide">
+              <div className="mt-2 max-h-40 overflow-auto rounded border border-primary/40 scrollbar-hide">
                 {storedProducts
                   .filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase()))
                   .slice(0, 20)
@@ -1332,7 +1358,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               <p className="text-white text-sm mb-2">Itens do pedido</p>
               <div className="space-y-2">
                 {adminCart.map((it, i) => (
-                  <div key={`${it.id}-${it.size}-${i}`} className="rounded-md border border-green-600/40 p-2 bg-black/40 flex items-center gap-3 flex-wrap md:flex-nowrap">
+                  <div key={`${it.id}-${it.size}-${i}`} className="rounded-md border border-primary/40 p-2 bg-black/40 flex items-center gap-3 flex-wrap md:flex-nowrap">
   {/* modelo (nome) */}
   <TooltipProvider>
     <Tooltip>
@@ -1367,11 +1393,11 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               </div>
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-white">Total</span>
-                <span className="text-green-500 font-semibold">{formatBRL(adminCartTotal)}</span>
+                <span className="text-primary font-semibold">{formatBRL(adminCartTotal)}</span>
               </div>
             </div>
 
-            <div className="rounded-md border border-green-600/40 p-3 bg-black/40">
+            <div className="rounded-md border border-primary/40 p-3 bg-black/40">
               <label className="flex items-center gap-2 text-white">
                 <input type="checkbox" checked={informarCliente} onChange={(e) => setInformarCliente(e.target.checked)} />
                 Informar cliente (nome e telefone)
@@ -1393,9 +1419,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               )}
             </div>
 
-            <div className="flex justify-end gap-2 sticky bottom-0 bg-[#141414] py-2">
+            <div className="flex justify-end gap-2 sticky bottom-0 bg-card py-2">
               <Button variant="outline" onClick={() => { setNewPedidoOpen(false); }}>Cancelar</Button>
               <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setConfirmDebitarOpen(true)} disabled={adminCart.length === 0}>Concluir pedido</Button>
+
             </div>
           </div>
         </DialogContent>
@@ -1403,7 +1430,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
       {/* Confirmação de baixa de estoque */}
       <Dialog open={confirmDebitarOpen} onOpenChange={setConfirmDebitarOpen}>
-        <DialogContent className="bg-[#141414] text-green-400 border border-green-600 max-w-md">
+        <DialogContent className="bg-card text-primary/90 border border-primary max-w-md">
           <DialogHeader>
             <DialogTitle className="text-white">Deseja dar baixa no estoque ao concluir?</DialogTitle>
             <DialogDescription className="text-white/70">Se não, o pedido ficará como pendente.</DialogDescription>

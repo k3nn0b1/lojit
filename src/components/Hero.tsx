@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
+import logoDefault from "@/assets/logo.png";
 import { useEffect, useRef, useState } from "react";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Hero = () => {
+  const { settings } = useStoreSettings();
+  const logo = settings?.logo_url || logoDefault;
+  const storeName = settings?.store_name || "FUT75 Store";
+  const heroPhrase = settings?.hero_phrase || "Seleções, clubes europeus e brasileiros, edições retrô e muito mais. A melhor coleção de camisas de futebol, bermudas e caisas de basquete em um só lugar.";
+
   const scrollToProducts = () => {
+
     const element = document.getElementById("products");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -61,9 +68,10 @@ const Hero = () => {
         >
           <img
             src={logo}
-            alt="FUT75 Store"
+            alt={storeName}
             className="w-full h-full object-contain"
           />
+
         </div>
         <div
           ref={contentRef}
@@ -71,16 +79,20 @@ const Hero = () => {
           data-aos="fade-up"
         >
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-display text-foreground leading-tight">
-            CAMISAS DE TIME
+            {settings?.hero_title_l1 || "CAMISAS DE TIME"}
             <span className="block text-primary glow-neon">
-              TAILANDESAS E PRIMEIRA LINHA
+              {settings?.hero_title_l2 || "TAILANDESAS E PRIMEIRA"}
             </span>
+            {settings?.hero_title_l3 && (
+              <span className="block text-primary glow-neon">
+                {settings?.hero_title_l3}
+              </span>
+            )}
           </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
-            Seleções, clubes europeus e brasileiros, edições retrô e muito mais.
-            A melhor coleção de camisas de futebol, bermudas e caisas de
-            basquete em um só lugar.
+            {heroPhrase}
           </p>
+
           <div className="flex flex-col sm:flex-row gap-2 justify-center pt-1">
             <Button
               onClick={scrollToProducts}
@@ -92,7 +104,7 @@ const Hero = () => {
             <Button
               variant="outline"
               size="lg"
-              className="border-primary/30 hover:border-primary hover:bg-primary/10 font-bold text-lg px-6 py-4 transition-smooth"
+              className="border-primary/30 hover:border-primary hover:bg-primary/10 hover:text-foreground font-bold text-lg px-6 py-4 transition-smooth"
               onClick={scrollToAbout}
             >
               SOBRE NÓS

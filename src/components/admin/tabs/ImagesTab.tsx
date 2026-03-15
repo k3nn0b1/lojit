@@ -157,7 +157,7 @@ const ImagesTab = ({
                         </Button>
                         <Button
                           variant="ghost"
-                          className="text-destructive hover:bg-destructive/10"
+                          className="text-destructive hover:bg-destructive/10 hover:text-foreground"
                           onClick={() => handleRemoveProductImage(p.id)}
                           size="sm"
                         >

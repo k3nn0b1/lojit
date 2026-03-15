@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Pencil, ChevronDown, ChevronUp } from "lucide-react";
 import { formatBRL, sortSizes, rankSize } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StockTabProps {
   storedProducts: any[];
@@ -108,7 +115,7 @@ const StockTab = ({
                                     <Label className="text-[10px] uppercase font-bold opacity-70 flex justify-between">
                                       {s}
                                       <button 
-                                        className="text-destructive hover:text-destructive/80" 
+                                        className="text-destructive hover:text-foreground" 
                                         onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id, s); }}
                                         title="Remover tamanho"
                                       >
@@ -127,19 +134,20 @@ const StockTab = ({
                                 {/* Adicionar novo tamanho a este modelo */}
                                 <div className="flex flex-col gap-1 border p-1 rounded bg-muted/40">
                                   <Label className="text-[10px] uppercase font-bold opacity-70">Add Tam</Label>
-                                  <select
-                                    className="h-8 text-xs bg-background border rounded"
-                                    onChange={(e) => {
-                                      const val = e.target.value;
+                                  <Select
+                                    onValueChange={(val) => {
                                       if (val) handleAddSizeToModel(p.id, val);
-                                      e.target.value = "";
                                     }}
                                   >
-                                    <option value="">+</option>
-                                    {globalSizes.filter(gs => !sizesLoaded.includes(gs)).map(gs => (
-                                      <option key={gs} value={gs}>{gs}</option>
-                                    ))}
-                                  </select>
+                                    <SelectTrigger className="h-8 text-xs bg-background">
+                                      <SelectValue placeholder="+" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {globalSizes.filter(gs => !sizesLoaded.includes(gs)).map(gs => (
+                                        <SelectItem key={gs} value={gs}>{gs}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               </div>
                             </div>
@@ -199,20 +207,24 @@ const StockTab = ({
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
             <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
               <span>Mostrando {pageSize} por página</span>
-              <select
-                className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
+              <Select
+                value={String(pageSize)}
+                onValueChange={(val) => {
+                  setPageSize(Number(val));
                   setCurrentPage(1);
                 }}
               >
-                {[15, 30, 50, 100].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-[70px] bg-background">
+                  <SelectValue placeholder={String(pageSize)} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[15, 30, 50, 100].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2">
@@ -261,8 +273,8 @@ const StockTab = ({
                         onClick={() => setCurrentPage(item as number)}
                         className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
                           currentPage === item
-                            ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
-                            : ""
+                            ? "bg-primary text-primary-foreground shadow-primary/30"
+                            : "hover:bg-primary/10 hover:text-foreground"
                         }`}
                       >
                         {item}

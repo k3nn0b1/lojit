@@ -6,8 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Image as ImageIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { formatBRL, parseSupabaseError, normalizeCategory, sortSizes } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductsTabProps {
   storedProducts: any[];
@@ -167,16 +174,21 @@ const ProductsTab = ({
             </div>
             <div>
               <Label>Categoria</Label>
-              <select
-                className="w-full rounded-md border px-3 py-2 bg-background text-foreground"
+              <Select
                 value={product.category}
-                onChange={(e) => handleChange("category", e.target.value)}
+                onValueChange={(val) => handleChange("category", val)}
               >
-                <option value="">Selecione uma categoria</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Preço (R$)</Label>
@@ -261,8 +273,8 @@ const ProductsTab = ({
                     <div className="text-xs text-muted-foreground">{p.category}</div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(p.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveProduct(p.id)} className="group">
+                      <Trash2 className="h-4 w-4 text-destructive group-hover:text-foreground" />
                     </Button>
                   </div>
                 </div>
@@ -279,20 +291,24 @@ const ProductsTab = ({
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
               <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
                 <span>Mostrando {pageSize} por página</span>
-                <select
-                  className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(val) => {
+                    setPageSize(Number(val));
                     setCurrentPage(1);
                   }}
                 >
-                  {[9, 18, 36, 72].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-8 w-[70px] bg-background">
+                    <SelectValue placeholder={String(pageSize)} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[9, 18, 36, 72].map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center gap-2">
@@ -341,8 +357,8 @@ const ProductsTab = ({
                           onClick={() => setCurrentPage(item as number)}
                           className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
                             currentPage === item
-                              ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
-                              : ""
+                              ? "bg-primary text-primary-foreground shadow-primary/30"
+                              : "hover:bg-primary/10 hover:text-foreground"
                           }`}
                         >
                           {item}

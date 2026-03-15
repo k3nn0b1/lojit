@@ -1,6 +1,13 @@
 import { useState } from "react";
 import ProductCard, { Product } from "./ProductCard";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductGridProps {
   products: Product[];
@@ -50,7 +57,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
               className={
                 selectedCategory === category
                   ? "bg-primary hover:bg-primary/90 text-primary-foreground glow-soft font-bold"
-                  : "border-primary/30 hover:border-primary hover:bg-primary/10 font-bold"
+                  : "border-primary/30 hover:border-primary hover:bg-primary/10 hover:text-foreground font-bold"
               }
             >
               {category}
@@ -84,20 +91,24 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-12 bg-black/20 p-4 rounded-xl border border-white/5">
             <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
               <span>Mostrando {pageSize} por página</span>
-              <select
-                className="bg-background border border-primary/20 rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors"
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
+              <Select
+                value={String(pageSize)}
+                onValueChange={(val) => {
+                  setPageSize(Number(val));
                   setCurrentPage(1);
                 }}
               >
-                {[12, 24, 48, 96].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="h-8 w-[70px] bg-background">
+                  <SelectValue placeholder={String(pageSize)} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[12, 24, 48, 96].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2">
@@ -106,7 +117,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 size="sm"
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 text-xs font-bold uppercase tracking-wider h-9"
+                className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 hover:text-foreground text-xs font-bold uppercase tracking-wider h-9"
               >
                 Anterior
               </Button>
@@ -146,8 +157,8 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                         onClick={() => setCurrentPage(item as number)}
                         className={`h-9 w-9 p-0 font-bold transition-all duration-300 ${
                           currentPage === item
-                            ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(0,230,118,0.4)]"
-                            : "border-primary/20 hover:border-primary/50"
+                            ? "bg-primary text-primary-foreground shadow-primary/40"
+                            : "border-primary/20 hover:border-primary/50 hover:bg-primary/10 hover:text-foreground"
                         }`}
                       >
                         {item}
@@ -162,7 +173,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 size="sm"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 text-xs font-bold uppercase tracking-wider h-9"
+                className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 hover:text-foreground text-xs font-bold uppercase tracking-wider h-9"
               >
                 Próxima
               </Button>

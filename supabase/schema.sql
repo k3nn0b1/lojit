@@ -300,3 +300,48 @@ CREATE POLICY "Admins delete clientes"
   FOR DELETE
   TO authenticated
   USING (EXISTS (SELECT 1 FROM public.admins a WHERE a.user_id = auth.uid()));
+
+-- Tabela de configurações da loja
+CREATE TABLE IF NOT EXISTS public.store_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1), -- Apenas uma linha de configurações
+  store_name TEXT NOT NULL DEFAULT 'FUT75 Store',
+  logo_url TEXT,
+  address TEXT DEFAULT 'Adenil Falcão Nº1887',
+  whatsapp TEXT DEFAULT '5575981284738',
+  hero_phrase TEXT DEFAULT 'As melhores camisas de time do mundo. Qualidade garantida.',
+  hero_title_l1 TEXT DEFAULT 'CAMISAS DE TIME',
+  hero_title_l2 TEXT DEFAULT 'TAILANDESAS E PRIMEIRA',
+  hero_title_l3 TEXT DEFAULT 'LINHA',
+  instagram_url TEXT DEFAULT 'https://www.instagram.com/fut75store/',
+  about_us TEXT DEFAULT 'Somos uma loja especializada na venda de camisas de times tailandesas e de primeira linha, perfeitas para quem ama futebol e quer vestir sua paixão com estilo. Trabalhamos com produtos de alta qualidade, confortáveis e fiéis aos modelos originais — tudo com ótimo custo-benefício.\n\nAqui, você encontra camisas dos maiores clubes do mundo, com atendimento rápido, envio seguro e aquele cuidado especial em cada detalhe. Nosso objetivo é que cada cliente vista o manto do seu time com orgulho e confiança!',
+  footer_info TEXT DEFAULT '© 2025 FUT75 Store. Todos os direitos reservados.',
+  primary_color TEXT DEFAULT '0 100% 50%', -- Default to Red for testing variety
+  secondary_color TEXT DEFAULT '142 100% 50%', -- Default to Green (Neon)
+  background_color TEXT DEFAULT '0 0% 5%', -- Default dark
+  background_url TEXT, -- Background image
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- Adicionar colunas caso já exista a tabela
+ALTER TABLE public.store_settings 
+  ADD COLUMN IF NOT EXISTS background_color TEXT DEFAULT '0 0% 5%',
+  ADD COLUMN IF NOT EXISTS background_url TEXT;
+
+-- Remover highlight_color se existir (opcional, mas bom limpar se possível, 
+-- porém no postgres em produção é melhor deixar ou dropar se tiver certeza)
+-- ALTER TABLE public.store_settings DROP COLUMN IF EXISTS highlight_color;
+
+
+-- Inserir valores padrão se não existir
+INSERT INTO public.store_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- Habilitar RLS
+ALTER TABLE public.store_settings ENABLE ROW LEVEL SECURITY;
+
+-- Políticas
+DROP POLICY IF EXISTS "Public read settings" ON public.store_settings;
+CREATE POLICY "Public read settings" ON public.store_settings FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admins update settings" ON public.store_settings;
+CREATE POLICY "Admins update settings" ON public.store_settings FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.admins a WHERE a.user_id = auth.uid()));

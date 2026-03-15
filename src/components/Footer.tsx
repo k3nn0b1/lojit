@@ -1,19 +1,30 @@
 import { MapPin, Instagram, Phone, Clock } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logoDefault from "@/assets/logo.png";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Footer = () => {
+  const { settings } = useStoreSettings();
+  const logo = settings?.logo_url || logoDefault;
+  const storeName = settings?.store_name || "FUT75 Store";
+  const address = settings?.address || "Adenil Falcão Nº1887";
+  const whatsapp = settings?.whatsapp || "(XX) XXXXX-XXXX";
+  const heroPhrase = settings?.hero_phrase || "As melhores camisas de time do mundo. Qualidade garantida.";
+  const footerInfo = settings?.footer_info || `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.`;
+
   return (
+
     <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <img src={logo} alt="FUT75 Store" className="h-14 sm:h-16 md:h-20 w-auto object-contain" />
+              <img src={logo} alt={storeName} className="h-14 sm:h-16 md:h-20 w-auto object-contain" />
             </div>
             <p className="text-muted-foreground">
-              As melhores camisas de time do mundo. Qualidade garantida.
+              {heroPhrase}
             </p>
+
           </div>
 
           {/* Contact Info */}
@@ -22,12 +33,13 @@ const Footer = () => {
             <div className="space-y-3 text-muted-foreground">
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <span>Adenil Falcão Nº1887</span>
+                <span>{address}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
-                <span>(XX) XXXXX-XXXX</span>
+                <span>{whatsapp}</span>
               </div>
+
               <div className="flex items-start gap-2">
                 <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
@@ -42,7 +54,7 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-display text-xl text-foreground">REDES SOCIAIS</h4>
             <a
-              href="https://instagram.com/fut75store"
+              href={settings?.instagram_url || "https://instagram.com/fut75store"}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
@@ -50,14 +62,19 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/30 group-hover:glow-soft transition-smooth">
                 <Instagram className="w-5 h-5" />
               </div>
-              <span className="font-medium">@fut75store</span>
+              <span className="font-medium">
+                @{settings?.instagram_url 
+                  ? settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0] 
+                  : "fut75store"}
+              </span>
             </a>
           </div>
         </div>
 
         <div className="mt-12 pt-8 border-t border-border/50 text-center text-muted-foreground text-sm">
-          <p>© 2025 FUT75 Store. Todos os direitos reservados.</p>
+          <p>{footerInfo}</p>
         </div>
+
       </div>
     </footer>
   );

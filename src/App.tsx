@@ -10,8 +10,10 @@ import Login from "./pages/Login";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
 
 const queryClient = new QueryClient();
+
 
 const AdminGuard = () => {
   const navigate = useNavigate();
@@ -68,21 +70,25 @@ const AdminGuard = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<AdminGuard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <StoreSettingsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<AdminGuard />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </StoreSettingsProvider>
     </QueryClientProvider>
   );
 };
+
 
 export default App;

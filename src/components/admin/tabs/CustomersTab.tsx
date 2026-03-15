@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { normalizePhone, formatPhoneMask, parseSupabaseError } from "@/lib/utils";
 
 interface CustomersTabProps {
@@ -175,7 +182,9 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
                     {editingClienteId === c.id ? (
                       <div className="flex items-center gap-2">
                         <Button variant="outline" onClick={() => { setEditingClienteId(null); setEditingClienteNome(""); setEditingClienteTelefone(""); }}>Cancelar</Button>
-                        <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSaveCliente}>Salvar</Button>
+                        <Button onClick={handleSaveCliente}>Salvar</Button>
+
+
                       </div>
                     ) : (
                       <Button variant="ghost" onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome || ""); setEditingClienteTelefone(c.telefone || ""); }}>Editar</Button>
@@ -188,20 +197,24 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
               <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-muted/20 border-t">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
                   <span>Mostrando {pageSize} por página</span>
-                  <select
-                    className="bg-background border rounded px-2 py-1 outline-none text-foreground focus:border-primary transition-colors h-8 text-xs"
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={(val) => {
+                      setPageSize(Number(val));
                       setCurrentPage(1);
                     }}
                   >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-8 w-[70px] bg-background">
+                      <SelectValue placeholder={String(pageSize)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[15, 30, 50, 100].map((size) => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -250,8 +263,8 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
                             onClick={() => setCurrentPage(item as number)}
                             className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
                               currentPage === item
-                                ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(0,230,118,0.3)]"
-                                : ""
+                                ? "bg-primary text-primary-foreground shadow-primary/30"
+                                : "hover:bg-primary/10 hover:text-foreground"
                             }`}
                           >
                             {item}

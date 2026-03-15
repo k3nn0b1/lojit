@@ -11,6 +11,8 @@ import "aos/dist/aos.css";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { formatBRL } from "@/lib/utils";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+
 
 // Mock products data
 const mockProducts: Product[] = [
@@ -94,9 +96,11 @@ const Index = () => {
     AOS.refresh();
   }, []);
 
+  const { settings } = useStoreSettings();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
+
 
   // Ordena produtos colocando esgotados (stock <= 0) por último e, dentro dos grupos, por id desc
   const sortProducts = (list: Product[]) => {
@@ -292,8 +296,10 @@ const Index = () => {
           : generateUUID();
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
-          await supabase.from("clientes").insert({ nome: clienteNome, telefone: normalizePhone(clienteTelefone) }, { ignoreDuplicates: true });
+          // Note: sem ignoreDuplicates, apenas capturamos o erro
+          await supabase.from("clientes").insert({ nome: clienteNome, telefone: normalizePhone(clienteTelefone) });
         } catch {}
+
 
         const { error } = await supabase
           .from("pedidos")
@@ -319,8 +325,9 @@ const Index = () => {
       )
       .join("\n\n")}\n\n💰 *TOTAL: ${formatBRL(total)}*\n\nPedido ID: ${pedidoId ?? "—"}`;
 
-    const phoneRaw = normalizePhone(import.meta.env.VITE_WHATSAPP_PHONE ?? "5575981284738");
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneRaw}&text=${encodeURIComponent(message)}`;
+    const cleanPhone = (settings?.whatsapp || "5575981284738").replace(/\D/g, "");
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
+
 
     // Esvaziar o carrinho e fechar o modal antes de redirecionar para o WhatsApp
     setCartItems([]);
@@ -348,25 +355,22 @@ const Index = () => {
         >
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Sobre nós</h2>
           <div className="max-w-3xl mx-auto text-muted-foreground text-center leading-relaxed space-y-4">
-            <p>
-              Somos uma loja especializada na venda de camisas de times tailandesas e de primeira linha, perfeitas para quem ama futebol e
-              quer vestir sua paixão com estilo. Trabalhamos com produtos de alta qualidade, confortáveis e fiéis aos modelos originais —
-              tudo com ótimo custo-benefício.
-            </p>
-            <p>
-              Aqui, você encontra camisas dos maiores clubes do mundo, com atendimento rápido, envio seguro e aquele cuidado especial em
-              cada detalhe. Nosso objetivo é que cada cliente vista o manto do seu time com orgulho e confiança!
-            </p>
+            {(settings?.about_us || `Somos uma loja especializada na venda de camisas de times tailandesas e de primeira linha, perfeitas para quem ama futebol e quer vestir sua paixão com estilo. Trabalhamos com produtos de alta qualidade, confortáveis e fiéis aos modelos originais — tudo com ótimo custo-benefício.
+
+Aqui, você encontra camisas dos maiores clubes do mundo, com atendimento rápido, envio seguro e aquele cuidado especial em cada detalhe. Nosso objetivo é que cada cliente vista o manto do seu time com orgulho e confiança!`).split('\n').map((text, i) => (
+              <p key={i}>{text}</p>
+            ))}
           </div>
         </section>
+
 
         {/* Localização / Mapa */}
         <section className="container mx-auto px-4 py-8 md:py-12" data-aos="fade-up">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Localização</h2>
           <div className="relative w-full h-[420px] md:h-[700px] rounded-xl shadow-lg overflow-hidden ring-1 ring-white/10" style={{ filter: "invert(100%) hue-rotate(180deg)" }}>
             <iframe
-              title="Mapa - Loja Fut75"
-              src="https://maps.google.com/maps?width=100%25&height=600&hl=pt-BR&q=Adenil%20Falc%C3%A3o,1887%20Feira%20de%20santana(Loja%20Fut75)&t=&z=19&ie=UTF8&iwloc=B&output=embed"
+              title="Mapa - Localização"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Adenil Falcão, 1887 Feira de Santana")}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}
               className="w-full h-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"

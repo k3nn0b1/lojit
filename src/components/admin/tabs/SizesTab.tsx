@@ -132,7 +132,7 @@ const SizesTab = ({ globalSizes, setGlobalSizes, IS_SUPABASE_READY }: SizesTabPr
                     </Button>
                     <Button
                       variant="ghost"
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 hover:text-foreground"
                       onClick={() => {
                         if (confirm(`Deseja remover o tamanho "${s}"?`)) {
                           const next = globalSizes.filter((x) => x !== s);
