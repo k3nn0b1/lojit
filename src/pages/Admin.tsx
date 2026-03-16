@@ -909,34 +909,34 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 {p.status === 'concluido' && <span className="text-green-500 font-medium">Concluído</span>}
 {p.status === 'parcialmente_devolvido' && <span className="text-amber-300 font-medium">Parcialmente Devolvido</span>}
 {p.status === 'devolvido' && <span className="text-amber-400 font-medium">Devolvido</span>}
-{p.status === 'cancelado' && <span className="text-white font-medium">Cancelado</span>}
+{p.status === 'cancelado' && <span className="text-foreground font-medium">Cancelado</span>}
                             </td>
                             <td className="px-3 py-2 align-middle">
                               <div className="flex items-center gap-2">
                                 {p.status === 'pendente' ? (
                                   <>
                                     <button
-                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-green-500 bg-black disabled:opacity-50"
+                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-green-500 bg-card disabled:opacity-50"
                                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
                                     >
-                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-white">Confirmar</span>
+                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground">Confirmar</span>
                                       <span className="absolute inset-0 z-0 scale-x-0 bg-green-500 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
                                     </button>
                                     <button
-                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-red-600 bg-black disabled:opacity-50"
+                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-red-600 bg-card disabled:opacity-50"
                                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
                                     >
-                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-white">Cancelar</span>
+                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground">Cancelar</span>
                                       <span className="absolute inset-0 z-0 scale-x-0 bg-red-600 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
                                     </button>
                                   </>
                                 ) : (
                                   <button
-                                    className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-[#262626] bg-black disabled:opacity-50"
+                                    className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-[#262626] bg-card disabled:opacity-50"
                                     onClick={(e) => { e.stopPropagation(); setPedidoDetalhesId(p.id); }}
                                   >
-                                    <span className="relative z-10 transition-colors duration-300 group-hover:text-white text-neutral-200">Detalhar</span>
-                                    <span className="absolute inset-0 z-0 scale-x-0 bg-[#262626] transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
+                                    <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground text-neutral-200">Detalhar</span>
+                                    <span className="absolute inset-0 z-0 scale-x-0 bg-muted transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
                                   </button>
                                 )}
                               </div>
@@ -1112,7 +1112,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancelar</Button>
             <Button 
-              className={confirmAction?.action === 'concluir' ? "bg-green-600 hover:bg-green-700 text-white" : "bg-red-600 hover:bg-red-700 text-white"} 
+              className={confirmAction?.action === 'concluir' ? "bg-green-600 hover:bg-green-700 text-foreground" : "bg-red-600 hover:bg-red-700 text-foreground"} 
               onClick={() => { if (confirmAction) handleConfirmAction(confirmAction.id, confirmAction.action); setConfirmAction(null); }}
             >
               Confirmar
@@ -1122,10 +1122,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       </Dialog>
 
       <Dialog open={pedidoDetalhesId != null} onOpenChange={(open) => setPedidoDetalhesId(open ? pedidoDetalhesId : null)}>
-        <DialogContent className="bg-black text-primary/90 border border-primary">
+        <DialogContent className="bg-card text-primary/90 border border-primary">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl sm:text-2xl">Detalhes do pedido</DialogTitle>
-            <DialogDescription className="text-white">ID: {pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}</DialogDescription>
+            <DialogTitle className="text-foreground text-xl sm:text-2xl">Detalhes do pedido</DialogTitle>
+            <DialogDescription className="text-foreground">ID: {pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}</DialogDescription>
           </DialogHeader>
           {(() => {
             const pedido = pedidos.find(p => p.id === pedidoDetalhesId);
@@ -1141,22 +1141,22 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             return (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-md border border-primary/40 p-3 bg-black/40">
-                    <p className="text-sm"><span className="text-white">Cliente:</span> <span className="text-primary">{pedido?.cliente_nome || '—'}</span></p>
-                    <p className="text-sm"><span className="text-white">Telefone:</span> <span className="text-primary">{pedido?.cliente_telefone || '—'}</span></p>
-                    <p className="text-sm"><span className="text-white">Data/Hora:</span> <span className="text-primary">{pedido?.data_criacao ? new Date(pedido.data_criacao).toLocaleString() : '—'}</span></p>
+                  <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
+                    <p className="text-sm"><span className="text-foreground">Cliente:</span> <span className="text-primary">{pedido?.cliente_nome || '—'}</span></p>
+                    <p className="text-sm"><span className="text-foreground">Telefone:</span> <span className="text-primary">{pedido?.cliente_telefone || '—'}</span></p>
+                    <p className="text-sm"><span className="text-foreground">Data/Hora:</span> <span className="text-primary">{pedido?.data_criacao ? new Date(pedido.data_criacao).toLocaleString() : '—'}</span></p>
                   </div>
-                  <div className="rounded-md border border-primary/40 p-3 bg-black/40">
-                    <p className="text-sm"><span className="text-white">Status:</span> <span className={pedido?.status === 'pendente' ? 'text-amber-500' : pedido?.status === 'cancelado' ? 'text-white' : pedido?.status === 'devolvido' ? 'text-amber-400' : pedido?.status === 'parcialmente_devolvido' ? 'text-amber-300' : 'text-primary'}>{pedido?.status === 'parcialmente_devolvido' ? 'Parcialmente Devolvido' : (pedido?.status || '—')}</span></p>
-                    <p className="text-sm"><span className="text-white">Total:</span> <span className="text-primary">{formatBRL(Number(pedido?.valor_total || 0))}</span></p>
+                  <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
+                    <p className="text-sm"><span className="text-foreground">Status:</span> <span className={pedido?.status === 'pendente' ? 'text-amber-500' : pedido?.status === 'cancelado' ? 'text-foreground' : pedido?.status === 'devolvido' ? 'text-amber-400' : pedido?.status === 'parcialmente_devolvido' ? 'text-amber-300' : 'text-primary'}>{pedido?.status === 'parcialmente_devolvido' ? 'Parcialmente Devolvido' : (pedido?.status || '—')}</span></p>
+                    <p className="text-sm"><span className="text-foreground">Total:</span> <span className="text-primary">{formatBRL(Number(pedido?.valor_total || 0))}</span></p>
                   </div>
                 </div>
                 <div>
-                   <p className="text-white text-sm mb-2">Itens detalhados</p>
+                   <p className="text-foreground text-sm mb-2">Itens detalhados</p>
                    <div className="space-y-2">
                      {itens.map((it: any, i: number) => (
-                       <div key={i} className="rounded-md border border-primary bg-black/40 p-2 grid grid-cols-[auto_2rem_auto_auto] items-center gap-2">
-                         <span className="text-white">{it.produto}</span>
+                       <div key={i} className="rounded-md border border-primary bg-muted/40 p-2 grid grid-cols-[auto_2rem_auto_auto] items-center gap-2">
+                         <span className="text-foreground">{it.produto}</span>
                         <Badge variant="outline" className="w-8 justify-center text-xs">{it.tamanho}</Badge>
                         <span className="text-primary">x{it.quantidade}</span>
                         {Number(it.devolvido || 0) > 0 && (
@@ -1189,10 +1189,10 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
       {devolucaoPedidoId && (
         <Dialog open={true} onOpenChange={(o) => { if (!o) { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); } }}>
-          <DialogContent className="bg-black text-primary/90 border border-primary">
+          <DialogContent className="bg-card text-primary/90 border border-primary">
             <DialogHeader>
-              <DialogTitle className="text-white">Devolução do pedido #{pedidoSeq[String(devolucaoPedidoId)] ?? '—'}</DialogTitle>
-              <DialogDescription className="text-white/70">Escolha devolução total ou parcial.</DialogDescription>
+              <DialogTitle className="text-foreground">Devolução do pedido #{pedidoSeq[String(devolucaoPedidoId)] ?? '—'}</DialogTitle>
+              <DialogDescription className="text-muted-foreground">Escolha devolução total ou parcial.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex gap-2">
@@ -1231,7 +1231,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); }}>Cancelar</Button>
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={() => {
+              <Button className="bg-amber-600 hover:bg-amber-700 text-foreground" onClick={() => {
                 const pedido = pedidos.find(p => String(p.id) === String(devolucaoPedidoId));
                 if (!pedido) { setDevolucaoPedidoId(null); return; }
                 if (!devolucaoParcial) {
@@ -1251,14 +1251,14 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
       {devolucaoPedidoId && (
         <AlertDialog open={confirmTotalOpen} onOpenChange={setConfirmTotalOpen}>
-          <AlertDialogContent className="bg-black text-primary/90 border border-primary">
+          <AlertDialogContent className="bg-card text-primary/90 border border-primary">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-white">Confirmar devolução total</AlertDialogTitle>
-              <AlertDialogDescription className="text-white/70">Tem certeza que deseja devolver todos os itens da compra?</AlertDialogDescription>
+              <AlertDialogTitle className="text-foreground">Confirmar devolução total</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">Tem certeza que deseja devolver todos os itens da compra?</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setConfirmTotalOpen(false)}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction className="bg-amber-600 hover:bg-amber-700 text-white" onClick={() => {
+              <AlertDialogAction className="bg-amber-600 hover:bg-amber-700 text-foreground" onClick={() => {
                 const pedido = pedidos.find(p => String(p.id) === String(devolucaoPedidoId));
                 if (pedido) {
                   const qs = (pedido.itens || []).map((it: any) => Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0)));
@@ -1278,7 +1278,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       <div className="fixed bottom-6 right-6 z-50">
         <button
           type="button"
-          className="group relative overflow-hidden rounded-md px-4 py-3 font-semibold text-white bg-primary shadow-lg hover:bg-primary/90 transition-colors"
+          className="group relative overflow-hidden rounded-md px-4 py-3 font-semibold text-foreground bg-primary shadow-lg hover:bg-primary/90 transition-colors"
           onClick={() => setNewPedidoOpen(true)}
           title="Criar novo pedido"
         >
@@ -1291,13 +1291,13 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       <Dialog open={newPedidoOpen} onOpenChange={setNewPedidoOpen}>
         <DialogContent className="bg-card text-primary/90 border border-primary max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Novo pedido</DialogTitle>
-            <DialogDescription className="text-white/70">Pesquise o produto, selecione tamanho e quantidade, e conclua o pedido.</DialogDescription>
+            <DialogTitle className="text-foreground">Novo pedido</DialogTitle>
+            <DialogDescription className="text-muted-foreground">Pesquise o produto, selecione tamanho e quantidade, e conclua o pedido.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 scrollbar-hide">
             <div>
-              <Label className="text-white">Pesquisar produto</Label>
+              <Label className="text-foreground">Pesquisar produto</Label>
               <Input
                 value={productQuery}
                 onChange={(e) => setProductQuery(e.target.value)}
@@ -1313,12 +1313,12 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                       key={p.id}
                       type="button"
                       onClick={() => { setSelectedProductId(p.id!); setSelectedSize(null); }}
-                      className={`w-full text-left px-3 py-2 hover:bg-black/30 ${selectedProductId === p.id ? 'bg-black/40' : ''}`}
+                      className={`w-full text-left px-3 py-2 hover:bg-muted/30 ${selectedProductId === p.id ? 'bg-muted/40' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <img src={p.image} alt={p.name} className="w-10 h-10 object-cover rounded" />
                         <div>
-                          <div className="text-white text-sm font-medium">{p.name}</div>
+                          <div className="text-foreground text-sm font-medium">{p.name}</div>
                           <div className="text-xs text-muted-foreground">{p.category}</div>
                         </div>
                       </div>
@@ -1336,7 +1336,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                 const sizes = (prod?.sizes && prod.sizes.length ? prod.sizes : ["U"]).sort((a,b) => rankSize(a) - rankSize(b));
                 return (
                   <div className="space-y-2">
-                    <Label className="text-white">Tamanho</Label>
+                    <Label className="text-foreground">Tamanho</Label>
                     <div className="flex flex-wrap gap-2">
                       {sizes.filter(s => Math.max(0, Number((prod?.stockBySize || {})[s] || 0)) > 0).map(s => (
                         <button
@@ -1358,7 +1358,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                     )}
                     <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
                       <div>
-                        <Label className="text-white">Quantidade</Label>
+                        <Label className="text-foreground">Quantidade</Label>
                         <Input type="number" min={1} value={quantity} onChange={(e) => {
   const v = e.target.value;
   const onlyDigits = v.replace(/[^0-9]/g, "");
@@ -1393,15 +1393,15 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             )}
 
             <div>
-              <p className="text-white text-sm mb-2">Itens do pedido</p>
+              <p className="text-foreground text-sm mb-2">Itens do pedido</p>
               <div className="space-y-2">
                 {adminCart.map((it, i) => (
-                  <div key={`${it.id}-${it.size}-${i}`} className="rounded-md border border-primary/40 p-2 bg-black/40 flex items-center gap-3 flex-wrap md:flex-nowrap">
+                  <div key={`${it.id}-${it.size}-${i}`} className="rounded-md border border-primary/40 p-2 bg-muted/40 flex items-center gap-3 flex-wrap md:flex-nowrap">
   {/* modelo (nome) */}
   <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="text-white min-w-0 max-w-[38%] truncate whitespace-nowrap">{it.name}</span>
+        <span className="text-foreground min-w-0 max-w-[38%] truncate whitespace-nowrap">{it.name}</span>
       </TooltipTrigger>
       <TooltipContent>{it.name}</TooltipContent>
     </Tooltip>
@@ -1430,24 +1430,24 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                 {adminCart.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item adicionado.</p>}
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-white">Total</span>
+                <span className="text-foreground">Total</span>
                 <span className="text-primary font-semibold">{formatBRL(adminCartTotal)}</span>
               </div>
             </div>
 
-            <div className="rounded-md border border-primary/40 p-3 bg-black/40">
-              <label className="flex items-center gap-2 text-white">
+            <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
+              <label className="flex items-center gap-2 text-foreground">
                 <input type="checkbox" checked={informarCliente} onChange={(e) => setInformarCliente(e.target.checked)} />
                 Informar cliente (nome e telefone)
               </label>
               {informarCliente && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                   <div>
-                    <Label className="text-white">Nome do cliente</Label>
+                    <Label className="text-foreground">Nome do cliente</Label>
                     <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Ex: João" />
                   </div>
                   <div>
-                    <Label className="text-white">Telefone</Label>
+                    <Label className="text-foreground">Telefone</Label>
                     <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
                   </div>
                 </div>
@@ -1459,7 +1459,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
             <div className="flex justify-end gap-2 sticky bottom-0 bg-card py-2">
               <Button variant="outline" onClick={() => { setNewPedidoOpen(false); }}>Cancelar</Button>
-              <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setConfirmDebitarOpen(true)} disabled={adminCart.length === 0}>Concluir pedido</Button>
+              <Button className="bg-green-600 hover:bg-green-700 text-foreground" onClick={() => setConfirmDebitarOpen(true)} disabled={adminCart.length === 0}>Concluir pedido</Button>
 
             </div>
           </div>
@@ -1470,8 +1470,8 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       <Dialog open={confirmDebitarOpen} onOpenChange={setConfirmDebitarOpen}>
         <DialogContent className="bg-card text-primary/90 border border-primary max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Deseja dar baixa no estoque ao concluir?</DialogTitle>
-            <DialogDescription className="text-white/70">Se não, o pedido ficará como pendente.</DialogDescription>
+            <DialogTitle className="text-foreground">Deseja dar baixa no estoque ao concluir?</DialogTitle>
+            <DialogDescription className="text-muted-foreground">Se não, o pedido ficará como pendente.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <div className="flex w-full justify-end gap-2">

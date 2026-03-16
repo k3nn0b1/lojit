@@ -76,7 +76,7 @@ const BackgroundManager: React.FC = () => {
         className="absolute inset-x-0 top-0 z-[-15] pointer-events-none"
         style={{ 
           height: '120vh',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.95) 100%)',
+          background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 40%, hsl(var(--background) / 1) 100%)',
           willChange: 'opacity'
         }}
       />
@@ -86,7 +86,8 @@ const BackgroundManager: React.FC = () => {
           Começa onde o fade termina e vai até o fim do documento.
       */}
       <div 
-        className="absolute inset-x-0 top-[120vh] bottom-0 z-[-15] pointer-events-none bg-black/95"
+        className="absolute inset-x-0 top-[120vh] bottom-0 z-[-15] pointer-events-none"
+        style={{ backgroundColor: 'hsl(var(--background))' }}
       />
     </>
   );

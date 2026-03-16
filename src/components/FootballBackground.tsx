@@ -18,10 +18,7 @@ const FootballBackground: React.FC<FootballBackgroundProps> = ({ mode = 'global'
           className="football"
         />
       ))}
-      {/* Overlay escuro apenas para o modo global */}
-      {mode === 'global' && (
-        <div className="absolute inset-0 bg-black/90 pointer-events-none z-[1]" />
-      )}
+      {/* Overlay removido para permitir que a cor de fundo configurada apareça */}
     </div>
   );
 };

@@ -87,7 +87,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
 
         {/* Pagination Controls */}
         {filteredProducts.length > 0 && (
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-12 bg-black/20 p-4 rounded-xl border border-white/5">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-12 bg-card/20 p-4 rounded-xl border border-border/20">
             <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
               <span>Mostrando {pageSize} por página</span>
               <Select

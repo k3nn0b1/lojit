@@ -353,7 +353,7 @@ export default function SettingsTab() {
                 value={formData.font_family || "'Inter', sans-serif"} 
                 onValueChange={value => setFormData({...formData, font_family: value})}
               >
-                <SelectTrigger id="font_family" className="bg-[#1a1a1a] border-border">
+                <SelectTrigger id="font_family" className="bg-card border-border">
                   <SelectValue placeholder="Selecione a fonte" />
                 </SelectTrigger>
                 <SelectContent>
@@ -399,7 +399,7 @@ export default function SettingsTab() {
                               type="color"
                               id="primary_color" 
                               value={formData.primary_hex} 
-                              className="w-14 h-10 p-1 bg-[#1a1a1a] border-border"
+                              className="w-14 h-10 p-1 bg-card border-border"
                               onChange={e => setFormData({...formData, primary_hex: e.target.value})}
                           />
                           <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.primary_hex}</code>
@@ -412,7 +412,7 @@ export default function SettingsTab() {
                               type="color"
                               id="secondary_color" 
                               value={formData.secondary_hex} 
-                              className="w-14 h-10 p-1 bg-[#1a1a1a] border-border"
+                              className="w-14 h-10 p-1 bg-card border-border"
                               onChange={e => setFormData({...formData, secondary_hex: e.target.value})}
                           />
                           <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.secondary_hex}</code>
@@ -430,7 +430,7 @@ export default function SettingsTab() {
                       value={formData.background_type || "solid"} 
                       onValueChange={value => setFormData({...formData, background_type: value})}
                     >
-                      <SelectTrigger className="bg-[#1a1a1a] border-border">
+                      <SelectTrigger className="bg-card border-border">
                         <SelectValue placeholder="Selecione o estilo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -450,7 +450,7 @@ export default function SettingsTab() {
                             type="color"
                             id="background_color" 
                             value={formData.background_hex} 
-                            className="w-14 h-10 p-1 bg-[#1a1a1a] border-border"
+                            className="w-14 h-10 p-1 bg-card border-border"
                             onChange={e => setFormData({...formData, background_hex: e.target.value})}
                         />
                         <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.background_hex}</code>

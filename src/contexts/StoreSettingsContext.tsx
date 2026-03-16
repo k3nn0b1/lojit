@@ -82,6 +82,13 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const applyColors = (s: StoreSettings) => {
     const root = document.documentElement;
+    
+    // Parse background HSL to determine if it's light or dark
+    const parts = s.background_color.split(' ');
+    const lValue = parseInt(parts[2]?.replace('%', '') || '0');
+    const isLight = lValue > 50;
+
+    // Base colors from settings
     root.style.setProperty("--primary", s.primary_color);
     root.style.setProperty("--secondary", s.secondary_color);
     root.style.setProperty("--background", s.background_color);
@@ -89,6 +96,31 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     root.style.setProperty("--ring", s.primary_color);
     root.style.setProperty("--accent", s.primary_color);
     
+    // Automatic Contrast Adjustment
+    if (isLight) {
+        root.style.setProperty("--foreground", "0 0% 10%");
+        root.style.setProperty("--card", "0 0% 96%");
+        root.style.setProperty("--card-foreground", "0 0% 10%");
+        root.style.setProperty("--popover", "0 0% 100%");
+        root.style.setProperty("--popover-foreground", "0 0% 10%");
+        root.style.setProperty("--muted", "0 0% 92%");
+        root.style.setProperty("--muted-foreground", "0 0% 40%");
+        root.style.setProperty("--border", "0 0% 80%");
+        root.style.setProperty("--input", "0 0% 80%");
+        root.style.setProperty("--primary-foreground", "0 0% 100%");
+    } else {
+        root.style.setProperty("--foreground", "0 0% 98%");
+        root.style.setProperty("--card", "0 0% 8%");
+        root.style.setProperty("--card-foreground", "0 0% 98%");
+        root.style.setProperty("--popover", "0 0% 8%");
+        root.style.setProperty("--popover-foreground", "0 0% 98%");
+        root.style.setProperty("--muted", "0 0% 15%");
+        root.style.setProperty("--muted-foreground", "0 0% 65%");
+        root.style.setProperty("--border", "0 0% 18%");
+        root.style.setProperty("--input", "0 0% 18%");
+        root.style.setProperty("--primary-foreground", "0 0% 0%");
+    }
+
     // Vincular efeitos de neon à cor secundária conforme solicitado
     root.style.setProperty("--neon-green", s.secondary_color);
     root.style.setProperty("--neon-glow", s.secondary_color);

@@ -4,16 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Design System - All colors HSL, overridden by JS at runtime */
 
 @layer base {
   :root {
-    /* Design System - Neon Theme */
     --background: 0 0% 5%;
     --foreground: 0 0% 98%;
-    
+
     --font-family: 'Inter', sans-serif;
 
     --card: 0 0% 8%;
@@ -22,11 +19,9 @@ All colors MUST be HSL.
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
 
-    /* Neutral Primary (Wait for JS to apply) */
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
-    
-    /* Dark variants */
+
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
 
@@ -45,34 +40,28 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Custom design tokens (Neutralized) */
-    --neon-green: 0 0% 80%;
-    --neon-glow: 0 0% 60%;
+    --neon-green: 213 94% 68%;
+    --neon-glow: 213 94% 68%;
     --metallic-gray: 0 0% 67%;
-    
-    /* Gradients */
+
     --gradient-neon: linear-gradient(135deg, hsl(var(--secondary) / 0.2), hsl(var(--secondary) / 0.05));
     --gradient-dark: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background) / 0.8));
     --gradient-hero: linear-gradient(135deg, hsl(var(--background)), hsl(var(--secondary) / 0.1), hsl(var(--background)));
 
-    /* Shadows & Glows */
     --glow-neon: 0 0 20px hsl(var(--secondary) / 0.5), 0 0 40px hsl(var(--secondary) / 0.3);
     --glow-soft: 0 0 30px hsl(var(--secondary) / 0.2);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
-    
-    /* Transitions */
+
     --transition-smooth: all 0.2s ease-out;
     --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-    /* Background image variable */
     --background-image: none;
 
-    /* Custom Scrollbar (Firefox) */
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--primary) / 0.3) transparent;
   }
 
-  /* Webkit Scrollbar Customization - Minimalist & Theme Colors */
+  /* Webkit Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -90,10 +79,7 @@ All colors MUST be HSL.
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.6);
   }
-}
 
-
-@layer base {
   * {
     @apply border-border;
   }
@@ -107,7 +93,6 @@ All colors MUST be HSL.
     background-attachment: fixed;
   }
 
-
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Bebas Neue', cursive;
     letter-spacing: 0.05em;
@@ -118,7 +103,7 @@ All colors MUST be HSL.
   .glow-neon {
     text-shadow: var(--glow-neon);
   }
-  
+
   .glow-soft {
     box-shadow: var(--glow-soft);
   }
@@ -135,13 +120,12 @@ All colors MUST be HSL.
     background: var(--gradient-hero);
   }
 
-  /* Hide scrollbars but keep scrolling */
   .scrollbar-hide {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   .scrollbar-hide::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
   }
 }
 
@@ -199,7 +183,7 @@ All colors MUST be HSL.
 
 @media (max-width: 768px) {
   .football {
-    filter: none; /* Filtros em elementos fixos + animação matam a performance no mobile */
+    filter: none;
     width: 45px;
     height: 45px;
   }
@@ -260,26 +244,17 @@ All colors MUST be HSL.
   animation-delay: -3s;
 }
 
-/* Style number input spin buttons to match neon theme */
+/* Number input */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
 
-/* Firefox */
 input[type="number"] {
   -moz-appearance: textfield;
-}
-
-/* Custom spinner using background for consistency with theme */
-input[type="number"] {
+  appearance: textfield;
   color: hsl(var(--foreground));
-  background-color: hsl(var(--background));
-}
-
-/* Optional: add small up/down adorners via background gradients (subtle, dark) */
-input[type="number"] {
-  /* Keep borders and focus consistent with theme */
   border-color: hsl(var(--input));
 }

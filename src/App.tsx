@@ -95,7 +95,7 @@ const AppContent = () => {
   // Isso evita o flash verde (cores padrão do CSS) e flashes de conteúdo vazio.
   if (loading || !settings?.store_name) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">
           <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
           <div className="flex flex-col items-center gap-2">
