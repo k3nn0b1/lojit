@@ -15,9 +15,14 @@ CREATE TABLE IF NOT EXISTS public.products (
   price NUMERIC(10,2) NOT NULL CHECK (price >= 0),
   image TEXT,
   publicId TEXT,
+  image2 TEXT,
+  publicId2 TEXT,
+  image3 TEXT,
+  publicId3 TEXT,
   sizes TEXT[] NOT NULL,
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   stockBySize JSONB DEFAULT '{}'::jsonb,
+  description TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -25,9 +30,14 @@ CREATE TABLE IF NOT EXISTS public.products (
 ALTER TABLE public.products
   ADD COLUMN IF NOT EXISTS image TEXT,
   ADD COLUMN IF NOT EXISTS publicId TEXT,
+  ADD COLUMN IF NOT EXISTS image2 TEXT,
+  ADD COLUMN IF NOT EXISTS publicId2 TEXT,
+  ADD COLUMN IF NOT EXISTS image3 TEXT,
+  ADD COLUMN IF NOT EXISTS publicId3 TEXT,
   ADD COLUMN IF NOT EXISTS sizes TEXT[],
   ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS stockBySize JSONB DEFAULT '{}'::jsonb;
+  ADD COLUMN IF NOT EXISTS stockBySize JSONB DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS description TEXT;
 
 -- Índices úteis
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);

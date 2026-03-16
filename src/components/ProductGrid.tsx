@@ -73,7 +73,6 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 product={product}
                 onAddToCart={onAddToCart}
               />
-              <p className="mt-2 text-xs text-muted-foreground text-center">Clique na imagem para ver estoque por tamanho</p>
             </div>
           ))}
         </div>

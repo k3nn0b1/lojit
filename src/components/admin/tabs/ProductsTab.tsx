@@ -45,9 +45,9 @@ const ProductsTab = ({
   handleStockBySizeChange,
   navigateStock,
 }: ProductsTabProps) => {
-  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], stock: 0, imageUrl: "" });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null]);
+  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null]);
   const [uploading, setUploading] = useState(false);
   const [productQuery, setProductQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,7 +72,7 @@ const ProductsTab = ({
     setProduct((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleImage = (file?: File) => {
+  const handleImage = (file: File | undefined, index: number) => {
     if (!file) return;
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       toast.error(`Arquivo muito grande (>${MAX_FILE_SIZE_MB}MB)`);
@@ -82,8 +82,14 @@ const ProductsTab = ({
       toast.error("Formato não permitido. Use JPG, PNG ou WEBP.");
       return;
     }
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    
+    const nextFiles = [...imageFiles];
+    nextFiles[index] = file;
+    setImageFiles(nextFiles);
+    
+    const nextPreviews = [...imagePreviews];
+    nextPreviews[index] = URL.createObjectURL(file);
+    setImagePreviews(nextPreviews);
   };
 
   const handleSizeToggle = (size: string) => {
@@ -101,13 +107,27 @@ const ProductsTab = ({
 
     let imageUrl = product.imageUrl;
     let publicId: string | undefined;
+    let imageUrl2 = product.imageUrl2;
+    let publicId2: string | undefined;
+    let imageUrl3 = product.imageUrl3;
+    let publicId3: string | undefined;
 
-    if (imageFile) {
+    if (imageFiles.some(f => f !== null)) {
       setUploading(true);
       try {
-        const uploaded = await uploadToCloudinary(imageFile);
-        imageUrl = uploaded.secure_url;
-        publicId = uploaded.public_id;
+        const uploadPromises = imageFiles.map(async (file, idx) => {
+            if (!file) return null;
+            const uploaded = await uploadToCloudinary(file);
+            return { url: uploaded.secure_url, id: uploaded.public_id, idx };
+        });
+
+        const results = await Promise.all(uploadPromises);
+        results.forEach(res => {
+            if (!res) return;
+            if (res.idx === 0) { imageUrl = res.url; publicId = res.id; }
+            if (res.idx === 1) { imageUrl2 = res.url; publicId2 = res.id; }
+            if (res.idx === 2) { imageUrl3 = res.url; publicId3 = res.id; }
+        });
       } catch (err: any) {
         toast.error("Falha no upload para Cloudinary");
         setUploading(false);
@@ -127,6 +147,11 @@ const ProductsTab = ({
       stock: allocatedTotal > 0 ? allocatedTotal : totalStock,
       image: imageUrl || "",
       publicId,
+      image2: imageUrl2 || "",
+      publicId2,
+      image3: imageUrl3 || "",
+      publicId3,
+      description: product.description,
       stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
     };
 
@@ -136,9 +161,9 @@ const ProductsTab = ({
         if (error) throw error;
         setStoredProducts((prev) => [...prev, data]);
         toast.success("Produto cadastrado");
-        setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0, imageUrl: "" });
-        setImageFile(null);
-        setImagePreview(null);
+        setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+        setImageFiles([null, null, null]);
+        setImagePreviews([null, null, null]);
         setDistribution({});
       } catch (e: any) {
         toast.error("Falha ao salvar no Supabase", { description: parseSupabaseError(e) });
@@ -203,6 +228,16 @@ const ProductsTab = ({
           </div>
 
           <div>
+            <Label>Descrição / Detalhes do Produto</Label>
+            <textarea 
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Ex: Camisa Tailandesa 1:1, tecido Dri-FIT, patch bordado..."
+              value={product.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+            />
+          </div>
+
+          <div>
             <Label>Tamanhos Disponíveis</Label>
             <div className="flex flex-wrap gap-2 mt-2">
               {globalSizes.map((s) => (
@@ -237,39 +272,50 @@ const ProductsTab = ({
             </div>
           )}
 
-          <div className="grid gap-2">
-            <Label>Imagem do Produto</Label>
-            <div className="flex flex-col gap-4">
-                {imagePreview ? (
-                    <div className="relative w-full aspect-video md:aspect-auto md:h-48 rounded-lg border-2 border-primary/20 bg-muted/30 overflow-hidden flex items-center justify-center group">
-                        <img src={imagePreview} alt="Preview" className="h-full w-full object-contain" />
-                        <Button 
-                          variant="destructive" 
-                          size="icon" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+          <div className="grid gap-4">
+            <Label>Imagens do Produto (Até 3)</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[0, 1, 2].map((idx) => (
+                    <div key={idx} className="flex flex-col gap-2">
+                        {imagePreviews[idx] ? (
+                            <div className="relative aspect-square rounded-lg border-2 border-primary/20 bg-muted/30 overflow-hidden flex items-center justify-center group">
+                                <img src={imagePreviews[idx]!} alt={`Preview ${idx+1}`} className="h-full w-full object-cover" />
+                                <Button 
+                                  variant="destructive" 
+                                  size="icon" 
+                                  className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => {
+                                    const nextFiles = [...imageFiles];
+                                    nextFiles[idx] = null;
+                                    setImageFiles(nextFiles);
+                                    
+                                    const nextPreviews = [...imagePreviews];
+                                    nextPreviews[idx] = null;
+                                    setImagePreviews(nextPreviews);
+                                  }}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-[10px] text-white font-bold">FOTO {idx+1}</div>
+                            </div>
+                        ) : (
+                            <div className="relative aspect-square">
+                                <Label 
+                                    htmlFor={`product-image-upload-${idx}`}
+                                    className="flex flex-col items-center justify-center gap-2 h-full w-full rounded-lg border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth group"
+                                >
+                                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-smooth">
+                                      <Upload className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="text-center px-2">
+                                      <span className="block text-xs font-bold text-primary">Foto {idx+1}</span>
+                                    </div>
+                                </Label>
+                                <input id={`product-image-upload-${idx}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0], idx)} />
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <Label 
-                        htmlFor="product-image-upload" 
-                        className="flex flex-col items-center justify-center gap-3 h-32 w-full rounded-lg border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth group"
-                    >
-                        <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-smooth">
-                          <Upload className="w-6 h-6 text-primary" />
-                        </div>
-                        <div className="text-center">
-                          <span className="block font-bold text-primary">Escolher imagem do produto</span>
-                          <span className="text-xs text-muted-foreground font-normal">PNG, JPG ou WEBP até 8MB</span>
-                        </div>
-                    </Label>
-                )}
-                <input id="product-image-upload" type="file" className="hidden" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} />
+                ))}
             </div>
           </div>
 

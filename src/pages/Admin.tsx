@@ -43,6 +43,10 @@ interface AdminProduct {
   stockBySize?: Record<string, number>;
   imageUrl?: string;
   publicId?: string;
+  imageUrl2?: string;
+  publicId2?: string;
+  imageUrl3?: string;
+  publicId3?: string;
 }
 
 // Cloudinary envs e upload helpers permanecem iguais

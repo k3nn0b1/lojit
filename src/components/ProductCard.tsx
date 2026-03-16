@@ -11,6 +11,14 @@ import { fill } from "@cloudinary/url-gen/actions/resize";
 import { format } from "@cloudinary/url-gen/actions/delivery";
 import { quality } from "@cloudinary/url-gen/actions/delivery";
 import { formatBRL } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Info, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export interface Product {
   id: number;
@@ -18,10 +26,15 @@ export interface Product {
   category: string;
   price: number;
   image: string;
+  image2?: string;
+  image3?: string;
   sizes: string[];
   stock?: number; // quantidade em estoque opcional
   publicId?: string;
+  publicId2?: string;
+  publicId3?: string;
   stockBySize?: Record<string, number>; // estoque por tamanho
+  description?: string;
 }
 
 interface ProductCardProps {
@@ -63,7 +76,25 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   }, [sortedSizes, product.stockBySize]);
 
   const [selectedSize, setSelectedSize] = useState(defaultSelectedSize);
-  const [showStockDetails, setShowStockDetails] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  const productPhotos = useMemo(() => {
+    const photos = [
+      { url: product.image, publicId: product.publicId },
+      { url: product.image2, publicId: product.publicId2 },
+      { url: product.image3, publicId: product.publicId3 },
+    ].filter(p => p.url || p.publicId);
+    return photos;
+  }, [product]);
+
+  const nextPhoto = () => {
+    setCurrentPhotoIndex((prev) => (prev + 1) % productPhotos.length);
+  };
+
+  const prevPhoto = () => {
+    setCurrentPhotoIndex((prev) => (prev - 1 + productPhotos.length) % productPhotos.length);
+  };
 
   useEffect(() => {
     setSelectedSize(defaultSelectedSize);
@@ -74,10 +105,19 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     toast.success("Adicionado ao carrinho!", {
       description: `${product.name} - Tamanho ${selectedSize}`,
     });
+    setIsDetailsOpen(false);
   };
 
-  // Build Cloudinary image if publicId exists
-  const cldImage = product.publicId ? cld.image(product.publicId).resize(fill().width(800).height(800)).delivery(format("auto")).delivery(quality("auto")) : null;
+  // Build Cloudinary image for a specific photo
+  const getCldImage = (publicId?: string) => {
+    if (!publicId) return null;
+    return cld.image(publicId)
+      .resize(fill().width(800).height(800))
+      .delivery(format("auto"))
+      .delivery(quality("auto"));
+  };
+
+  const mainCldImage = getCldImage(product.publicId);
 
   // Calcula o total a partir do estoque por tamanho (se existir)
   const hasStockBySize = !!(product.stockBySize && Object.keys(product.stockBySize).length > 0);
@@ -100,117 +140,214 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   }, [sortedSizes, product.stockBySize, hasStockBySize]);
 
   return (
-    <Card className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full">
-      <div
-        className="relative aspect-square overflow-hidden bg-muted cursor-pointer shrink-0"
-        onClick={() => setShowStockDetails((prev) => !prev)}
+    <>
+      <Card 
+        className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full"
       >
-        {cldImage ? (
-          <AdvancedImage
-            cldImg={cldImage}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
-        ) : (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
-        )}
-        {isSoldOut && (
-          <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground">Esgotado</Badge>
-        )}
-        <Badge className="absolute top-3 right-3 bg-primary/90 text-primary-foreground">
-          {product.category}
-        </Badge>
-      </div>
-
-      <CardContent className="p-3 md:p-4 flex-grow flex flex-col space-y-2 md:space-y-3">
-        <h3 className="font-display text-base md:text-xl text-foreground line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem]">
-          {product.name}
-        </h3>
-        
-        <div className="flex items-center justify-between">
-          <span className="text-lg md:text-2xl font-bold text-primary">
-            {formatBRL(product.price)}
-          </span>
+          <div 
+            className="relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer"
+            onClick={() => setIsDetailsOpen(true)}
+          >
+            {mainCldImage ? (
+              <AdvancedImage
+                cldImg={mainCldImage}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          )}
+          {isSoldOut && (
+            <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground">Esgotado</Badge>
+          )}
+          <Badge className="absolute top-3 right-3 bg-primary/90 text-primary-foreground">
+            {product.category}
+          </Badge>
         </div>
 
-        {!isSoldOut && (
-          <div className="space-y-2">
-            <label className="text-[10px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
-              Tamanho:
-            </label>
-            <div className="flex flex-wrap gap-1.5 md:gap-2">
-              {displaySizes.map((size) => {
-                const key = size.trim();
-                const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setSelectedSize(key)}
-                    className={`h-8 w-8 md:h-10 md:w-10 flex items-center justify-center rounded-md border transition-smooth font-bold text-xs md:text-sm ${
-                      selectedSize === key
-                        ? "bg-primary text-primary-foreground border-primary glow-soft"
-                        : "border-border hover:border-primary/50 bg-background/50 text-foreground"
-                    }`}
+        <CardContent className="p-3 md:p-4 flex-grow flex flex-col space-y-2 md:space-y-3">
+          <h3 className="font-display text-base md:text-xl text-foreground line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem]">
+            {product.name}
+          </h3>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-lg md:text-2xl font-bold text-primary">
+              {formatBRL(product.price)}
+            </span>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-3 md:p-4 pt-0 mt-auto">
+          <Button
+            onClick={() => setIsDetailsOpen(true)}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth"
+            size="lg"
+            disabled={isSoldOut}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            COMPRAR
+          </Button>
+        </CardFooter>
+      </Card>
+
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-card border-primary/20 sm:rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* Image Section */}
+            {/* Image Carousel Section */}
+            <div className="relative aspect-square md:aspect-auto bg-muted group overflow-hidden touch-none">
+               <AnimatePresence initial={false}>
+                 <motion.div
+                   key={currentPhotoIndex}
+                   initial={{ opacity: 0, x: 100 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   exit={{ opacity: 0, x: -100 }}
+                   transition={{ duration: 0.2, ease: "easeOut" }}
+                   drag="x"
+                   dragConstraints={{ left: 0, right: 0 }}
+                   dragElastic={1}
+                   onDragEnd={(_, info) => {
+                     const swipeThreshold = 50;
+                     if (info.offset.x > swipeThreshold) {
+                       prevPhoto();
+                     } else if (info.offset.x < -swipeThreshold) {
+                       nextPhoto();
+                     }
+                   }}
+                   className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing"
+                 >
+                    {productPhotos[currentPhotoIndex].publicId ? (
+                      <AdvancedImage
+                        cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                        alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                    ) : (
+                      <img
+                        src={productPhotos[currentPhotoIndex].url}
+                        alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
+                        className="w-full h-full object-cover pointer-events-none"
+                      />
+                    )}
+                 </motion.div>
+               </AnimatePresence>
+               
+               {productPhotos.length > 1 && (
+                 <>
+                   <button
+                     onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                     className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
+                   >
+                     <ChevronLeft className="w-6 h-6" />
+                   </button>
+                   <button
+                     onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                     className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
+                   >
+                     <ChevronRight className="w-6 h-6" />
+                   </button>
+                   
+                   {/* Dots indicators */}
+                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                     {productPhotos.map((_, i) => (
+                       <button
+                         key={i}
+                         onClick={() => setCurrentPhotoIndex(i)}
+                         className={`h-2 rounded-full transition-all ${
+                           currentPhotoIndex === i ? "w-6 bg-primary" : "w-2 bg-white/50"
+                         }`}
+                       />
+                     ))}
+                   </div>
+                 </>
+               )}
+
+               {isSoldOut && (
+                 <Badge className="absolute top-4 left-4 bg-destructive text-destructive-foreground text-lg px-4 py-1 z-30">Esgotado</Badge>
+               )}
+            </div>
+
+            {/* Content Section */}
+            <div className="p-6 md:p-8 flex flex-col h-full max-h-[85vh] md:max-h-none overflow-y-auto scrollbar-hide">
+              <DialogHeader className="text-left space-y-2 mb-6">
+                <Badge variant="outline" className="w-fit text-primary border-primary/30 uppercase tracking-widest">{product.category}</Badge>
+                <DialogTitle className="text-2xl md:text-4xl font-display leading-tight">{product.name}</DialogTitle>
+                <div className="text-3xl font-bold text-primary">{formatBRL(product.price)}</div>
+              </DialogHeader>
+
+              <div className="space-y-6 flex-grow">
+                {product.description && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Sobre este produto</h4>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                  </div>
+                )}
+
+                {!isSoldOut && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Escolha seu tamanho</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {displaySizes.map((size) => {
+                        const key = size.trim();
+                        const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
+                        const isSelected = selectedSize === key;
+                        
+                        return (
+                          <div key={key} className="flex flex-col items-center gap-1">
+                            <button
+                              onClick={() => setSelectedSize(key)}
+                              className={`h-12 w-12 flex items-center justify-center rounded-lg border-2 transition-all font-bold text-lg ${
+                                isSelected
+                                  ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                                  : "border-border hover:border-primary/50 bg-background/50 text-foreground"
+                              }`}
+                            >
+                              {key}
+                            </button>
+                            <span className="text-[10px] text-muted-foreground font-bold">{qty ?? 0} un</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-6 border-t border-border/50">
+                   <Button
+                    onClick={handleAddToCart}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth h-14 text-lg"
+                    size="lg"
+                    disabled={
+                      hasStockBySize
+                        ? Number(product.stockBySize?.[selectedSize] ?? 0) <= 0
+                        : (product.stock !== undefined && product.stock <= 0)
+                    }
                   >
-                    {key}
-                  </button>
-                );
-              })}
+                    <ShoppingCart className="w-5 h-5 mr-3" />
+                    ADICIONAR AO CARRINHO
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        )}
-        
-        {showStockDetails && (
-          <div className="mt-auto pt-3 p-3 rounded-md border border-border/50 bg-muted/50">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Estoque</p>
-            <ul className="grid grid-cols-2 gap-2">
-              {sortedSizes
-                .filter((size) => {
-                  const key = size.trim();
-                  const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
-                  return qty === undefined || qty > 0;
-                })
-                .map((size) => {
-                  const key = size.trim();
-                  const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
-                  return (
-                    <li
-                      key={key}
-                      className="flex items-center justify-between rounded-md bg-background/60 px-2 py-1 border border-border/50"
-                    >
-                      <span className="font-bold text-xs">{key}</span>
-                      <span className="text-xs text-foreground">
-                        {qty !== undefined ? qty : "N/D"}
-                      </span>
-                    </li>
-                  );
-                })}
-            </ul>
-          </div>
-        )}
-      </CardContent>
 
-      <CardFooter className="p-3 md:p-4 pt-0 mt-auto">
-        <Button
-          onClick={handleAddToCart}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth"
-          size="lg"
-          disabled={
-            hasStockBySize
-              ? Number(product.stockBySize?.[selectedSize] ?? product.stockBySize?.[selectedSize?.toString()] ?? 0) <= 0
-              : (product.stock !== undefined && product.stock <= 0)
-          }
-        >
-          <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
-          <span className="hidden md:inline">ADICIONAR AO CARRINHO</span>
-          <span className="md:hidden">COMPRAR</span>
-        </Button>
-      </CardFooter>
-    </Card>
+          {/* Botão Voltar/Fechar customizado para melhor visibilidade no mobile */}
+          <button
+            onClick={() => setIsDetailsOpen(false)}
+            className="absolute right-4 top-4 z-50 rounded-full h-11 w-11 flex items-center justify-center bg-background border-2 border-primary/20 text-foreground hover:bg-primary hover:text-white transition-all shadow-xl active:scale-90 group md:bg-background/20 md:backdrop-blur-md md:text-white md:border-white/20"
+            aria-label="Voltar"
+          >
+            <X className="h-6 w-6 stroke-[3]" />
+          </button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
