@@ -3,11 +3,12 @@ import { Toaster as Sonner } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import Login from "./pages/Login";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
+
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Login = lazy(() => import("./pages/Login"));
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { StoreSettingsProvider, useStoreSettings } from "@/contexts/StoreSettingsContext";
@@ -110,15 +111,23 @@ const AppContent = () => {
   }
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       <BackgroundManager />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin" element={<AdminGuard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center bg-background">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
+          </div>
+        }>
+          <div className="flex-1 flex flex-col">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<AdminGuard />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </Suspense>
       </BrowserRouter>
     </div>
   );

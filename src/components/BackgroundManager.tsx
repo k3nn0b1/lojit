@@ -9,7 +9,7 @@ import FootballBackground from './FootballBackground';
 
 const BackgroundManager: React.FC = () => {
   const { settings } = useStoreSettings();
-  const [scrollY, setScrollY] = React.useState(0);
+  const [shouldRenderBg, setShouldRenderBg] = React.useState(true);
 
   const colors = useMemo(() => {
     if (!settings) return null;
@@ -21,11 +21,10 @@ const BackgroundManager: React.FC = () => {
   }, [settings]);
 
   React.useEffect(() => {
+    const threshold = window.innerHeight * 1.5;
     const handleScroll = () => {
-      // Usamos requestAnimationFrame para não sobrecarregar o processamento
-      window.requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-      });
+      const visible = window.scrollY < threshold;
+      setShouldRenderBg(prev => prev !== visible ? visible : prev);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -34,11 +33,9 @@ const BackgroundManager: React.FC = () => {
   if (!settings || !colors) return null;
 
   const isSolid = !settings.background_type || settings.background_type === 'solid';
-  // O background animado só precisa renderizar enquanto o usuário ainda consegue vê-lo (até ~150% da altura da tela)
-  const shouldRenderBackground = scrollY < (window.innerHeight * 1.5);
 
   const renderBackground = () => {
-    if (!shouldRenderBackground) return null;
+    if (!shouldRenderBg) return null;
     if (isSolid) {
       return <FootballBackground mode="hero" />;
     }
@@ -59,36 +56,18 @@ const BackgroundManager: React.FC = () => {
 
   return (
     <>
-      {/* Background animado sempre fixo ocupando a tela toda */}
       <div 
-        className="fixed inset-0 z-[-20] overflow-hidden pointer-events-none"
-        style={{ willChange: 'transform' }}
+        className="fixed inset-0 z-[-20] overflow-hidden pointer-events-none bg-background"
       >
         {renderBackground()}
+        {/* Overlay que cobre a tela toda permanentemente, sem causar scroll extra */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{ 
+            background: 'radial-gradient(circle at center, transparent 0%, hsl(var(--background) / 0.8) 100%)',
+          }}
+        />
       </div>
-
-      {/* 
-          Overlay de Transição (Fade):
-          Ocupa apenas os primeiros 100-120vh para criar o efeito de escurecimento suave.
-          É ABSOLUTO para que suba junto com o scroll do Hero.
-      */}
-      <div 
-        className="absolute inset-x-0 top-0 z-[-15] pointer-events-none"
-        style={{ 
-          height: '120vh',
-          background: 'linear-gradient(to bottom, transparent 0%, hsl(var(--background) / 0.4) 40%, hsl(var(--background) / 1) 100%)',
-          willChange: 'opacity'
-        }}
-      />
-      
-      {/* 
-          Overlay do Corpo:
-          Começa onde o fade termina e vai até o fim do documento.
-      */}
-      <div 
-        className="absolute inset-x-0 top-[120vh] bottom-0 z-[-15] pointer-events-none"
-        style={{ backgroundColor: 'hsl(var(--background))' }}
-      />
     </>
   );
 };

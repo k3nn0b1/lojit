@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatBRL, parseSupabaseError, normalizePhone, formatPhoneMask, sortSizes, rankSize, normalizeCategory } from "@/lib/utils";
+import { formatBRL, parseSupabaseError, normalizePhone, formatPhoneMask, sortSizes, rankSize, normalizeCategory, generateUUID, normalizeProductStock } from "@/lib/utils";
 import CustomersTab from "@/components/admin/tabs/CustomersTab";
 import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
 import SizesTab from "@/components/admin/tabs/SizesTab";
@@ -84,24 +84,7 @@ const Admin = () => {
 
   const [storedProducts, setStoredProducts] = useState<any[]>([]);
   
-  // Função para normalizar e calcular estoque total dos produtos
-  const normalizeProduct = (p: any) => {
-    const stockBySizeObj = p.stockBySize && typeof p.stockBySize === 'object'
-      ? Object.fromEntries(Object.entries(p.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
-      : undefined;
-    
-    const totalFromSizes = stockBySizeObj
-      ? Object.values(stockBySizeObj).reduce((sum: number, n: any) => sum + (Number(n) || 0), 0)
-      : undefined;
-
-    return {
-      ...p,
-      stockBySize: stockBySizeObj,
-      // Prioriza a soma dos tamanhos se disponível, senão usa o campo stock legado
-      stock: totalFromSizes !== undefined ? totalFromSizes : (Number(p.stock) || 0),
-    };
-  };
-
+  // auth...
   // Distribuição de estoque por tamanho (para cadastro de produto)
   const [distribution, setDistribution] = useState<Record<string, number>>({});
 
@@ -222,16 +205,7 @@ const updateAdminCartQuantity = (i: number, newQty: number) => {
 
 const adminCartTotal = adminCart.reduce((sum, it) => sum + it.price * it.quantity, 0);
 
-const generateUUID = () => {
-  let dt = new Date().getTime();
-  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = (dt + Math.random() * 16) % 16 | 0;
-    dt = Math.floor(dt / 16);
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
-  return uuid;
-};
-
+  // uuid...
 const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
   if (adminCart.length === 0) {
     toast.error("Adicione itens ao pedido");
@@ -431,13 +405,13 @@ useEffect(() => {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
       const newRow = payload.new;
       if (!newRow) return;
-      const norm = normalizeProduct(newRow);
+      const norm = normalizeProductStock(newRow);
       setStoredProducts(prev => [norm, ...prev.filter(p => p.id !== newRow.id)]);
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload: any) => {
       const newRow = payload.new;
       if (!newRow) return;
-      const norm = normalizeProduct(newRow);
+      const norm = normalizeProductStock(newRow);
       setStoredProducts(prev => prev.map(p => p.id === newRow.id ? norm : p));
     })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload: any) => {
@@ -645,7 +619,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
             .select("*")
             .order("id", { ascending: false });
           if (!prodErr && prodData) {
-            setStoredProducts(prodData.map(normalizeProduct));
+            setStoredProducts(prodData.map(normalizeProductStock));
           }
 
           // Carregar lista global de tamanhos
@@ -816,14 +790,14 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="flex-1 flex flex-col relative w-full">
       <Header
         showCart={false}
         rightAction={(
           <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={handleLogout}>Sair</Button>
         )}
       />
-      <div className="container mx-auto px-4 py-8">
+      <div className="flex-1 container mx-auto px-4 py-8 mb-12">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">Painel Administrativo</h1>
         </div>

@@ -34,8 +34,7 @@ const Login = () => {
             .select("user_id")
             .eq("user_id", uid);
           const isAdmin = !adminErr && Array.isArray(admins) && admins.length > 0;
-          const canBypass = email === "john.fcostaa@gmail.com"; // bypass temporário
-          if (!isAdmin && !canBypass) {
+          if (!isAdmin) {
             toast.error("Acesso restrito a administradores");
             await supabase.auth.signOut();
           } else {
@@ -61,9 +60,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen flex flex-col relative w-full">
       <Header cartItemCount={0} onCartClick={() => {}} />
-      <div className="container mx-auto px-4 py-8">
+      <div className="flex-grow container mx-auto px-4 py-16 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardHeader>
             <CardTitle>Login do Admin</CardTitle>

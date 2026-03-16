@@ -15,4 +15,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('@radix-ui')) return 'vendor-radix';
+            if (id.includes('@cloudinary')) return 'vendor-cloudinary';
+          }
+        },
+      },
+    },
+  },
 }));

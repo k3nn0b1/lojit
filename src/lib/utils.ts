@@ -58,3 +58,33 @@ export const sortSizes = (arr: string[]) => [...(arr || [])].sort((a, b) => {
 });
 
 export const normalizeCategory = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\x00-\x7F]/g, '').replace(/[\u0300-\u036f]/g, '');
+
+// UUID v4 generator with crypto.randomUUID fallback
+export const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function') {
+    return (crypto as any).randomUUID();
+  }
+  let dt = new Date().getTime();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (dt + Math.random() * 16) % 16 | 0;
+    dt = Math.floor(dt / 16);
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+};
+
+// Normalizes product stock data from Supabase (stockBySize + total)
+export const normalizeProductStock = (p: any) => {
+  const stockBySizeObj = p.stockBySize && typeof p.stockBySize === 'object'
+    ? Object.fromEntries(Object.entries(p.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
+    : undefined;
+  const totalFromSizes = stockBySizeObj
+    ? Object.values(stockBySizeObj).reduce((sum, n) => sum + Number(n ?? 0), 0)
+    : undefined;
+  return {
+    ...p,
+    stockBySize: stockBySizeObj,
+    stock: totalFromSizes !== undefined && totalFromSizes > 0
+      ? totalFromSizes
+      : (typeof p.stock === 'number' ? p.stock : 0),
+  };
+};

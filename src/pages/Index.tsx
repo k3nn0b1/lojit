@@ -10,7 +10,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { formatBRL } from "@/lib/utils";
+import { formatBRL, normalizePhone, generateUUID, normalizeProductStock } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 
@@ -125,24 +125,7 @@ const Index = () => {
             .select("*")
             .order("id", { ascending: false });
           if (!error && data) {
-            const normalized = (data as any[]).map((p) => {
-              const stockBySizeObj = p.stockBySize && typeof p.stockBySize === "object"
-                ? Object.fromEntries(
-                    Object.entries(p.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)])
-                  )
-                : undefined;
-              const totalFromSizes = stockBySizeObj
-                ? Object.values(stockBySizeObj).reduce((sum, n) => sum + Number(n ?? 0), 0)
-                : undefined;
-              return {
-                ...p,
-                stockBySize: stockBySizeObj,
-                stock:
-                  totalFromSizes !== undefined && totalFromSizes > 0
-                    ? totalFromSizes
-                    : (typeof p.stock === "number" ? p.stock : 0),
-              } as Product;
-            });
+            const normalized = (data as any[]).map(p => normalizeProductStock(p) as Product);
             setProducts(sortProducts(normalized));
           }
         } catch {}
@@ -152,33 +135,13 @@ const Index = () => {
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
             const newRow = payload.new;
             if (!newRow) return;
-            const stockBySizeObj = newRow.stockBySize && typeof newRow.stockBySize === "object"
-              ? Object.fromEntries(Object.entries(newRow.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
-              : undefined;
-            const totalFromSizes = stockBySizeObj
-              ? Object.values(stockBySizeObj).reduce((sum, n) => sum + Number(n ?? 0), 0)
-              : undefined;
-            const norm = {
-              ...newRow,
-              stockBySize: stockBySizeObj,
-              stock: totalFromSizes !== undefined && totalFromSizes > 0 ? totalFromSizes : (typeof newRow.stock === 'number' ? newRow.stock : 0),
-            } as Product;
+            const norm = normalizeProductStock(newRow) as Product;
             setProducts(prev => sortProducts([norm, ...prev.filter(p => p.id !== norm.id)]));
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload: any) => {
             const newRow = payload.new;
             if (!newRow) return;
-            const stockBySizeObj = newRow.stockBySize && typeof newRow.stockBySize === "object"
-              ? Object.fromEntries(Object.entries(newRow.stockBySize).map(([k, v]) => [k, Number((v as any) ?? 0)]))
-              : undefined;
-            const totalFromSizes = stockBySizeObj
-              ? Object.values(stockBySizeObj).reduce((sum, n) => sum + Number(n ?? 0), 0)
-              : undefined;
-            const norm = {
-              ...newRow,
-              stockBySize: stockBySizeObj,
-              stock: totalFromSizes !== undefined && totalFromSizes > 0 ? totalFromSizes : (typeof newRow.stock === 'number' ? newRow.stock : 0),
-            } as Product;
+            const norm = normalizeProductStock(newRow) as Product;
             setProducts(prev => sortProducts(prev.map(p => p.id === norm.id ? norm : p)));
           })
           .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload: any) => {
@@ -271,20 +234,6 @@ const Index = () => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size)));
   };
 
-  const normalizePhone = (raw: string) => raw.replace(/\D+/g, "");
-
-  // Polyfill simples de UUID v4 para ambientes sem crypto.randomUUID
-  const generateUUID = () => {
-  // Retorna string no formato xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-  let dt = new Date().getTime();
-  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-  const r = (dt + Math.random() * 16) % 16 | 0;
-  dt = Math.floor(dt / 16);
-  return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
-  return uuid;
-  };
-
   const handleCheckout = async (clienteNome: string, clienteTelefone: string) => {
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -361,11 +310,10 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen relative bg-transparent">
-      
-
-      <div className="relative z-10">
+    <div className="flex-1 w-full relative bg-transparent flex flex-col">
+      <div className="relative z-10 flex flex-col flex-grow">
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
+        <div className="flex-grow">
         <Hero />
         <ProductGrid products={products} onAddToCart={handleAddToCart} />
 
@@ -398,6 +346,7 @@ const Index = () => {
             />
           </div>
         </section>
+        </div>
         <Footer />
       </div>
 
