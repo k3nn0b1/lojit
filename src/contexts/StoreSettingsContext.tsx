@@ -26,6 +26,7 @@ export interface StoreSettings {
   background_type?: 'solid' | 'bg1' | 'bg2' | 'bg3' | 'bg4';
   background_config?: any;
   opening_hours?: string;
+  font_family?: string;
   updated_at?: string;
 }
 
@@ -58,7 +59,8 @@ const defaultSettings: StoreSettings = {
   show_instagram: true,
   show_whatsapp: true,
   show_youtube: false,
-  youtube_url: ""
+  youtube_url: "",
+  font_family: "Inter"
 };
 
 const getInitialSettings = (): StoreSettings => {
@@ -83,6 +85,7 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     root.style.setProperty("--primary", s.primary_color);
     root.style.setProperty("--secondary", s.secondary_color);
     root.style.setProperty("--background", s.background_color);
+    root.style.setProperty("--font-family", s.font_family || "Inter");
     root.style.setProperty("--ring", s.primary_color);
     root.style.setProperty("--accent", s.primary_color);
     

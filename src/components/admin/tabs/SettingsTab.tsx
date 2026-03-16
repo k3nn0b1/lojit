@@ -338,13 +338,33 @@ export default function SettingsTab() {
                 className="resize-none"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="footer_info">Informações do Footer (Copyright)</Label>
-            <Input 
-                id="footer_info" 
-                value={formData.footer_info} 
-                onChange={e => setFormData({...formData, footer_info: e.target.value})}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="footer_info">Informações do Footer (Copyright)</Label>
+              <Input 
+                  id="footer_info" 
+                  value={formData.footer_info} 
+                  onChange={e => setFormData({...formData, footer_info: e.target.value})}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="font_family">Fonte do Site</Label>
+              <Select 
+                value={formData.font_family || "'Inter', sans-serif"} 
+                onValueChange={value => setFormData({...formData, font_family: value})}
+              >
+                <SelectTrigger id="font_family" className="bg-[#1a1a1a] border-border">
+                  <SelectValue placeholder="Selecione a fonte" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
+                  <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
+                  <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
+                  <SelectItem value="'Pacifico', cursive">Pacifico (Manuscrita)</SelectItem>
+                  <SelectItem value="'Iosevka Charon', monospace">Iosevka Charon (Programador)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-border/50 space-y-8">

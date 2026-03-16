@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Pacifico&family=Iosevka+Charon:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,6 +13,8 @@ All colors MUST be HSL.
     /* Design System - Neon Theme */
     --background: 0 0% 5%;
     --foreground: 0 0% 98%;
+    
+    --font-family: 'Inter', sans-serif;
 
     --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
@@ -95,8 +99,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-family);
     background-image: var(--background-image);
     background-size: cover;
     background-position: center;

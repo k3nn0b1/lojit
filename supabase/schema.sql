@@ -329,6 +329,7 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
   secondary_color TEXT DEFAULT '142 100% 50%', -- Default to Green (Neon)
   background_color TEXT DEFAULT '0 0% 5%', -- Default dark
   background_url TEXT, -- Background image
+  font_family TEXT DEFAULT 'Inter',
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT single_row CHECK (id = 1)
 );
@@ -336,7 +337,8 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
 -- Adicionar colunas caso já exista a tabela
 ALTER TABLE public.store_settings 
   ADD COLUMN IF NOT EXISTS background_color TEXT DEFAULT '0 0% 5%',
-  ADD COLUMN IF NOT EXISTS background_url TEXT;
+  ADD COLUMN IF NOT EXISTS background_url TEXT,
+  ADD COLUMN IF NOT EXISTS font_family TEXT DEFAULT 'Inter';
 
 -- Remover highlight_color se existir (opcional, mas bom limpar se possível, 
 -- porém no postgres em produção é melhor deixar ou dropar se tiver certeza)
