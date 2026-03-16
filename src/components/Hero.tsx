@@ -4,8 +4,8 @@ import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Hero = () => {
   const { settings } = useStoreSettings();
-  const storeName = settings?.store_name || "FUT75 Store";
-  const heroPhrase = settings?.hero_phrase || "Seleções, clubes europeus e brasileiros, edições retrô e muito mais. A melhor coleção de camisas de futebol, bermudas e caisas de basquete em um só lugar.";
+  const storeName = settings?.store_name || "";
+  const heroPhrase = settings?.hero_phrase || "";
 
   const scrollToProducts = () => {
 

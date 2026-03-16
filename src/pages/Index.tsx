@@ -329,7 +329,7 @@ const Index = () => {
       }
     }
 
-    const message = `🛍️ *Novo Pedido - FUT75 Store*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}\n\n${cartItems
+    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}\n\n${cartItems
       .map(
         (item) =>
           `• ${item.name}\n  Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`
@@ -348,6 +348,17 @@ const Index = () => {
   };
 
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (settingsLoading && !settings?.store_name) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <span className="text-muted-foreground font-medium animate-pulse text-sm tracking-widest uppercase">Carregando</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative bg-background">

@@ -39,26 +39,43 @@ const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>
 
 const defaultSettings: StoreSettings = {
   id: 1,
-  store_name: "FUT75 Store",
+  store_name: "",
   logo_url: null,
   address: "",
   whatsapp: "",
-  hero_phrase: "A melhor coleção de camisas de futebol.",
+  hero_phrase: "",
   about_us: "",
-  footer_info: "© 2024 FUT75 Store. Todos os direitos reservados.",
+  footer_info: "",
   primary_color: "142 100% 50%",
   secondary_color: "142 100% 50%",
   background_color: "0 0% 5%",
   background_url: null,
-  opening_hours: "Segunda a Sexta: 9h às 18h\nSábado: 9h às 14h",
+  opening_hours: "",
   show_instagram: true,
   show_whatsapp: true,
   show_youtube: false,
   youtube_url: ""
 };
 
+const getInitialSettings = (): StoreSettings => {
+  if (typeof window !== "undefined") {
+    const cached = localStorage.getItem("store_settings_cache");
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        // Proteção contra cache antigo com marca FUT75
+        if (parsed.store_name && parsed.store_name.includes("FUT75")) {
+          return defaultSettings;
+        }
+        return parsed;
+      } catch (e) {}
+    }
+  }
+  return defaultSettings;
+};
+
 export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<StoreSettings>(defaultSettings);
+  const [settings, setSettings] = useState<StoreSettings>(getInitialSettings());
   const [loading, setLoading] = useState(true);
 
   const applyColors = (s: StoreSettings) => {

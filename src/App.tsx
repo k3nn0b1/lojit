@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
+import { StoreSettingsProvider, useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +87,39 @@ const AdminGuard = () => {
   return isAuth ? <Admin /> : null;
 };
 
+const AppContent = () => {
+  const { settings, loading } = useStoreSettings();
+
+  // Bloqueia a exibição até que o carregamento termine E tenhamos o nome da loja real.
+  // Isso evita o flash verde (cores padrão do CSS) e flashes de conteúdo vazio.
+  if (loading || !settings?.store_name) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d]">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-primary font-bold text-xl tracking-[0.2em] animate-pulse">CARREGANDO</span>
+            <div className="h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
+              <div className="h-full bg-primary animate-progress-loading" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<AdminGuard />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -94,16 +127,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<AdminGuard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AppContent />
         </TooltipProvider>
       </StoreSettingsProvider>
     </QueryClientProvider>

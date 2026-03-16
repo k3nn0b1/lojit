@@ -13,7 +13,7 @@ interface HeaderProps {
 
 const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true }: HeaderProps) => {
   const { settings } = useStoreSettings();
-  const storeName = settings?.store_name || "FUT75 Store";
+  const storeName = settings?.store_name || "";
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">

@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FUT75 Store | Camisas de Time Originais</title>
+    <title>Loja Online | Camisas de Time</title>
     <meta
       name="description"
       content="Camisas de time originais das melhores ligas do mundo. Seleções, clubes europeus e brasileiros, edições retrô e muito mais."
     />
-    <meta name="author" content="FUT75 Store" />
+    <meta name="author" content="Loja Online" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,7 +18,7 @@
 
     <meta
       property="og:title"
-      content="FUT75 Store | Camisas de Time Originais"
+      content="Loja Online | Camisas de Time"
     />
     <meta
       property="og:description"
@@ -31,7 +31,7 @@
     />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@fut75store" />
+    <meta name="twitter:site" content="@lojaonline" />
     <meta
       name="twitter:image"
       content="https://lovable.dev/opengraph-image-p98pqg.png"
@@ -39,7 +39,20 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #0d0d0d; color: #14f163; font-family: sans-serif;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+          <div style="width: 50px; height: 50px; border: 3px solid rgba(20, 241, 99, 0.1); border-top: 3px solid #14f163; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <style>
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+          <span style="letter-spacing: 2px; font-weight: bold; opacity: 0.8;">CARREGANDO</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

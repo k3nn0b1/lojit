@@ -56,13 +56,24 @@ const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.e
 
 
 const Admin = () => {
-  const { settings } = useStoreSettings();
+  const { settings, loading: settingsLoading } = useStoreSettings();
 
   useEffect(() => {
     if (settings?.store_name) {
       document.title = `${settings.store_name} - Painel`;
     }
   }, [settings?.store_name]);
+
+  if (settingsLoading && !settings?.store_name) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <span className="text-muted-foreground font-medium animate-pulse text-sm tracking-widest uppercase">Carregando Painel</span>
+        </div>
+      </div>
+    );
+  }
 
   // Auth: verificação de acesso é feita pelo AdminGuard em App.tsx
   // Removido checkAuth local para evitar redirecionamentos duplicados.

@@ -5,13 +5,13 @@ import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 const Footer = () => {
   const { settings } = useStoreSettings();
-  const storeName = settings?.store_name || "Loja";
+  const storeName = settings?.store_name || "";
   const address = settings?.address || "";
   const whatsapp = settings?.whatsapp || "";
   const youtube = settings?.youtube_url || "";
   const footerInfo = settings?.footer_info 
     ? settings.footer_info.replace("FUT75 Store", storeName) 
-    : `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.`;
+    : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : "";
 
   // Flags de visibilidade (default para true se não existirem nas configurações antigas)
   const showInsta = settings?.show_instagram !== false;
