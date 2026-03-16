@@ -8,7 +8,6 @@ const Hero = () => {
   const heroPhrase = settings?.hero_phrase || "";
 
   const scrollToProducts = () => {
-
     const element = document.getElementById("products");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -21,90 +20,68 @@ const Hero = () => {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const [imgHeight, setImgHeight] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    const update = () => {
-      if (!sectionRef.current || !contentRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const styles = window.getComputedStyle(sectionRef.current);
-      const padTop = parseFloat(styles.paddingTop || "0");
-      const padBottom = parseFloat(styles.paddingBottom || "0");
-      const sectionH = rect.height;
-      const contentH = contentRef.current.offsetHeight;
-      const gap = 8;
-      const available = Math.max(
-        0,
-        sectionH - contentH - padTop - padBottom - gap
-      );
-      setImgHeight(available);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
 
   return (
     <section
       id="hero"
-      ref={sectionRef}
-      className="relative h-svh pt-4 md:pt-8 pb-12 md:pb-16 overflow-hidden flex items-start justify-center scroll-mt-24 md:scroll-mt-32"
+      className="relative min-h-[90vh] md:h-svh overflow-hidden flex items-center justify-center scroll-mt-24 md:scroll-mt-32 py-16 md:py-20"
     >
-      <div className="absolute inset-0 gradient-hero opacity-30" />
+      {/* Deep Glow Elements - Subtle highlight for the core content */}
+      <div className="absolute top-1/4 -left-10 w-64 h-64 rounded-full bg-primary/5 blur-[120px] animate-pulse" />
+      <div className="absolute bottom-1/4 -right-10 w-80 h-80 rounded-full bg-primary/5 blur-[140px] animate-pulse" style={{ animationDelay: "2s" }} />
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div
-          className="relative mx-auto mb-3 md:mb-5"
-          data-aos="zoom-in"
-          style={{
-            width: "min(420px, 68vw)",
-            height: imgHeight ? `${imgHeight}px` : undefined,
-            maxHeight: "24vh",
-          }}
-        >
-          {settings?.logo_url && (
+      <div className="container mx-auto px-4 relative z-10 flex flex-col items-center justify-center">
+        {/* Logo Section */}
+        {settings?.logo_url && (
+          <div
+            className="relative mb-8 md:mb-12 hover-scale transition-smooth"
+            data-aos="zoom-in"
+          >
+            <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
             <img
               src={settings.logo_url}
               alt={storeName}
-              className="w-full h-full object-contain"
+              className="relative w-full max-w-[280px] md:max-w-[420px] h-auto max-h-[15vh] md:max-h-[22vh] object-contain"
             />
-          )}
+          </div>
+        )}
 
-        </div>
+        {/* Content Section */}
         <div
-          ref={contentRef}
-          className="max-w-3xl mx-auto text-center space-y-3 animate-fade-in"
+          className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8"
           data-aos="fade-up"
+          data-aos-delay="200"
         >
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-display text-foreground leading-tight">
-            {settings?.hero_title_l1 || "CAMISAS DE TIME"}
-            <span className="block text-primary glow-neon">
-              {settings?.hero_title_l2 || "TAILANDESAS E PRIMEIRA"}
-            </span>
-            {settings?.hero_title_l3 && (
-              <span className="block text-primary glow-neon">
-                {settings?.hero_title_l3}
+          <div className="space-y-4">
+            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] tracking-tight text-foreground">
+              {settings?.hero_title_l1 || "CAMISAS DE TIME"}
+              <span className="block mt-2 text-primary glow-neon drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                {settings?.hero_title_l2 || "TAILANDESAS E PRIMEIRA"}
               </span>
-            )}
-          </h2>
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
-            {heroPhrase}
-          </p>
+              {settings?.hero_title_l3 && (
+                <span className="block text-primary glow-neon drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                  {settings?.hero_title_l3}
+                </span>
+              )}
+            </h2>
+            
+            <p className="text-base md:text-xl text-muted-foreground/80 max-w-2xl mx-auto font-medium leading-relaxed">
+              {heroPhrase || "A maior variedade de regatas e camisas de time com qualidade premium."}
+            </p>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 justify-center pt-1">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Button
               onClick={scrollToProducts}
               size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-6 py-4 glow-soft transition-smooth"
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-10 py-7 rounded-full glow-soft transition-smooth hover:scale-105 active:scale-95"
             >
               VER COLEÇÃO
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="border-primary/30 hover:border-primary hover:bg-primary/10 hover:text-foreground font-bold text-lg px-6 py-4 transition-smooth"
+              className="w-full sm:w-auto border-primary/40 hover:border-primary hover:bg-primary/10 text-foreground font-bold text-lg px-10 py-7 rounded-full transition-smooth hover:scale-105 active:scale-95"
               onClick={scrollToAbout}
             >
               SOBRE NÓS

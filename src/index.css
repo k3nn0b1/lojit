@@ -51,7 +51,6 @@ All colors MUST be HSL.
     --gradient-dark: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background) / 0.8));
     --gradient-hero: linear-gradient(135deg, hsl(var(--background)), hsl(var(--secondary) / 0.1), hsl(var(--background)));
 
-    
     /* Shadows & Glows */
     --glow-neon: 0 0 20px hsl(var(--secondary) / 0.5), 0 0 40px hsl(var(--secondary) / 0.3);
     --glow-soft: 0 0 30px hsl(var(--secondary) / 0.2);
@@ -63,6 +62,29 @@ All colors MUST be HSL.
 
     /* Background image variable */
     --background-image: none;
+
+    /* Custom Scrollbar (Firefox) */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+  }
+
+  /* Webkit Scrollbar Customization - Minimalist & Theme Colors */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.3);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.6);
   }
 }
 
