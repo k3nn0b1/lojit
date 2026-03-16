@@ -20,14 +20,14 @@ const Footer = () => {
 
   return (
 
-    <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm mt-20">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm mt-12">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               {settings?.logo_url ? (
-                <img src={settings.logo_url} alt={storeName} className="h-14 sm:h-16 md:h-20 w-auto object-contain" />
+                <img src={settings.logo_url} alt={storeName} className="h-12 sm:h-14 md:h-16 w-auto object-contain" />
               ) : (
                 <span className="font-display text-xl text-primary font-bold">{storeName}</span>
               )}
@@ -35,16 +35,16 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="space-y-4">
-            <h4 className="font-display text-xl text-foreground">INFORMAÇÕES</h4>
-            <div className="space-y-3 text-muted-foreground">
+          <div className="space-y-3">
+            <h4 className="font-display text-lg text-foreground">INFORMAÇÕES</h4>
+            <div className="space-y-2 text-muted-foreground text-sm">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <span>{address}</span>
               </div>
               
               <div className="flex items-start gap-2">
-                <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div>
                   {(settings?.opening_hours || "Segunda a Sexta: 9h às 18h\nSábado: 9h às 14h").split('\n').map((line, i) => (
                     <p key={i}>{line}</p>
@@ -55,17 +55,17 @@ const Footer = () => {
           </div>
 
           {/* Social */}
-          <div className="space-y-4">
-            <h4 className="font-display text-xl text-foreground">REDES SOCIAIS</h4>
-            <div className="flex flex-col gap-3">
+          <div className="space-y-3">
+            <h4 className="font-display text-lg text-foreground">REDES SOCIAIS</h4>
+            <div className="flex flex-col gap-2">
               {showInsta && (
                 <a
                   href={settings?.instagram_url || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group text-sm"
                 >
-                  <Instagram className="w-5 h-5 text-primary shrink-0" />
+                  <Instagram className="w-4 h-4 text-primary shrink-0" />
                   <span className="font-medium">
                     {settings?.instagram_url 
                       ? `@${settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0]}` 
@@ -79,9 +79,9 @@ const Footer = () => {
                   href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group text-sm"
                 >
-                  <WhatsappIcon className="w-5 h-5 text-primary shrink-0" />
+                  <WhatsappIcon className="w-4 h-4 text-primary shrink-0" />
                   <span className="font-medium">{whatsapp}</span>
                 </a>
               )}
@@ -91,9 +91,9 @@ const Footer = () => {
                   href={youtube}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group text-sm"
                 >
-                  <YoutubeIcon className="w-5 h-5 text-primary shrink-0" />
+                  <YoutubeIcon className="w-4 h-4 text-primary shrink-0" />
                   <span className="font-medium">YouTube</span>
                 </a>
               )}
@@ -101,7 +101,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border/50 text-center text-muted-foreground text-sm">
+        <div className="mt-8 pt-6 border-t border-border/50 text-center text-muted-foreground text-xs">
           <p>{footerInfo}</p>
         </div>
 

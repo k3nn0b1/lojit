@@ -78,6 +78,14 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [selectedSize, setSelectedSize] = useState(defaultSelectedSize);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const productPhotos = useMemo(() => {
     const photos = [
@@ -145,7 +153,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full"
       >
         <div 
-          className="relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group touch-none"
+          className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
         >
           <AnimatePresence initial={false}>
             <motion.div
@@ -154,7 +162,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              drag="x"
+              drag={!isMobile && productPhotos.length > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.5}
               onDragEnd={(_, info) => {
@@ -199,7 +207,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <ChevronRight className="w-5 h-5" />
               </button>
               
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 hidden md:flex gap-1 z-20">
                 {productPhotos.map((_, i) => (
                   <div
                     key={i}
