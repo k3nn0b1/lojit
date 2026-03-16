@@ -58,8 +58,8 @@ All colors MUST be HSL.
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
     
     /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-smooth: all 0.2s ease-out;
+    --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     /* Background image variable */
     --background-image: none;
@@ -136,8 +136,8 @@ All colors MUST be HSL.
 
 @keyframes float-3 {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(20px, -40px) rotate(120deg); }
-  66% { transform: translate(-30px, -20px) rotate(240deg); }
+  33% { transform: translate(15px, -25px) rotate(120deg); }
+  66% { transform: translate(-20px, -15px) rotate(240deg); }
 }
 
 @keyframes progress-loading {
@@ -167,7 +167,16 @@ All colors MUST be HSL.
   width: 60px;
   height: 60px;
   opacity: 0.1;
-  filter: drop-shadow(0 0 10px hsl(var(--secondary)));
+  filter: drop-shadow(0 0 8px hsl(var(--secondary) / 0.5));
+  will-change: transform;
+}
+
+@media (max-width: 768px) {
+  .football {
+    filter: none; /* Filtros em elementos fixos + animação matam a performance no mobile */
+    width: 45px;
+    height: 45px;
+  }
 }
 
 .football:nth-child(1) {

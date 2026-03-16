@@ -9,6 +9,7 @@ import FootballBackground from './FootballBackground';
 
 const BackgroundManager: React.FC = () => {
   const { settings } = useStoreSettings();
+  const [scrollY, setScrollY] = React.useState(0);
 
   const colors = useMemo(() => {
     if (!settings) return null;
@@ -19,11 +20,25 @@ const BackgroundManager: React.FC = () => {
     };
   }, [settings]);
 
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Usamos requestAnimationFrame para não sobrecarregar o processamento
+      window.requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+      });
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   if (!settings || !colors) return null;
 
   const isSolid = !settings.background_type || settings.background_type === 'solid';
+  // O background animado só precisa renderizar enquanto o usuário ainda consegue vê-lo (até ~150% da altura da tela)
+  const shouldRenderBackground = scrollY < (window.innerHeight * 1.5);
 
   const renderBackground = () => {
+    if (!shouldRenderBackground) return null;
     if (isSolid) {
       return <FootballBackground mode="hero" />;
     }
@@ -45,7 +60,10 @@ const BackgroundManager: React.FC = () => {
   return (
     <>
       {/* Background animado sempre fixo ocupando a tela toda */}
-      <div className="fixed inset-0 z-[-20] overflow-hidden pointer-events-none">
+      <div 
+        className="fixed inset-0 z-[-20] overflow-hidden pointer-events-none"
+        style={{ willChange: 'transform' }}
+      >
         {renderBackground()}
       </div>
 
@@ -58,14 +76,14 @@ const BackgroundManager: React.FC = () => {
         className="absolute inset-x-0 top-0 z-[-15] pointer-events-none"
         style={{ 
           height: '120vh',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.95) 100%)' 
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.95) 100%)',
+          willChange: 'opacity'
         }}
       />
       
       {/* 
           Overlay do Corpo:
           Começa onde o fade termina e vai até o fim do documento.
-          O segredo aqui é usar uma cor de fundo sólida no body ou em uma div pai que não force altura extra.
       */}
       <div 
         className="absolute inset-x-0 top-[120vh] bottom-0 z-[-15] pointer-events-none bg-black/95"

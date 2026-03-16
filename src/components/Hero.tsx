@@ -114,9 +114,9 @@ const Hero = () => {
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-1/4 left-10 w-20 h-20 rounded-full bg-primary/10 blur-3xl animate-pulse" />
+      <div className="absolute top-1/4 left-10 w-20 h-20 rounded-full bg-primary/10 blur-xl md:blur-3xl md:animate-pulse" />
       <div
-        className="absolute bottom-1/4 right-10 w-32 h-32 rounded-full bg-primary/10 blur-3xl animate-pulse"
+        className="absolute bottom-1/4 right-10 w-32 h-32 rounded-full bg-primary/10 blur-xl md:blur-3xl md:animate-pulse"
         style={{ animationDelay: "1s" }}
       />
       <div

@@ -4,17 +4,20 @@ const AnimatedBackground2 = ({
   primaryColor = '#4f46e5', 
   backgroundColor = '#f8fafc' 
 }) => {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden" style={{ backgroundColor }}>
       <div 
         className="absolute inset-0 opacity-20 animate-pulse-slow"
         style={{ 
-          background: `radial-gradient(circle at 50% 50%, ${primaryColor}44 0%, transparent 70%)` 
+          background: `radial-gradient(circle at 50% 50%, ${primaryColor}44 0%, transparent 70%)`,
+          willChange: 'opacity'
         }}
       />
 
       <div className="absolute inset-0 opacity-[0.2]">
-        <svg width="100%" height="100%" className="animate-flow-slow">
+        <svg width="100%" height="100%" className="animate-flow-slow" style={{ willChange: 'transform' }}>
           <defs>
             <pattern id="topo-pattern-1" width="800" height="800" patternUnits="userSpaceOnUse">
               <path d="M0 200 Q 200 100 400 200 T 800 200" fill="none" stroke={primaryColor} strokeWidth="2" opacity="0.8" />
@@ -26,17 +29,19 @@ const AnimatedBackground2 = ({
         </svg>
       </div>
 
-      <div className="absolute inset-0 opacity-[0.1]">
-        <svg width="100%" height="100%" className="animate-flow-fast">
-          <defs>
-            <pattern id="topo-pattern-2" width="600" height="600" patternUnits="userSpaceOnUse">
-              <path d="M0 150 Q 150 250 300 150 T 600 150" fill="none" stroke={primaryColor} strokeWidth="1" />
-              <path d="M0 450 Q 150 350 300 450 T 600 450" fill="none" stroke={primaryColor} strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="200%" height="200%" fill="url(#topo-pattern-2)" />
-        </svg>
-      </div>
+      {!isMobile && (
+        <div className="absolute inset-0 opacity-[0.1]">
+          <svg width="100%" height="100%" className="animate-flow-fast" style={{ willChange: 'transform' }}>
+            <defs>
+              <pattern id="topo-pattern-2" width="600" height="600" patternUnits="userSpaceOnUse">
+                <path d="M0 150 Q 150 250 300 150 T 600 150" fill="none" stroke={primaryColor} strokeWidth="1" />
+                <path d="M0 450 Q 150 350 300 450 T 600 450" fill="none" stroke={primaryColor} strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="200%" height="200%" fill="url(#topo-pattern-2)" />
+          </svg>
+        </div>
+      )}
 
       <div 
         className="absolute inset-0 opacity-[0.03]" 
@@ -50,7 +55,8 @@ const AnimatedBackground2 = ({
         <div 
           className="w-full h-1/4 opacity-10 animate-scan-float"
           style={{ 
-            background: `linear-gradient(to bottom, transparent, ${primaryColor}, transparent)` 
+            background: `linear-gradient(to bottom, transparent, ${primaryColor}, transparent)`,
+            willChange: 'transform'
           }}
         />
       </div>

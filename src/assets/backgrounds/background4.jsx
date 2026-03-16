@@ -21,12 +21,14 @@ const AnimatedBackground4 = ({
   const feColorMatrixRef = useRef(null);
   const hueRotateMotionValue = useMotionValue(180);
   const hueRotateAnimation = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
   const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
   useEffect(() => {
-    if (feColorMatrixRef.current && animationEnabled) {
+    // Desativar animação SV no mobile para preservar performance
+    if (feColorMatrixRef.current && animationEnabled && !isMobile) {
       if (hueRotateAnimation.current) {
         hueRotateAnimation.current.stop();
       }
@@ -49,7 +51,7 @@ const AnimatedBackground4 = ({
         }
       };
     }
-  }, [animationEnabled, animationDuration]);
+  }, [animationEnabled, animationDuration, isMobile]);
 
   return (
     <div
@@ -66,11 +68,12 @@ const AnimatedBackground4 = ({
       <div
         style={{
           position: "absolute",
-          inset: -displacementScale,
-          filter: animationEnabled ? `url(#shadowoverlay-${id}) blur(8px)` : "none"
+          inset: isMobile ? 0 : -displacementScale,
+          filter: (animationEnabled && !isMobile) ? `url(#shadowoverlay-${id}) blur(8px)` : "none",
+          willChange: isMobile ? 'auto' : 'filter'
         }}
       >
-        {animationEnabled && (
+        {animationEnabled && !isMobile && (
           <svg style={{ position: "absolute", width: 0, height: 0 }}>
             <defs>
               <filter id={`shadowoverlay-${id}`}>
@@ -117,7 +120,8 @@ const AnimatedBackground4 = ({
             maskRepeat: "no-repeat",
             maskPosition: "center",
             width: "100%",
-            height: "100%"
+            height: "100%",
+            opacity: isMobile ? 0.3 : 1
           }}
         />
       </div>

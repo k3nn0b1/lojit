@@ -100,9 +100,9 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   }, [sortedSizes, product.stockBySize, hasStockBySize]);
 
   return (
-    <Card className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft">
+    <Card className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full">
       <div
-        className="relative aspect-square overflow-hidden bg-muted cursor-pointer"
+        className="relative aspect-square overflow-hidden bg-muted cursor-pointer shrink-0"
         onClick={() => setShowStockDetails((prev) => !prev)}
       >
         {cldImage ? (
@@ -126,23 +126,23 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         </Badge>
       </div>
 
-      <CardContent className="p-4 space-y-3">
-        <h3 className="font-display text-xl text-foreground line-clamp-2">
+      <CardContent className="p-3 md:p-4 flex-grow flex flex-col space-y-2 md:space-y-3">
+        <h3 className="font-display text-base md:text-xl text-foreground line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem]">
           {product.name}
         </h3>
         
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-primary">
+          <span className="text-lg md:text-2xl font-bold text-primary">
             {formatBRL(product.price)}
           </span>
         </div>
 
         {!isSoldOut && (
           <div className="space-y-2">
-            <label className="text-sm text-muted-foreground font-medium">
+            <label className="text-[10px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
               Tamanho:
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
               {displaySizes.map((size) => {
                 const key = size.trim();
                 const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
@@ -150,10 +150,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   <button
                     key={key}
                     onClick={() => setSelectedSize(key)}
-                    className={`px-4 py-2 rounded-md border transition-smooth font-medium ${
+                    className={`h-8 w-8 md:h-10 md:w-10 flex items-center justify-center rounded-md border transition-smooth font-bold text-xs md:text-sm ${
                       selectedSize === key
-                        ? "bg-primary/90 text-primary-foreground border-primary glow-soft"
-                        : "border-border hover:border-primary/50 bg-background text-foreground"
+                        ? "bg-primary text-primary-foreground border-primary glow-soft"
+                        : "border-border hover:border-primary/50 bg-background/50 text-foreground"
                     }`}
                   >
                     {key}
@@ -165,8 +165,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         )}
         
         {showStockDetails && (
-          <div className="mt-3 p-3 rounded-md border border-border/50 bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-2">Estoque por tamanho</p>
+          <div className="mt-auto pt-3 p-3 rounded-md border border-border/50 bg-muted/50">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Estoque</p>
             <ul className="grid grid-cols-2 gap-2">
               {sortedSizes
                 .filter((size) => {
@@ -180,10 +180,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   return (
                     <li
                       key={key}
-                      className="flex items-center justify-between rounded-md bg-background/60 px-3 py-2 border border-border/50"
+                      className="flex items-center justify-between rounded-md bg-background/60 px-2 py-1 border border-border/50"
                     >
-                      <span className="font-medium">{key}</span>
-                      <span className="text-sm text-foreground">
+                      <span className="font-bold text-xs">{key}</span>
+                      <span className="text-xs text-foreground">
                         {qty !== undefined ? qty : "N/D"}
                       </span>
                     </li>
@@ -194,7 +194,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-3 md:p-4 pt-0 mt-auto">
         <Button
           onClick={handleAddToCart}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth"
@@ -205,8 +205,9 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               : (product.stock !== undefined && product.stock <= 0)
           }
         >
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          ADICIONAR AO CARRINHO
+          <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
+          <span className="hidden md:inline">ADICIONAR AO CARRINHO</span>
+          <span className="md:hidden">COMPRAR</span>
         </Button>
       </CardFooter>
     </Card>
