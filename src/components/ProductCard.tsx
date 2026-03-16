@@ -144,27 +144,78 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       <Card 
         className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full"
       >
-          <div 
-            className="relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer"
-            onClick={() => setIsDetailsOpen(true)}
-          >
-            {mainCldImage ? (
-              <AdvancedImage
-                cldImg={mainCldImage}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-            ) : (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
+        <div 
+          className="relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group touch-none"
+        >
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={currentPhotoIndex}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.5}
+              onDragEnd={(_, info) => {
+                const swipeThreshold = 30;
+                if (info.offset.x > swipeThreshold) {
+                  prevPhoto();
+                } else if (info.offset.x < -swipeThreshold) {
+                  nextPhoto();
+                }
+              }}
+              onClick={() => setIsDetailsOpen(true)}
+              className="w-full h-full absolute inset-0"
+            >
+              {productPhotos[currentPhotoIndex]?.publicId ? (
+                <AdvancedImage
+                  cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
+                />
+              ) : (
+                <img
+                  src={productPhotos[currentPhotoIndex]?.url || product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {productPhotos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-20">
+                {productPhotos.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${
+                      currentPhotoIndex === i ? "w-4 bg-primary" : "w-1.5 bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
           )}
+
           {isSoldOut && (
-            <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground">Esgotado</Badge>
+            <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground z-30">Esgotado</Badge>
           )}
-          <Badge className="absolute top-3 right-3 bg-primary/90 text-primary-foreground">
+          <Badge className="absolute top-3 right-3 bg-primary/90 text-primary-foreground z-30">
             {product.category}
           </Badge>
         </div>
