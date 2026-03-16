@@ -47,6 +47,7 @@ interface AdminProduct {
   publicId2?: string;
   imageUrl3?: string;
   publicId3?: string;
+  description?: string;
 }
 
 // Cloudinary envs e upload helpers permanecem iguais
@@ -764,6 +765,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     if (typeof fields.category !== "undefined") payload.category = fields.category;
     if (typeof fields.price !== "undefined") payload.price = fields.price;
     if (typeof fields.stock === "number" && Number.isFinite(fields.stock)) payload.stock = fields.stock;
+    if (typeof fields.description !== "undefined") payload.description = fields.description;
 
     if (IS_SUPABASE_READY) {
       try {

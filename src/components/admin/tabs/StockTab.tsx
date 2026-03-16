@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -170,6 +171,15 @@ const StockTab = ({
                                     className="h-8 text-sm"
                                     value={fieldData?.name ?? p.name}
                                     onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), name: e.target.value } }))}
+                                  />
+                                </div>
+                                <div className="grid gap-1">
+                                  <Label className="text-xs">Descrição / Detalhes</Label>
+                                  <Textarea
+                                    className="text-sm min-h-[60px] resize-y"
+                                    value={fieldData?.description ?? p.description ?? ""}
+                                    onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), description: e.target.value } }))}
+                                    placeholder="Detalhes do produto"
                                   />
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
