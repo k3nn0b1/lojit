@@ -361,8 +361,8 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen relative bg-background">
-      <FootballBackground />
+    <div className="min-h-screen relative bg-transparent">
+      
 
       <div className="relative z-10">
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />

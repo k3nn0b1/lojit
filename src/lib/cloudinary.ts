@@ -1,6 +1,6 @@
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dlmkynuni";
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "";
-const DEFAULT_FOLDER = "fut75/products";
+const DEFAULT_FOLDER = "store/products";
 
 export async function uploadToCloudinary(file: File, folder: string = DEFAULT_FOLDER): Promise<{ secure_url: string; public_id: string }> {
   if (!UPLOAD_PRESET) throw new Error("Upload preset não configurado. Defina VITE_CLOUDINARY_UPLOAD_PRESET no .env");

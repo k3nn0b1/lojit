@@ -1,7 +1,11 @@
 import footballSvg from "@/assets/football.svg";
 import footballSvg2 from "@/assets/football2.svg";
 
-const FootballBackground = () => {
+interface FootballBackgroundProps {
+  mode?: 'global' | 'hero';
+}
+
+const FootballBackground: React.FC<FootballBackgroundProps> = ({ mode = 'global' }) => {
   const footballImages = [footballSvg, footballSvg2];
   
   return (
@@ -14,6 +18,10 @@ const FootballBackground = () => {
           className="football"
         />
       ))}
+      {/* Overlay escuro apenas para o modo global */}
+      {mode === 'global' && (
+        <div className="absolute inset-0 bg-black/90 pointer-events-none z-[1]" />
+      )}
     </div>
   );
 };

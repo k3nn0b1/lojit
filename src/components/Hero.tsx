@@ -52,7 +52,7 @@ const Hero = () => {
       ref={sectionRef}
       className="relative h-svh pt-4 md:pt-8 pb-12 md:pb-16 overflow-hidden flex items-start justify-center scroll-mt-24 md:scroll-mt-32"
     >
-      <div className="absolute inset-0 gradient-hero opacity-50" />
+      <div className="absolute inset-0 gradient-hero opacity-30" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div

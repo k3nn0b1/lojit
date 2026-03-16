@@ -12,6 +12,13 @@ import { Loader2, Upload, X, Instagram } from "lucide-react";
 import { WhatsappIcon } from "../../icons/WhatsappIcon";
 import { YoutubeIcon } from "../../icons/YoutubeIcon";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 export default function SettingsTab() {
@@ -81,6 +88,8 @@ export default function SettingsTab() {
         primary_hex: hslStringToHex(settings.primary_color),
         secondary_hex: hslStringToHex(settings.secondary_color),
         background_hex: hslStringToHex(settings.background_color),
+        background_type: settings.background_type || "solid",
+        background_config: settings.background_config || {}
       });
     }
   }, [settings]);
@@ -126,7 +135,7 @@ export default function SettingsTab() {
 
       setUploading(true);
       try {
-          const { secure_url } = await uploadToCloudinary(file, "fut75/logo");
+          const { secure_url } = await uploadToCloudinary(file, "store/logo");
           setFormData({...formData, logo_url: secure_url});
           toast.success("Logo carregado com sucesso!");
       } catch (error) {
@@ -143,7 +152,7 @@ export default function SettingsTab() {
 
       setUploading(true);
       try {
-          const { secure_url } = await uploadToCloudinary(file, "fut75/background");
+          const { secure_url } = await uploadToCloudinary(file, "store/background");
           setFormData({...formData, background_url: secure_url});
           toast.success("Background carregado com sucesso!");
       } catch (error) {
@@ -169,7 +178,7 @@ export default function SettingsTab() {
                     id="store_name" 
                     value={formData.store_name} 
                     onChange={e => setFormData({...formData, store_name: e.target.value})}
-                    placeholder="Ex: FUT75 Store"
+                    placeholder="Ex: Minha Loja"
                 />
               </div>
               <div className="grid gap-2">
@@ -179,7 +188,7 @@ export default function SettingsTab() {
                       id="instagram" 
                       value={formData.instagram_url} 
                       onChange={e => setFormData({...formData, instagram_url: e.target.value})}
-                      placeholder="Ex: @fut75store"
+                      placeholder="Ex: @minhaloja"
                       className="flex-1"
                   />
                   <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
@@ -188,7 +197,7 @@ export default function SettingsTab() {
                       checked={formData.show_instagram} 
                       onCheckedChange={checked => setFormData({...formData, show_instagram: checked})}
                     />
-                    <Label htmlFor="show_instagram" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                    <Label htmlFor="show_instagram" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
                   </div>
                 </div>
               </div>
@@ -209,7 +218,7 @@ export default function SettingsTab() {
                       checked={formData.show_whatsapp} 
                       onCheckedChange={checked => setFormData({...formData, show_whatsapp: checked})}
                     />
-                    <Label htmlFor="show_whatsapp" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                    <Label htmlFor="show_whatsapp" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
                   </div>
                 </div>
               </div>
@@ -230,7 +239,7 @@ export default function SettingsTab() {
                       checked={formData.show_youtube} 
                       onCheckedChange={checked => setFormData({...formData, show_youtube: checked})}
                     />
-                    <Label htmlFor="show_youtube" className="text-xs font-bold cursor-pointer">MOSTRAR NO FOOTER</Label>
+                    <Label htmlFor="show_youtube" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
                   </div>
                 </div>
               </div>
@@ -396,7 +405,26 @@ export default function SettingsTab() {
               <h4 className="text-sm font-medium mb-4">Background do Site</h4>
               <div className="space-y-6">
                 <div className="grid gap-2">
-                    <Label htmlFor="background_color" className="text-xs uppercase text-muted-foreground">Cor de Fundo</Label>
+                    <Label className="text-xs uppercase text-muted-foreground">Tipo de Estilo de Fundo</Label>
+                    <Select 
+                      value={formData.background_type || "solid"} 
+                      onValueChange={value => setFormData({...formData, background_type: value})}
+                    >
+                      <SelectTrigger className="bg-[#1a1a1a] border-border">
+                        <SelectValue placeholder="Selecione o estilo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="solid">Esportivo (Bolas de Futebol)</SelectItem>
+                        <SelectItem value="bg1">Vibrante (Mesh Gradient)</SelectItem>
+                        <SelectItem value="bg2">Topográfico (Interactive Flow)</SelectItem>
+                        <SelectItem value="bg3">Auroras (Radial Gradient)</SelectItem>
+                        <SelectItem value="bg4">Etereo (Shadow Movement)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="background_color" className="text-xs uppercase text-muted-foreground">Cor de Fundo Base / Sólida</Label>
                     <div className="flex items-center gap-3">
                         <Input 
                             type="color"
@@ -409,32 +437,6 @@ export default function SettingsTab() {
                     </div>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label className="text-xs uppercase text-muted-foreground">Imagem de Fundo (Opcional)</Label>
-                  <div className="flex items-center gap-4">
-                      {formData.background_url && (
-                          <div className="h-20 w-32 rounded-md border border-border overflow-hidden bg-white/5 relative group">
-                              <img src={formData.background_url} alt="BG Preview" className="h-full w-full object-cover" />
-                              <button 
-                                onClick={() => setFormData({...formData, background_url: null})}
-                                className="absolute top-1 right-1 bg-destructive p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <X className="w-3 h-3 text-white" />
-                              </button>
-                          </div>
-                      )}
-                      <div className="flex-1">
-                          <Label 
-                              htmlFor="bg-upload" 
-                              className="flex items-center justify-center gap-2 h-12 px-4 rounded-md border border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth"
-                          >
-                              {uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
-                              <span className="font-medium">{uploading ? "Enviando..." : "Carregar imagem de fundo"}</span>
-                          </Label>
-                          <input id="bg-upload" type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} disabled={uploading} />
-                      </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

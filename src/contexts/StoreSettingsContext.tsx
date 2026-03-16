@@ -23,6 +23,8 @@ export interface StoreSettings {
   secondary_color: string;
   background_color: string;
   background_url: string | null;
+  background_type?: 'solid' | 'bg1' | 'bg2' | 'bg3' | 'bg4';
+  background_config?: any;
   opening_hours?: string;
   updated_at?: string;
 }
@@ -50,6 +52,8 @@ const defaultSettings: StoreSettings = {
   secondary_color: "0 0% 100%",
   background_color: "0 0% 5%",
   background_url: null,
+  background_type: "bg3",
+  background_config: {},
   opening_hours: "",
   show_instagram: true,
   show_whatsapp: true,
@@ -63,10 +67,6 @@ const getInitialSettings = (): StoreSettings => {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        // Proteção contra cache antigo com marca FUT75
-        if (parsed.store_name && parsed.store_name.includes("FUT75")) {
-          return defaultSettings;
-        }
         return parsed;
       } catch (e) {}
     }

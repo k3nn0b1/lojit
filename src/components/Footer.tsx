@@ -11,7 +11,7 @@ const Footer = () => {
   const youtube = settings?.youtube_url || "";
   const footerInfo = settings?.footer_info 
     ? settings.footer_info.replace("FUT75 Store", storeName) 
-    : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : "";
+    : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : `© ${new Date().getFullYear()}. Todos os direitos reservados.`;
 
   // Flags de visibilidade (default para true se não existirem nas configurações antigas)
   const showInsta = settings?.show_instagram !== false;
@@ -60,16 +60,16 @@ const Footer = () => {
             <div className="flex flex-col gap-3">
               {showInsta && (
                 <a
-                  href={settings?.instagram_url || "https://instagram.com/fut75store"}
+                  href={settings?.instagram_url || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group"
                 >
                   <Instagram className="w-5 h-5 text-primary shrink-0" />
                   <span className="font-medium">
-                    @{settings?.instagram_url 
-                      ? settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0] 
-                      : "fut75store"}
+                    {settings?.instagram_url 
+                      ? `@${settings.instagram_url.split('/').filter(Boolean).pop()?.split('?')[0]}` 
+                      : "Instagram"}
                   </span>
                 </a>
               )}

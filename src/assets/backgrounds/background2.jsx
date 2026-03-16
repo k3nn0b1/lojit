@@ -1,18 +1,11 @@
 import React from 'react';
 
-/**
- * AnimatedBackground - Estilo "Topographic Flow" Intensificado
- * @param {string} primaryColor - Cor das linhas e efeitos (ex: '#6366f1').
- * @param {string} backgroundColor - Cor sólida de fundo (ex: '#000000' ou '#ffffff').
- */
-const AnimatedBackground = ({ 
+const AnimatedBackground2 = ({ 
   primaryColor = '#4f46e5', 
   backgroundColor = '#f8fafc' 
 }) => {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden" style={{ backgroundColor }}>
-      
-      {/* Camada 1: Brilho Atmosférico Pulsante */}
       <div 
         className="absolute inset-0 opacity-20 animate-pulse-slow"
         style={{ 
@@ -20,7 +13,6 @@ const AnimatedBackground = ({
         }}
       />
 
-      {/* Camada 2: Linhas Topográficas Principais (Lentas) */}
       <div className="absolute inset-0 opacity-[0.2]">
         <svg width="100%" height="100%" className="animate-flow-slow">
           <defs>
@@ -34,7 +26,6 @@ const AnimatedBackground = ({
         </svg>
       </div>
 
-      {/* Camada 3: Linhas Secundárias (Rápidas e Cruzadas) */}
       <div className="absolute inset-0 opacity-[0.1]">
         <svg width="100%" height="100%" className="animate-flow-fast">
           <defs>
@@ -47,7 +38,6 @@ const AnimatedBackground = ({
         </svg>
       </div>
 
-      {/* Camada 4: Grelha de Pontos Estática para Contraste */}
       <div 
         className="absolute inset-0 opacity-[0.03]" 
         style={{ 
@@ -56,7 +46,6 @@ const AnimatedBackground = ({
         }}
       />
 
-      {/* Linha de Scanner Vertical */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div 
           className="w-full h-1/4 opacity-10 animate-scan-float"
@@ -66,59 +55,34 @@ const AnimatedBackground = ({
         />
       </div>
 
-      {/* Definições de Animação */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes flow-slow {
           0% { transform: translate(-25%, -25%) rotate(0deg); }
           50% { transform: translate(-20%, -20%) rotate(2deg); }
           100% { transform: translate(-25%, -25%) rotate(0deg); }
         }
-
         @keyframes flow-fast {
           0% { transform: translate(0, 0) scale(1); }
           50% { transform: translate(-10%, -5%) scale(1.05); }
           100% { transform: translate(0, 0) scale(1); }
         }
-
         @keyframes scan-float {
           0% { transform: translateY(-100%); opacity: 0; }
           20% { opacity: 0.2; }
           80% { opacity: 0.2; }
           100% { transform: translateY(400%); opacity: 0; }
         }
-
         @keyframes pulse-slow {
           0%, 100% { opacity: 0.1; }
           50% { opacity: 0.25; }
         }
-
-        .animate-flow-slow {
-          animation: flow-slow 40s infinite linear;
-        }
-
-        .animate-flow-fast {
-          animation: flow-fast 25s infinite ease-in-out;
-        }
-
-        .animate-scan-float {
-          animation: scan-float 12s infinite ease-in-out;
-        }
-
-        .animate-pulse-slow {
-          animation: pulse-slow 8s infinite ease-in-out;
-        }
+        .animate-flow-slow { animation: flow-slow 40s infinite linear; }
+        .animate-flow-fast { animation: flow-fast 25s infinite ease-in-out; }
+        .animate-scan-float { animation: scan-float 12s infinite ease-in-out; }
+        .animate-pulse-slow { animation: pulse-slow 8s infinite ease-in-out; }
       `}} />
     </div>
   );
 };
 
-export default function App() {
-  return (
-    <div className="relative min-h-screen">
-      <AnimatedBackground 
-        primaryColor="#6366f1" 
-        backgroundColor="#0f172a" /* Alterado para fundo escuro para realçar a animação */
-      />
-    </div>
-  );
-}
+export default AnimatedBackground2;
