@@ -8,12 +8,13 @@ import { Pencil, Check, X } from "lucide-react";
 import { parseSupabaseError, sortSizes } from "@/lib/utils";
 
 interface SizesTabProps {
+  tenantId?: string | null;
   globalSizes: string[];
   setGlobalSizes: React.Dispatch<React.SetStateAction<string[]>>;
   IS_SUPABASE_READY: boolean;
 }
 
-const SizesTab = ({ globalSizes, setGlobalSizes, IS_SUPABASE_READY }: SizesTabProps) => {
+const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: SizesTabProps) => {
   const [newGlobalSize, setNewGlobalSize] = useState("");
   const [editingSize, setEditingSize] = useState<string | null>(null);
   const [sizeEditValue, setSizeEditValue] = useState("");
@@ -22,14 +23,14 @@ const SizesTab = ({ globalSizes, setGlobalSizes, IS_SUPABASE_READY }: SizesTabPr
     const removed = globalSizes.filter((s) => !next.includes(s));
     const normalized = sortSizes(next);
     setGlobalSizes(normalized);
-    if (IS_SUPABASE_READY) {
+    if (IS_SUPABASE_READY && tenantId) {
       try {
-        const rows = normalized.map((name) => ({ name }));
-        const { error: upsertErr } = await supabase.from("sizes").upsert(rows, { onConflict: "name" });
+        const rows = normalized.map((name) => ({ name, tenant_id: tenantId }));
+        const { error: upsertErr } = await supabase.from("sizes").upsert(rows, { onConflict: "name,tenant_id" });
         if (upsertErr) throw upsertErr;
 
         if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("sizes").delete().in("name", removed);
+          const { error: delErr } = await supabase.from("sizes").delete().in("name", removed).eq("tenant_id", tenantId);
           if (delErr) throw delErr;
         }
 

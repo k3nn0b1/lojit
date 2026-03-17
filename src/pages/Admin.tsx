@@ -30,6 +30,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { useTenant } from "@/hooks/use-tenant";
 
 
 // Modelo de produto
@@ -62,6 +63,7 @@ const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.e
 
 const Admin = () => {
   const { settings, loading: settingsLoading } = useStoreSettings();
+  const { tenantId } = useTenant();
 
   useEffect(() => {
     if (settings?.store_name) {
@@ -265,7 +267,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
           : generateUUID();
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) });
+          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone), tenant_id: tenantId });
         } catch {}
         
 
@@ -278,6 +280,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
             itens,
             valor_total: adminCartTotal,
             status: "concluido",
+            tenant_id: tenantId,
           });
         if (error) throw error;
 
@@ -285,6 +288,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
         const { data: pedidosData } = await supabase
           .from("pedidos")
           .select("*")
+          .eq("tenant_id", tenantId)
           .order("data_criacao", { ascending: false });
         if (pedidosData) setPedidos(sortPedidos(pedidosData as any[]));
 
@@ -313,7 +317,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
           : generateUUID();
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone) });
+          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone), tenant_id: tenantId });
         } catch {}
         
 
@@ -326,6 +330,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
             itens,
             valor_total: adminCartTotal,
             status: "pendente",
+            tenant_id: tenantId,
           });
         if (error) throw error;
 
@@ -333,6 +338,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
         const { data: pedidosData } = await supabase
           .from("pedidos")
           .select("*")
+          .eq("tenant_id", tenantId)
           .order("data_criacao", { ascending: false });
         if (pedidosData) setPedidos(sortPedidos(pedidosData as any[]));
       }
@@ -364,6 +370,7 @@ useEffect(() => {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
+      .eq("tenant_id", tenantId)
       .order("data_criacao", { ascending: false });
     if (!error && data) setPedidos(sortPedidos(data as any[]));
   };
@@ -394,7 +401,7 @@ useEffect(() => {
   return () => {
     try { supabase.removeChannel(channel); } catch {}
   };
-}, []);
+}, [tenantId]);
 
 // Realtime de clientes removido daqui pois está no componente CustomersTab
 
@@ -433,12 +440,13 @@ useEffect(() => {
       const { data } = await supabase
         .from('categories')
         .select('name')
+        .eq('tenant_id', tenantId)
         .order('name', { ascending: true });
       if (data) setCategories((data as any[]).map(c => c.name));
     })
     .subscribe();
   return () => { try { supabase.removeChannel(channel); } catch {} };
-}, []);
+}, [tenantId]);
 
 // Realtime de tamanhos
 useEffect(() => {
@@ -449,12 +457,13 @@ useEffect(() => {
       const { data } = await supabase
         .from('sizes')
         .select('name')
+        .eq('tenant_id', tenantId)
         .order('name', { ascending: true });
       if (data) setGlobalSizes((data as any[]).map(s => s.name));
     })
     .subscribe();
   return () => { try { supabase.removeChannel(channel); } catch {} };
-}, []);
+}, [tenantId]);
 
 // Filtro
 const filteredPedidos = pedidos.filter((p) => {
@@ -495,13 +504,13 @@ const applyBaixaDeEstoque = async (pedido: any) => {
     const tamanho = item.tamanho;
     const qty = Number(item.quantidade || 0);
     if (!productId || !tamanho || qty <= 0) continue;
-    const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).single();
+    const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).eq('tenant_id', tenantId).single();
     if (!prodData) continue;
     const stockBySize = prodData.stockBySize || {};
     const current = Number(stockBySize[tamanho] || 0);
     const next = Math.max(0, current - qty);
     const nextStockBySize = { ...stockBySize, [tamanho]: next };
-    await supabase.from('products').update({ stockBySize: nextStockBySize }).eq('id', productId);
+    await supabase.from('products').update({ stockBySize: nextStockBySize }).eq('id', productId).eq('tenant_id', tenantId);
   }
 };
 
@@ -518,14 +527,14 @@ const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) 
       if (qty <= 0) continue;
       const productId = it.product_id;
       const tamanho = it.tamanho;
-      const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).single();
+      const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).eq('tenant_id', tenantId).single();
       if (!prodData) continue;
       const stockBySize = prodData.stockBySize || {};
       const current = Number(stockBySize[tamanho] || 0);
       const next = Math.max(0, current + qty);
       const nextStockBySize = { ...stockBySize, [tamanho]: next };
       const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-      await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', productId);
+      await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', productId).eq('tenant_id', tenantId);
     }
 
     // Atualiza itens do pedido com flag de devolvido
@@ -542,7 +551,7 @@ const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) 
     // Se devolveu todos itens (somando devolvido == somando quantidade), marcar status 'devolvido'
     const isTotalReturn = newItens.every((it: any) => Number(it.devolvido || 0) >= Number(it.quantidade || 0));
 
-    const { error } = await supabase.from('pedidos').update({ itens: newItens, status: isTotalReturn ? 'devolvido' : 'parcialmente_devolvido' }).eq('id', pedido.id);
+    const { error } = await supabase.from('pedidos').update({ itens: newItens, status: isTotalReturn ? 'devolvido' : 'parcialmente_devolvido' }).eq('id', pedido.id).eq('tenant_id', tenantId);
     if (error) throw error;
 
     // Atualiza UI local
@@ -591,7 +600,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     if (action === 'concluir') {
       await applyBaixaDeEstoque(target);
     }
-    const { error } = await supabase.from('pedidos').update({ status: action === 'concluir' ? 'concluido' : 'cancelado' }).eq('id', id);
+    const { error } = await supabase.from('pedidos').update({ status: action === 'concluir' ? 'concluido' : 'cancelado' }).eq('id', id).eq('tenant_id', tenantId);
     if (error) throw error;
     // Atualização otimista de UI
     setPedidos((prev) => {
@@ -611,6 +620,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           const { data: catData, error: catErr } = await supabase
             .from("categories")
             .select("name")
+            .eq("tenant_id", tenantId)
             .order("name", { ascending: true });
           if (!catErr && catData) setCategories(catData.map((c: any) => c.name));
 
@@ -618,6 +628,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           const { data: prodData, error: prodErr } = await supabase
             .from("products")
             .select("*")
+            .eq("tenant_id", tenantId)
             .order("id", { ascending: false });
           if (!prodErr && prodData) {
             setStoredProducts(prodData.map(normalizeProductStock));
@@ -627,6 +638,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           const { data: sizeData, error: sizeErr } = await supabase
             .from("sizes")
             .select("name")
+            .eq("tenant_id", tenantId)
             .order("name", { ascending: true });
 
           if (!sizeErr && Array.isArray(sizeData) && sizeData.length > 0) {
@@ -665,7 +677,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       }
     };
     void init();
-  }, []);
+  }, [tenantId]);
 
   // Ajuste: não auto-selecionar tamanhos conforme categoria
   useEffect(() => {
@@ -988,6 +1000,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           {/* Produtos */}
           <TabsContent value="products" className="mt-6">
             <ProductsTab 
+              tenantId={tenantId}
               storedProducts={storedProducts}
               setStoredProducts={setStoredProducts}
               categories={categories}
@@ -1006,6 +1019,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           {/* Estoque */}
           <TabsContent value="stock" className="mt-6">
             <StockTab 
+              tenantId={tenantId}
               storedProducts={storedProducts}
               globalSizes={globalSizes}
               expandedProductId={expandedProductId}
@@ -1025,17 +1039,18 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
           {/* Tamanhos */}
           <TabsContent value="sizes" className="mt-6">
-            <SizesTab globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+            <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
           {/* Categorias */}
           <TabsContent value="categories" className="mt-6">
-            <CategoriesTab categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+            <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
           {/* Imagens */}
           <TabsContent value="images" className="mt-6">
             <ImagesTab 
+              tenantId={tenantId}
               storedProducts={storedProducts} 
               setStoredProducts={setStoredProducts}
               uploadToCloudinary={uploadToCloudinary}
@@ -1048,12 +1063,15 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
           {/* Clientes */}
           <TabsContent value="clientes" className="mt-6">
-            <CustomersTab IS_SUPABASE_READY={IS_SUPABASE_READY} />
+            <CustomersTab 
+              tenantId={tenantId}
+              IS_SUPABASE_READY={IS_SUPABASE_READY} 
+            />
           </TabsContent>
 
           {/* Configurações */}
           <TabsContent value="config" className="mt-6">
-            <SettingsTab />
+            <SettingsTab tenantId={tenantId} />
           </TabsContent>
         </Tabs>
 

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 
 interface StockTabProps {
+  tenantId?: string | null;
   storedProducts: any[];
   globalSizes: string[];
   expandedProductId: number | null;
@@ -33,6 +34,7 @@ interface StockTabProps {
 }
 
 const StockTab = ({
+  tenantId,
   storedProducts,
   globalSizes,
   expandedProductId,

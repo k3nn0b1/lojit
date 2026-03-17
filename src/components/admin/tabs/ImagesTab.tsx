@@ -9,6 +9,7 @@ import { Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ImagesTabProps {
+  tenantId?: string | null;
   storedProducts: any[];
   setStoredProducts: React.Dispatch<React.SetStateAction<any[]>>;
   uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
@@ -19,6 +20,7 @@ interface ImagesTabProps {
 }
 
 const ImagesTab = ({
+  tenantId,
   storedProducts,
   setStoredProducts,
   uploadToCloudinary,
@@ -57,8 +59,8 @@ const ImagesTab = ({
       const suffix = index === 1 ? "" : index;
       const payload = { [`image${suffix}`]: uploaded.secure_url, [`publicId${suffix}`]: uploaded.public_id };
 
-      if (IS_SUPABASE_READY) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
+      if (IS_SUPABASE_READY && tenantId) {
+        const { error } = await supabase.from("products").update(payload).eq("id", id).eq("tenant_id", tenantId);
         if (error) throw error;
       }
 
@@ -81,8 +83,8 @@ const ImagesTab = ({
       const suffix = index === 1 ? "" : index;
       const payload = { [`image${suffix}`]: null, [`publicId${suffix}`]: null };
 
-      if (IS_SUPABASE_READY) {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
+      if (IS_SUPABASE_READY && tenantId) {
+        const { error } = await supabase.from("products").update(payload).eq("id", id).eq("tenant_id", tenantId);
         if (error) throw error;
       }
 

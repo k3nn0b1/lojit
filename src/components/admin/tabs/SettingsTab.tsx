@@ -21,7 +21,11 @@ import {
 } from "@/components/ui/select";
 
 
-export default function SettingsTab() {
+interface SettingsTabProps {
+  tenantId?: string | null;
+}
+
+export default function SettingsTab({ tenantId }: SettingsTabProps) {
   const { settings, loading, updateSettings } = useStoreSettings();
   const [formData, setFormData] = useState<any>(null);
   const [uploading, setUploading] = useState(false);

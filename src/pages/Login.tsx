@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { setAdminSessionValid } from "@/App";
+import { useTenant } from "@/hooks/use-tenant";
 
 const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const Login = () => {
   const navigate = useNavigate();
+  const { tenantId } = useTenant();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,13 +31,15 @@ const Login = () => {
         } else {
           const uid = data.user.id;
           const email = (data.user.email || "").toLowerCase();
+          // Verificar se é admin do tenant atual
           const { data: admins, error: adminErr } = await supabase
             .from("admins")
             .select("user_id")
-            .eq("user_id", uid);
+            .eq("user_id", uid)
+            .eq("tenant_id", tenantId);
           const isAdmin = !adminErr && Array.isArray(admins) && admins.length > 0;
           if (!isAdmin) {
-            toast.error("Acesso restrito a administradores");
+            toast.error("Acesso restrito a administradores desta loja");
             await supabase.auth.signOut();
           } else {
             sessionStorage.setItem("admin_auth", "true");

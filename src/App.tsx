@@ -9,10 +9,15 @@ const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
+const TenantNotFound = lazy(() => import("./pages/TenantNotFound"));
+const MasterPanel = lazy(() => import("./pages/MasterPanel"));
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { TenantProvider, useTenantContext } from "@/contexts/TenantContext";
 import { StoreSettingsProvider, useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { checkTenantAdmin } from "@/lib/tenant-queries";
 import BackgroundManager from "./components/BackgroundManager";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +33,7 @@ const AdminGuard = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
   const [isAuth, setIsAuth] = useState(false);
+  const { tenantId } = useTenantContext();
 
   const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -56,7 +62,14 @@ const AdminGuard = () => {
             navigate("/login", { replace: true });
             return;
           }
-          const ok = !!user && sessionFlag; // Exige os dois agora
+
+          // Verificar se é admin do tenant específico
+          let isTenantAdmin = false;
+          if (user && tenantId) {
+            isTenantAdmin = await checkTenantAdmin(tenantId);
+          }
+
+          const ok = !!user && sessionFlag && isTenantAdmin;
           setIsAuth(ok);
           if (!ok) navigate("/login", { replace: true });
         } else {
@@ -74,7 +87,7 @@ const AdminGuard = () => {
       }
     };
     void verify();
-  }, [navigate, IS_SUPABASE_READY]);
+  }, [navigate, IS_SUPABASE_READY, tenantId]);
 
   if (!checked) {
     return (
@@ -89,11 +102,105 @@ const AdminGuard = () => {
   return isAuth ? <Admin /> : null;
 };
 
+const MasterGuard = () => {
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
+  const { isMaster } = useTenantContext();
+
+  const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  useEffect(() => {
+    const verify = async () => {
+      if (!isMaster) {
+          navigate("/", { replace: true });
+          return;
+      }
+      
+      try {
+        if (IS_SUPABASE_READY) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            navigate("/login", { replace: true });
+            return;
+          }
+
+          const { data: masterData } = await supabase
+            .from("master_admins")
+            .select("user_id")
+            .eq("user_id", user.id)
+            .single();
+
+          const ok = !!masterData;
+          setIsAuth(ok);
+          if (!ok) navigate("/login", { replace: true });
+        } else {
+          setIsAuth(true); // Dev mode sem supabase
+        }
+      } catch (e) {
+        navigate("/login", { replace: true });
+      } finally {
+        setChecked(true);
+      }
+    };
+    void verify();
+  }, [navigate, IS_SUPABASE_READY, isMaster]);
+
+  if (!checked) return <div className="min-h-screen bg-[#0a0a0a]" />;
+  return isAuth ? <MasterPanel /> : null;
+};
+
 const AppContent = () => {
   const { settings, loading } = useStoreSettings();
+  const { isMaster, tenantId, loading: tenantLoading, error: tenantError } = useTenantContext();
+
+  // Ainda resolvendo o tenant
+  if (tenantLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-primary font-bold text-xl tracking-[0.2em] animate-pulse">CARREGANDO</span>
+            <div className="h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
+              <div className="h-full bg-primary animate-progress-loading" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Se é o painel master, renderizar rotas do master
+  if (isMaster) {
+    return (
+      <BrowserRouter>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          </div>
+        }>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<MasterGuard />} />
+            <Route path="/" element={<MasterGuard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    );
+  }
+
+  // Tenant não encontrado
+  if (tenantError || !tenantId) {
+    return (
+      <Suspense fallback={null}>
+        <TenantNotFound />
+      </Suspense>
+    );
+  }
 
   // Bloqueia a exibição até que o carregamento termine E tenhamos o nome da loja real.
-  // Isso evita o flash verde (cores padrão do CSS) e flashes de conteúdo vazio.
   if (loading || !settings?.store_name) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -136,13 +243,15 @@ const AppContent = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreSettingsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </TooltipProvider>
-      </StoreSettingsProvider>
+      <TenantProvider>
+        <StoreSettingsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </TooltipProvider>
+        </StoreSettingsProvider>
+      </TenantProvider>
     </QueryClientProvider>
   );
 };

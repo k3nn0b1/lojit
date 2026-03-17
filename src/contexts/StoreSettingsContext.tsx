@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { hexToHSL } from "@/lib/colors";
+import { useTenantContext } from "@/contexts/TenantContext";
 
 export interface StoreSettings {
-  id: number;
+  tenant_id: string;
   store_name: string;
   logo_url: string | null;
   address: string;
@@ -41,7 +42,7 @@ interface StoreSettingsContextType {
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
 const defaultSettings: StoreSettings = {
-  id: 1,
+  tenant_id: "",
   store_name: "",
   logo_url: null,
   address: "",
@@ -63,9 +64,9 @@ const defaultSettings: StoreSettings = {
   font_family: "Inter"
 };
 
-const getInitialSettings = (): StoreSettings => {
-  if (typeof window !== "undefined") {
-    const cached = localStorage.getItem("store_settings_cache");
+const getInitialSettings = (tenantId?: string | null): StoreSettings => {
+  if (typeof window !== "undefined" && tenantId) {
+    const cached = localStorage.getItem(`store_settings_cache_${tenantId}`);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
@@ -77,7 +78,8 @@ const getInitialSettings = (): StoreSettings => {
 };
 
 export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<StoreSettings>(getInitialSettings());
+  const { tenantId, isMaster, loading: tenantLoading } = useTenantContext();
+  const [settings, setSettings] = useState<StoreSettings>(getInitialSettings(tenantId));
   const [loading, setLoading] = useState(true);
 
   const applyColors = (s: StoreSettings) => {
@@ -151,8 +153,15 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
   const fetchSettings = async () => {
-    // Tentar carregar do cache primeiro
-    const cached = localStorage.getItem("store_settings_cache");
+    // Se não temos tenantId (ainda carregando ou é master), não buscar
+    if (!tenantId) {
+      setLoading(false);
+      return;
+    }
+
+    // Tentar carregar do cache primeiro (separado por tenant)
+    const cacheKey = `store_settings_cache_${tenantId}`;
+    const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
@@ -166,7 +175,7 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       const { data, error } = await supabase
         .from("store_settings")
         .select("*")
-        .eq("id", 1)
+        .eq("tenant_id", tenantId)
         .single();
 
       if (error) {
@@ -180,8 +189,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       setSettings(data);
       applyColors(data);
       updateMetadata(data);
-      // Salvar no cache
-      localStorage.setItem("store_settings_cache", JSON.stringify(data));
+      // Salvar no cache (separado por tenant)
+      localStorage.setItem(cacheKey, JSON.stringify(data));
 
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -192,11 +201,13 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updateSettings = async (newSettings: Partial<StoreSettings>) => {
+    if (!tenantId) throw new Error("Tenant não resolvido");
+
     try {
       const { error } = await supabase
         .from("store_settings")
         .update(newSettings)
-        .eq("id", 1);
+        .eq("tenant_id", tenantId);
 
       if (error) throw error;
       
@@ -204,8 +215,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       setSettings(updated);
       applyColors(updated);
       updateMetadata(updated);
-      // Atualizar cache
-      localStorage.setItem("store_settings_cache", JSON.stringify(updated));
+      // Atualizar cache (separado por tenant)
+      localStorage.setItem(`store_settings_cache_${tenantId}`, JSON.stringify(updated));
 
     } catch (error) {
       console.error("Error updating settings:", error);
@@ -214,8 +225,11 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    // Só buscar settings quando o tenant estiver resolvido (ou se for master, pular)
+    if (!tenantLoading) {
+      fetchSettings();
+    }
+  }, [tenantId, tenantLoading]);
 
   return (
     <StoreSettingsContext.Provider value={{ settings, loading, updateSettings, refresh: fetchSettings }}>

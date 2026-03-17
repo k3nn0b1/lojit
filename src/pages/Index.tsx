@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { formatBRL, normalizePhone, generateUUID, normalizeProductStock } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { useTenant } from "@/hooks/use-tenant";
 
 
 // Mock products data
@@ -97,6 +98,7 @@ const Index = () => {
   }, []);
 
   const { settings, loading: settingsLoading } = useStoreSettings();
+  const { tenantId } = useTenant();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
@@ -118,11 +120,12 @@ const Index = () => {
     let channel: any;
     const load = async () => {
       const hasSupabase = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
-      if (hasSupabase) {
+      if (hasSupabase && tenantId) {
         try {
           const { data, error } = await supabase
             .from("products")
             .select("*")
+            .eq("tenant_id", tenantId)
             .order("id", { ascending: false });
           if (!error && data) {
             const normalized = (data as any[]).map(p => normalizeProductStock(p) as Product);
@@ -158,7 +161,7 @@ const Index = () => {
     return () => { 
       if (channel) supabase.removeChannel(channel); 
     };
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     if (!settingsLoading) {
@@ -257,7 +260,7 @@ const Index = () => {
         // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
         try {
           // Note: sem ignoreDuplicates, apenas capturamos o erro
-          await supabase.from("clientes").insert({ nome: clienteNome, telefone: normalizePhone(clienteTelefone) });
+          await supabase.from("clientes").insert({ nome: clienteNome, telefone: normalizePhone(clienteTelefone), tenant_id: tenantId });
         } catch {}
 
 
@@ -270,6 +273,7 @@ const Index = () => {
             itens,
             valor_total: total,
             status: "pendente",
+            tenant_id: tenantId,
           });
         if (error) throw error;
         pedidoId = uuid;

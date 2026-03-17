@@ -15,10 +15,11 @@ import {
 import { normalizePhone, formatPhoneMask, parseSupabaseError } from "@/lib/utils";
 
 interface CustomersTabProps {
+  tenantId?: string | null;
   IS_SUPABASE_READY: boolean;
 }
 
-const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
+const CustomersTab = ({ tenantId, IS_SUPABASE_READY }: CustomersTabProps) => {
   const [clientes, setClientes] = useState<any[]>([]);
   const [clientesQuery, setClientesQuery] = useState("");
   const [clienteNome, setClienteNome] = useState("");
@@ -44,11 +45,12 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
   };
 
   useEffect(() => {
-    if (!IS_SUPABASE_READY) return;
+    if (!IS_SUPABASE_READY || !tenantId) return;
     const fetchClientes = async () => {
       const { data, error } = await supabase
         .from("clientes")
         .select("*")
+        .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
       if (!error && data) setClientes(data as any[]);
     };
@@ -57,7 +59,7 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
     const channel = supabase
       .channel("clientes-realtime-tab")
       .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, async () => {
-        const { data } = await supabase.from('clientes').select('*').order('created_at', { ascending: false });
+        const { data } = await supabase.from('clientes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false });
         if (data) setClientes(data as any[]);
       })
       .subscribe();
@@ -65,7 +67,7 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
     return () => {
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [IS_SUPABASE_READY]);
+  }, [IS_SUPABASE_READY, tenantId]);
 
   const handleAddCliente = async () => {
     try {
@@ -80,13 +82,13 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
         toast.error("Telefone inválido");
         return;
       }
-      if (!IS_SUPABASE_READY) {
-        toast.error("Supabase não configurado");
+      if (!IS_SUPABASE_READY || !tenantId) {
+        toast.error("Configuração incompleta");
         return;
       }
       const { error } = await supabase
         .from("clientes")
-        .insert({ nome, telefone: tel });
+        .insert({ nome, telefone: tel, tenant_id: tenantId });
       if (error) throw error;
 
       toast.success("Cliente salvo!");
@@ -112,14 +114,15 @@ const CustomersTab = ({ IS_SUPABASE_READY }: CustomersTabProps) => {
         toast.error("Contato inválido");
         return;
       }
-      if (!IS_SUPABASE_READY) {
-        toast.error("Supabase não configurado");
+      if (!IS_SUPABASE_READY || !tenantId) {
+        toast.error("Configuração incompleta");
         return;
       }
       const { error } = await supabase
         .from("clientes")
         .update({ nome, telefone: tel })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("tenant_id", tenantId);
       if (error) throw error;
 
       toast.success("Cliente atualizado");

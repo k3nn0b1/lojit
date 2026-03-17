@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 
 interface ProductsTabProps {
+  tenantId?: string | null;
   storedProducts: any[];
   setStoredProducts: React.Dispatch<React.SetStateAction<any[]>>;
   categories: string[];
@@ -32,6 +33,7 @@ interface ProductsTabProps {
 }
 
 const ProductsTab = ({
+  tenantId,
   storedProducts,
   setStoredProducts,
   categories,
@@ -153,9 +155,10 @@ const ProductsTab = ({
       publicId3,
       description: product.description,
       stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
+      tenant_id: tenantId,
     };
 
-    if (IS_SUPABASE_READY) {
+    if (IS_SUPABASE_READY && tenantId) {
       try {
         const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
         if (error) throw error;
@@ -173,9 +176,9 @@ const ProductsTab = ({
 
   const handleRemoveProduct = async (id: number) => {
     if (!confirm("Deseja realmente excluir este produto?")) return;
-    if (IS_SUPABASE_READY) {
+    if (IS_SUPABASE_READY && tenantId) {
       try {
-        const { error } = await supabase.from("products").delete().eq("id", id);
+        const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
         if (error) throw error;
         setStoredProducts((prev) => prev.filter((p) => p.id !== id));
         toast.success("Produto removido");

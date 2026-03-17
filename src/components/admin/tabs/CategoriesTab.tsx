@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/select";
 
 interface CategoriesTabProps {
+  tenantId?: string | null;
   categories: string[];
   setCategories: React.Dispatch<React.SetStateAction<string[]>>;
   IS_SUPABASE_READY: boolean;
 }
 
-const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: CategoriesTabProps) => {
+const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY }: CategoriesTabProps) => {
   const [newCategory, setNewCategory] = useState("");
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [categoryEditValue, setCategoryEditValue] = useState("");
@@ -35,14 +36,14 @@ const CategoriesTab = ({ categories, setCategories, IS_SUPABASE_READY }: Categor
   const saveCategories = async (next: string[]) => {
     const removed = categories.filter((c) => !next.includes(c));
     setCategories(next);
-    if (IS_SUPABASE_READY) {
+    if (IS_SUPABASE_READY && tenantId) {
       try {
-        const rows = next.map((name) => ({ name }));
-        const { error: upsertErr } = await supabase.from("categories").upsert(rows, { onConflict: "name" });
+        const rows = next.map((name) => ({ name, tenant_id: tenantId }));
+        const { error: upsertErr } = await supabase.from("categories").upsert(rows, { onConflict: "name,tenant_id" });
         if (upsertErr) throw upsertErr;
 
         if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("categories").delete().in("name", removed);
+          const { error: delErr } = await supabase.from("categories").delete().in("name", removed).eq("tenant_id", tenantId);
           if (delErr) throw delErr;
         }
 
