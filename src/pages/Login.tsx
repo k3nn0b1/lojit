@@ -15,7 +15,7 @@ const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.e
 
 const Login = () => {
   const navigate = useNavigate();
-  const { tenantId } = useTenant();
+  const { tenantId, isMaster } = useTenant();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,22 +30,45 @@ const Login = () => {
           toast.error("Credenciais inválidas");
         } else {
           const uid = data.user.id;
-          const email = (data.user.email || "").toLowerCase();
-          // Verificar se é admin do tenant atual
-          const { data: admins, error: adminErr } = await supabase
-            .from("admins")
-            .select("user_id")
-            .eq("user_id", uid)
-            .eq("tenant_id", tenantId);
-          const isAdmin = !adminErr && Array.isArray(admins) && admins.length > 0;
-          if (!isAdmin) {
-            toast.error("Acesso restrito a administradores desta loja");
-            await supabase.auth.signOut();
+          
+          if (isMaster) {
+            // Verificar se é Master Admin
+            const { data: masterAdmins, error: masterErr } = await supabase
+              .from("master_admins")
+              .select("user_id")
+              .eq("user_id", uid)
+              .single();
+
+            const isMasterAdmin = !masterErr && !!masterAdmins;
+
+            if (!isMasterAdmin) {
+              toast.error("Acesso restrito a Master Admins");
+              await supabase.auth.signOut();
+            } else {
+              sessionStorage.setItem("admin_auth", "true");
+              setAdminSessionValid(true);
+              toast.success("Autenticado como Master");
+              navigate("/"); // App.tsx tratará o roteamento para o MasterPanel
+            }
           } else {
-            sessionStorage.setItem("admin_auth", "true");
-            setAdminSessionValid(true);
-            toast.success("Autenticado");
-            navigate("/admin");
+            // Verificar se é admin do tenant atual
+            const { data: admins, error: adminErr } = await supabase
+              .from("admins")
+              .select("user_id")
+              .eq("user_id", uid)
+              .eq("tenant_id", tenantId);
+
+            const isAdmin = !adminErr && Array.isArray(admins) && admins.length > 0;
+
+            if (!isAdmin) {
+              toast.error("Acesso restrito a administradores desta loja");
+              await supabase.auth.signOut();
+            } else {
+              sessionStorage.setItem("admin_auth", "true");
+              setAdminSessionValid(true);
+              toast.success("Autenticado");
+              navigate("/admin");
+            }
           }
         }
       } else {
@@ -69,7 +92,7 @@ const Login = () => {
       <div className="flex-grow container mx-auto px-4 py-16 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardHeader>
-            <CardTitle>Login do Admin</CardTitle>
+            <CardTitle>{isMaster ? "Login Master Admin" : "Login do Admin"}</CardTitle>
           </CardHeader>
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
