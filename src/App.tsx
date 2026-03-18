@@ -78,7 +78,7 @@ const AdminGuard = () => {
             isTenantAdmin = await checkTenantAdmin(tenantId);
           }
 
-          const ok = !!user && sessionFlag && isTenantAdmin;
+          const ok = !!user && sessionFlag && (isTenantAdmin || isMasterSessionValid);
           setIsAuth(ok);
           if (!ok) navigate("/login", { replace: true });
         } else {
