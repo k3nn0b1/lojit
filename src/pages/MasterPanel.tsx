@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Tenant {
@@ -21,6 +21,7 @@ interface AdminUser {
   id?: string;
   user_id: string;
   email?: string;
+  password?: string;
 }
 
 export default function MasterPanel() {
@@ -45,10 +46,10 @@ export default function MasterPanel() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Segurança: Logout no F5 (limpa o estado temporário se desejar ser agressivo)
-    // Para implementar o logout no F5, verificamos se é o primeiro carregamento
+    document.title = "Painel Master Lojit";
     fetchTenants();
   }, []);
 
@@ -213,7 +214,7 @@ export default function MasterPanel() {
     try {
       const { data, error } = await supabase
         .from("admins")
-        .select("id, user_id, email")
+        .select("id, user_id, email, password")
         .eq("tenant_id", tenant.id);
 
       if (error) throw error;
@@ -282,8 +283,16 @@ export default function MasterPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-inter">
-      <div className="max-w-6xl mx-auto space-y-12">
+    <div className="min-h-screen bg-[#020202] text-white p-4 md:p-8 font-sans relative overflow-hidden">
+      {/* Background Etéreo de Sombra e Movimento */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-zinc-900 rounded-full blur-[100px]"></div>
+        <div className="absolute inset-0 bg-[#020202]/80 backdrop-blur-[1px]"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
@@ -522,14 +531,22 @@ export default function MasterPanel() {
                        <div className="text-center py-10 text-zinc-600 text-sm border border-zinc-900 border-dashed rounded-xl">Nenhum admin vinculado.</div>
                    ) : (
                        tenantAdmins.map(admin => (
-                           <div key={admin.id} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-lg group">
+                           <div key={admin.id} className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-lg group hover:border-primary/40 transition-all">
                                <div className="flex items-center gap-3">
                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
                                        <Mail className="w-3 h-3 text-primary" />
                                    </div>
                                    <div>
                                        <p className="text-xs font-bold text-zinc-100">{admin.email || "Lojista Vinculado"}</p>
-                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Acesso: ••••••••</p>
+                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                          Acesso: {showPasswords[admin.id!] ? admin.password : "••••••••"}
+                                          <button 
+                                            onClick={() => setShowPasswords(prev => ({ ...prev, [admin.id!]: !prev[admin.id!] }))}
+                                            className="hover:text-primary transition-colors"
+                                          >
+                                            {showPasswords[admin.id!] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                          </button>
+                                        </p>
                                    </div>
                                </div>
                                <Button 

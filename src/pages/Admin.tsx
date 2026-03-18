@@ -1276,12 +1276,12 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       <div className="fixed bottom-6 right-6 z-50">
         <button
           type="button"
-          className="group relative overflow-hidden rounded-md px-4 py-3 font-semibold text-foreground bg-primary shadow-lg hover:bg-primary/90 transition-colors"
+          className="group relative overflow-hidden rounded-md px-6 py-3 font-black text-black bg-primary shadow-xl hover:bg-primary/90 transition-all active:scale-95 border border-primary/20"
           onClick={() => setNewPedidoOpen(true)}
           title="Criar novo pedido"
         >
-          <span className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-primary/30 transition-transform"></span>
-          <span className="relative">NOVO PEDIDO</span>
+          <span className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-white/10 transition-transform"></span>
+          <span className="relative tracking-widest uppercase">Novo Pedido</span>
         </button>
       </div>
 
