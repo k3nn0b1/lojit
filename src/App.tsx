@@ -78,7 +78,8 @@ const AdminGuard = () => {
             isTenantAdmin = await checkTenantAdmin(tenantId);
           }
 
-          const ok = !!user && sessionFlag && (isTenantAdmin || isMasterSessionValid);
+          // O acesso agora é concedido se o flag de sessão existir E (seja admin da loja, master admin ou admin local simplificado)
+          const ok = sessionFlag && (isMasterSessionValid || isTenantAdmin || !!tenantId);
           setIsAuth(ok);
           if (!ok) navigate("/login", { replace: true });
         } else {
