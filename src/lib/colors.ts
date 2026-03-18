@@ -48,11 +48,19 @@ export function hslToHex(h: number, s: number, l: number): string {
 }
 
 export function parseHSL(hslStr: string): { h: number, s: number, l: number } {
-  const parts = hslStr.split(' ');
-  const h = parseInt(parts[0]);
-  const s = parseInt(parts[1].replace('%', ''));
-  const l = parseInt(parts[2].replace('%', ''));
-  return { h, s, l };
+  const stringToParse = hslStr || "0 0% 0%";
+  
+  // Se for código HEX em vez de HSL, retorna valores nulos pacíficos para evitar crash do gráfico
+  if (stringToParse.startsWith("#")) {
+     return { h: 0, s: 0, l: 0 };
+  }
+
+  const parts = stringToParse.split(' ');
+  const h = parseInt(parts[0] || "0");
+  const s = parseInt((parts[1] || "0%").replace('%', ''));
+  const l = parseInt((parts[2] || "0%").replace('%', ''));
+  
+  return { h: isNaN(h) ? 0 : h, s: isNaN(s) ? 0 : s, l: isNaN(l) ? 0 : l };
 }
 
 export function hslStringToHex(hslStr: string): string {
