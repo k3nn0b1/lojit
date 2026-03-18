@@ -120,6 +120,10 @@ export default function MasterPanel() {
             hero_phrase: "Subtítulo da página principal",
             // Texto do Sobre Nós completo
             about_us: `Somos uma empresa comprometida em oferecer produtos de alta qualidade para quem valoriza estilo, conforto e autenticidade. Trabalhamos com itens cuidadosamente selecionados, sempre buscando unir excelência, durabilidade e um ótimo custo-benefício.\n\nNosso foco está em proporcionar a melhor experiência para cada cliente, com atendimento ágil, envio seguro e atenção em cada detalhe do processo. Acreditamos que cada compra deve ser mais do que uma simples aquisição — deve ser uma experiência positiva, confiável e satisfatória.\n\nAqui, você encontra dedicação, compromisso e o cuidado necessário para garantir que você receba exatamente o que procura, com qualidade e confiança.`,
+            // Títulos da Vitrine (Novos campos)
+            collection_title_l1: "NOSSA",
+            collection_title_l2: "COLEÇÃO",
+            collection_subtitle: "As melhores camisas de futebol do mundo",
             // Flags de visibilidade
             show_whatsapp: true,
             show_instagram: true,
