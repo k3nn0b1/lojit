@@ -77,8 +77,29 @@ export default function MasterPanel() {
 
       if (error) throw error;
 
-      toast.success("Lojista criado com sucesso!");
-      setTenants([data, ...tenants]);
+      const newTenant = data as Tenant;
+
+      // Criar configurações iniciais essenciais para evitar o carregamento infinito
+      const { error: settingsError } = await supabase
+        .from("store_settings")
+        .insert([{
+          tenant_id: newTenant.id,
+          store_name: newTenantName,
+          primary_color: "#7e3af2", // Roxo padrão ou cor de sua escolha
+          footer_info: `© ${new Date().getFullYear()} ${newTenantName}. Todos os direitos reservados.`,
+          address: "Endereço da Loja",
+          whatsapp: "(75) 00000-0000",
+          opening_hours: "Segunda a Sexta: 9h às 18h\nSábado: 9h às 14h"
+        }]);
+
+      if (settingsError) {
+          console.error("Erro ao criar configurações iniciais:", settingsError);
+          toast.warning("Lojista criado, mas as configurações iniciais falharam. Configure manualmente no Admin.");
+      } else {
+          toast.success("Lojista criado e configurado com sucesso!");
+      }
+
+      setTenants([newTenant, ...tenants]);
       setNewTenantName("");
       setNewTenantSlug("");
     } catch (error: any) {
