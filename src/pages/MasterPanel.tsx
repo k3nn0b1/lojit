@@ -210,20 +210,26 @@ export default function MasterPanel() {
   const openAdminManager = async (tenant: Tenant) => {
     setManagingAdminsTenant(tenant);
     setIsLoadingAdmins(true);
-    setTenantAdmins([]);
+    setTenantAdmins([]); // Clear previous
     try {
+      // Pequeno timeout ou delay não necessário aqui, mas garantimos a query limpa
       const { data, error } = await supabase
         .from("admins")
-        .select(`
-            id,
-            user_id
-        `)
+        .select("id, user_id")
         .eq("tenant_id", tenant.id);
 
-      if (error) throw error;
+      if (error) {
+          // Se for erro de privilégio ou tabela vazia, apenas mostramos lista vazia sem dar toast de erro
+          if (error.code === 'PGRST116') {
+              setTenantAdmins([]);
+              return;
+          }
+          throw error;
+      };
       setTenantAdmins(data || []);
     } catch (error) {
-      toast.error("Erro ao listar administradores");
+      console.error("Erro ao listar admins:", error);
+      // toast.error("Erro ao listar administradores");
     } finally {
       setIsLoadingAdmins(false);
     }
