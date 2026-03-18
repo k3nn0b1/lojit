@@ -43,6 +43,7 @@ export default function MasterPanel() {
   const [managingAdminsTenant, setManagingAdminsTenant] = useState<Tenant | null>(null);
   const [tenantAdmins, setTenantAdmins] = useState<AdminUser[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
 
   useEffect(() => {
@@ -225,40 +226,27 @@ export default function MasterPanel() {
   };
 
   const handleAddAdmin = async () => {
-    if (!managingAdminsTenant || !newAdminEmail) return;
+    if (!managingAdminsTenant || !newAdminEmail || !newAdminPassword) {
+        toast.error("Preencha E-mail e Senha");
+        return;
+    }
     setIsLoadingAdmins(true);
     try {
-      let targetUserId = newAdminEmail;
+      // Chama a função Master que cria o usuário no Auth e vincula ao Tenant
+      const { data: createdId, error: rpcError } = await supabase.rpc("master_create_lojista", {
+          p_email: newAdminEmail.trim().toLowerCase(),
+          p_password: newAdminPassword,
+          p_tenant_id: managingAdminsTenant.id
+      });
 
-      // Se parecer um e-mail, tentar buscar o UUID automaticamente via RPC
-      if (newAdminEmail.includes("@")) {
-          const { data: foundId, error: rpcError } = await supabase.rpc("get_user_id_by_email", {
-              p_email: newAdminEmail.trim().toLowerCase()
-          });
+      if (rpcError) throw rpcError;
 
-          if (rpcError || !foundId) {
-              throw new Error("Usuário não encontrado com este e-mail no sistema. Certifique-se que ele já se cadastrou.");
-          }
-          targetUserId = foundId;
-      }
-
-      const { error } = await supabase
-        .from("admins")
-        .insert([{
-            user_id: targetUserId,
-            tenant_id: managingAdminsTenant.id
-        }]);
-
-      if (error) {
-          if (error.code === "23503") throw new Error("ID de usuário inválido ou inexistente.");
-          throw error;
-      }
-
-      toast.success("Administrador vinculado com sucesso!");
+      toast.success("Lojista cadastrado e vinculado com sucesso!");
       setNewAdminEmail("");
-      openAdminManager(managingAdminsTenant); // Refresh
+      setNewAdminPassword("");
+      openAdminManager(managingAdminsTenant); // Refresh lista
     } catch (error: any) {
-      toast.error(error.message || "Erro ao vincular usuário");
+      toast.error(error.message || "Erro ao cadastrar lojista");
     } finally {
       setIsLoadingAdmins(false);
     }
@@ -495,22 +483,31 @@ export default function MasterPanel() {
           <div className="py-6 space-y-6">
              <div className="bg-zinc-950 p-4 border border-zinc-800 rounded-xl space-y-4">
                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-tighter">Vincular Administrador</p>
-                    <p className="text-[10px] text-zinc-500 uppercase">Insira o e-mail ou o UUID do lojista</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-tighter">Cadastrar Novo Administrador</p>
+                    <p className="text-[10px] text-zinc-500 uppercase">Crie a conta de acesso para este lojista</p>
                  </div>
-                 <div className="flex gap-2">
-                     <Input 
-                        placeholder="E-mail (ex: lojista@email.com) ou UUID" 
-                        value={newAdminEmail}
-                        onChange={e => setNewAdminEmail(e.target.value)}
-                        className="bg-black border-zinc-700 text-xs h-9"
-                     />
+                 <div className="flex flex-col gap-3">
+                     <div className="grid grid-cols-2 gap-2">
+                        <Input 
+                            placeholder="E-mail (ex: lojista@email.com)" 
+                            value={newAdminEmail}
+                            onChange={e => setNewAdminEmail(e.target.value)}
+                            className="bg-black border-zinc-700 text-xs h-10"
+                        />
+                        <Input 
+                            type="password"
+                            placeholder="Senha de acesso" 
+                            value={newAdminPassword}
+                            onChange={e => setNewAdminPassword(e.target.value)}
+                            className="bg-black border-zinc-700 text-xs h-10"
+                        />
+                     </div>
                      <Button 
                         onClick={handleAddAdmin} 
-                        disabled={isLoadingAdmins || !newAdminEmail}
-                        className="bg-primary text-black font-bold text-xs h-9"
+                        disabled={isLoadingAdmins || !newAdminEmail || !newAdminPassword}
+                        className="bg-primary text-black font-black text-xs h-10 uppercase tracking-widest"
                      >
-                        Vincular
+                        {isLoadingAdmins ? <Loader2 className="w-4 h-4 animate-spin" /> : "CADASTRAR E VINCULAR"}
                      </Button>
                  </div>
              </div>
