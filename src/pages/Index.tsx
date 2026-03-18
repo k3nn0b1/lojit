@@ -323,6 +323,15 @@ const Index = () => {
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
         <div className="flex-grow">
         <Hero />
+        <div className="container mx-auto px-4 pt-16 pb-8 text-center" data-aos="fade-up">
+           <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 uppercase italic">
+             <span className="text-white">{settings?.collection_title_l1 || "NOSSA"}</span>{" "}
+             <span className="text-primary glow-text">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
+           </h2>
+           <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl mx-auto">
+             {settings?.collection_subtitle || "As melhores camisas de futebol do mundo disponíveis para você."}
+           </p>
+        </div>
         <ProductGrid products={products} onAddToCart={handleAddToCart} />
 
         {/* Sobre Nós */}
@@ -343,7 +352,7 @@ const Index = () => {
         {/* Localização / Mapa */}
         <section className="container mx-auto px-4 py-8 md:py-12" data-aos="fade-up">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Localização</h2>
-          <div className="relative w-full h-[420px] md:h-[700px] rounded-xl shadow-lg overflow-hidden ring-1 ring-white/10" style={{ filter: "invert(100%) hue-rotate(180deg)" }}>
+          <div className="relative w-full h-[420px] md:h-[700px] rounded-xl shadow-lg overflow-hidden ring-1 ring-white/10" style={{ filter: "grayscale(1) contrast(1.2) invert(1) opacity(0.8)" }}>
             <iframe
               title="Mapa - Localização"
               src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Feira de Santana, Bahia")}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}

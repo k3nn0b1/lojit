@@ -298,39 +298,75 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
           <CardTitle>Personalização do Site</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="grid gap-2">
-              <Label htmlFor="hero_l1">Título Linha 1</Label>
-              <Input 
-                  id="hero_l1" 
-                  value={formData.hero_title_l1} 
-                  onChange={e => setFormData({...formData, hero_title_l1: e.target.value})}
-              />
+          <div className="grid gap-6 border-b border-border/50 pb-6">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Hero (Destaque Principal)</h4>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-2">
+                <Label htmlFor="hero_l1">Título Linha 1</Label>
+                <Input 
+                    id="hero_l1" 
+                    value={formData.hero_title_l1} 
+                    onChange={e => setFormData({...formData, hero_title_l1: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="hero_l2">Título Linha 2 (Destaque)</Label>
+                <Input 
+                    id="hero_l2" 
+                    value={formData.hero_title_l2} 
+                    onChange={e => setFormData({...formData, hero_title_l2: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="hero_l3">Título Linha 3 (Destaque)</Label>
+                <Input 
+                    id="hero_l3" 
+                    value={formData.hero_title_l3} 
+                    onChange={e => setFormData({...formData, hero_title_l3: e.target.value})}
+                />
+              </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="hero_l2">Título Linha 2 (Destaque)</Label>
+              <Label htmlFor="hero_phrase">Frase do Hero (Abaixo da logo na home)</Label>
               <Input 
-                  id="hero_l2" 
-                  value={formData.hero_title_l2} 
-                  onChange={e => setFormData({...formData, hero_title_l2: e.target.value})}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="hero_l3">Título Linha 3 (Destaque)</Label>
-              <Input 
-                  id="hero_l3" 
-                  value={formData.hero_title_l3} 
-                  onChange={e => setFormData({...formData, hero_title_l3: e.target.value})}
+                  id="hero_phrase" 
+                  value={formData.hero_phrase} 
+                  onChange={e => setFormData({...formData, hero_phrase: e.target.value})}
               />
             </div>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="hero_phrase">Frase do Hero (Abaixo da logo na home)</Label>
-            <Input 
-                id="hero_phrase" 
-                value={formData.hero_phrase} 
-                onChange={e => setFormData({...formData, hero_phrase: e.target.value})}
-            />
+
+          <div className="grid gap-6 border-b border-border/50 pb-6">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Vitrine (Nossa Coleção)</h4>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="coll_l1">Título (Branco)</Label>
+                <Input 
+                    id="coll_l1" 
+                    value={formData.collection_title_l1} 
+                    onChange={e => setFormData({...formData, collection_title_l1: e.target.value})}
+                    placeholder="Ex: NOSSA"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="coll_l2">Título (Destaque de Cor)</Label>
+                <Input 
+                    id="coll_l2" 
+                    value={formData.collection_title_l2} 
+                    onChange={e => setFormData({...formData, collection_title_l2: e.target.value})}
+                    placeholder="Ex: COLEÇÃO"
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="coll_sub">Subtítulo da Seção</Label>
+              <Input 
+                  id="coll_sub" 
+                  value={formData.collection_subtitle} 
+                  onChange={e => setFormData({...formData, collection_subtitle: e.target.value})}
+                  placeholder="Ex: As melhores seleções em um só lugar"
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="about_us">Sobre Nós</Label>

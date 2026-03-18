@@ -28,6 +28,9 @@ export interface StoreSettings {
   background_config?: any;
   opening_hours?: string;
   font_family?: string;
+  collection_title_l1?: string;
+  collection_title_l2?: string;
+  collection_subtitle?: string;
   updated_at?: string;
 }
 
