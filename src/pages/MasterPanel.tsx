@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { encryptPassword, decryptPassword } from "@/lib/encryption";
 
 interface Tenant {
   id: string;
@@ -238,9 +239,11 @@ export default function MasterPanel() {
     setIsLoadingAdmins(true);
     try {
       // Chama a função Master que cria o usuário no Auth e vincula ao Tenant
+      const encryptedPassword = encryptPassword(newAdminPassword);
+      
       const { data: createdId, error: rpcError } = await supabase.rpc("master_create_lojista", {
           p_email: newAdminEmail.trim().toLowerCase(),
-          p_password: newAdminPassword,
+          p_password: encryptedPassword,
           p_tenant_id: managingAdminsTenant.id
       });
 
@@ -415,7 +418,6 @@ export default function MasterPanel() {
                         size="sm" 
                         onClick={() => openAdminManager(tenant)}
                         className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
-                        style={{ borderHoverColor: themeColor }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = themeColor;
                           e.currentTarget.style.color = themeColor;
@@ -625,7 +627,7 @@ export default function MasterPanel() {
                                    <div>
                                        <p className="text-xs font-bold text-zinc-100">{admin.email || "Lojista Vinculado"}</p>
                                         <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                                          Acesso: {showPasswords[admin.id!] ? admin.password : "••••••••"}
+                                          Acesso: {showPasswords[admin.id!] ? decryptPassword(admin.password!) : "••••••••"}
                                           <button 
                                             onClick={() => setShowPasswords(prev => ({ ...prev, [admin.id!]: !prev[admin.id!] }))}
                                             className="hover:text-primary transition-colors"

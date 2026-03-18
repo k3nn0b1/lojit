@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { setAdminSessionValid, setMasterSessionValid } from "@/App";
 import { useTenant } from "@/hooks/use-tenant";
+import { decryptPassword } from "@/lib/encryption";
 
 const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -51,19 +52,24 @@ const Login = () => {
         // 2. Se falhar ou não for Master, tentar o Login Simplificado (Tabela public.admins)
         const { data: localAdmin, error: localErr } = await supabase
           .from("admins")
-          .select("id")
+          .select("id, password")
           .eq("email", user.toLowerCase().trim())
-          .eq("password", pass)
           .eq("tenant_id", tenantId)
           .single();
 
         if (localAdmin) {
-          sessionStorage.setItem("admin_auth", "true");
-          setAdminSessionValid(true);
-          toast.success("Autenticado");
-          navigate("/admin");
-        } else {
-          toast.error("Credenciais inválidas");
+           const decryptedPass = decryptPassword(localAdmin.password);
+           if (decryptedPass === pass) {
+              sessionStorage.setItem("admin_auth", "true");
+              setAdminSessionValid(true);
+              toast.success("Autenticado");
+              navigate("/admin");
+              return;
+           }
+        }
+        
+        if (!localAdmin || (localAdmin && decryptPassword(localAdmin.password) !== pass)) {
+           toast.error("Credenciais inválidas");
         }
       } else {
         if (user === "admin" && pass === "nimda") {
@@ -96,7 +102,12 @@ const Login = () => {
               </div>
               <div>
                 <Label>Senha</Label>
-                <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} />
+                <Input 
+                  type="password" 
+                  value={pass} 
+                  onChange={(e) => setPass(e.target.value)} 
+                  className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
+                />
               </div>
               <div className="flex flex-col items-center gap-4 pt-2">
                 <p className="text-xs text-muted-foreground text-center">Sessão expira ao fechar/atualizar a página</p>
