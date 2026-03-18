@@ -336,10 +336,10 @@ export default function MasterPanel() {
               <CardContent>
                 <form onSubmit={handleCreateTenant} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Nome da Operação</Label>
+                    <Label htmlFor="name" className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Nome da Loja</Label>
                     <Input
                       id="name"
-                      placeholder="Ex: Suzarte Cell"
+                      placeholder="( Ex: Loja )"
                       value={newTenantName}
                       onChange={(e) => setNewTenantName(e.target.value)}
                       className="bg-black/60 border-zinc-800 text-white h-12 focus:border-primary transition-all"
@@ -350,7 +350,7 @@ export default function MasterPanel() {
                     <div className="relative group">
                       <Input
                         id="slug"
-                        placeholder="suzartecell"
+                        placeholder="loja"
                         value={newTenantSlug}
                         onChange={(e) => setNewTenantSlug(e.target.value.toLowerCase())}
                         className="bg-black/60 border-zinc-800 text-white h-12 pr-28 group-focus-within:border-primary transition-all"
@@ -360,7 +360,12 @@ export default function MasterPanel() {
                       </div>
                     </div>
                   </div>
-                  <Button type="submit" disabled={isCreating} className="w-full h-12 font-black bg-primary hover:bg-primary/90 text-black shadow-xl shadow-primary/20 group">
+                  <Button 
+                    type="submit" 
+                    disabled={isCreating} 
+                    className="w-full h-12 font-black text-black shadow-xl group transition-all"
+                    style={{ backgroundColor: themeColor }}
+                  >
                     {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />}
                     CRIAR PLATAFORMA
                   </Button>
