@@ -101,15 +101,11 @@ export default function MasterPanel() {
           tenant_id: newTenant.id,
           store_name: newTenantName,
           primary_color: "#00f5ff", // Ciano lojit
-          secondary_color: "#0a0a0a",
           background_color: "#000000",
-          footer_info: `Plataforma lojit - Loja ${newTenantName}. Configure seus textos aqui no painel administrativo.`,
-          address: "Configurar endereço no painel",
+          footer_info: `Plataforma lojit - Loja ${newTenantName}.`,
+          address: "Endereço da Loja",
           whatsapp: "(00) 00000-0000",
-          opening_hours: "Segunda a Sexta: 08:00 às 18:00",
-          // Adicionar placeholders para evitar as telas pretas por falta de dado
-          hero_title: `BENVINDO À ${newTenantName.toUpperCase()}`,
-          hero_subtitle: "As melhores ofertas você encontra aqui. Explore nossa coleção completa abaixo.",
+          opening_hours: "Segunda a Sexta: 08:00 às 18:00"
         }]);
 
       if (settingsError) throw settingsError;
