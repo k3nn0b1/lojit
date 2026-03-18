@@ -125,8 +125,19 @@ const Footer = ({ minimal = false }: FooterProps) => {
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-border/50 text-center text-muted-foreground text-xs">
-              <p>{footerInfo}</p>
+            <div className="mt-8 pt-6 border-t border-border/50 text-center space-y-2">
+              <p className="text-muted-foreground text-xs">{footerInfo}</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                Desenvolvedor: {" "}
+                <a 
+                  href="https://wa.me/5575981284738" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  Jonathan Costa
+                </a>
+              </p>
             </div>
           </>
         )}
