@@ -94,24 +94,42 @@ export default function MasterPanel() {
 
       const newTenant = tenantData as Tenant;
 
-      // 2. Criar BLUEPRINT (Configurações Padrão lojit)
+      // 2. Criar BLUEPRINT COMPLETO lojit (Configurações Padrão)
       const { error: settingsError } = await supabase
         .from("store_settings")
         .insert([{
           tenant_id: newTenant.id,
           store_name: newTenantName,
-          primary_color: "#00f5ff", 
+          primary_color: "#00d8ff", 
+          secondary_color: "#0a0a0a",
           background_color: "#000000",
-          secondary_color: "#1a1a1a",
-          footer_info: `© ${new Date().getFullYear()} ${newTenantName} - lojit`,
-          address: "Endereço não configurado",
-          whatsapp: "(75) 00000-0000",
-          opening_hours: "Segunda a Sábado: 08:00 às 20:00"
+          text_color: "#ffffff",
+          footer_info: `© ${new Date().getFullYear()} ${newTenantName} - Plataforma lojit`,
+          address: "Configurar Endereço no Painel",
+          whatsapp: "(75) 90000-0000",
+          opening_hours: "Segunda a Sábado: 08:00 às 20:00",
+          // Campos de texto para evitar erros na Home
+          hero_title: `BEM-VINDO À ${newTenantName.toUpperCase()}`,
+          hero_subtitle: "As melhores seleções e ofertas exclusivas.",
+          cta_text: "VER PRODUTOS",
+          // Outros campos essenciais
+          show_whatsapp: true,
+          show_instagram: true,
+          show_youtube: false
         }]);
 
       if (settingsError) throw settingsError;
 
-      toast.success("Lojista criado com Blueprint lojit!");
+      // 3. Vincular o MASTER ADMIN atual como admin da nova loja para ele conseguir entrar no admin dela de imediato
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+          await supabase.from("admins").insert([{
+              user_id: user.id,
+              tenant_id: newTenant.id
+          }]);
+      }
+
+      toast.success("Plataforma criada e Master vinculada!");
       setTenants([newTenant, ...tenants]);
       setNewTenantName("");
       setNewTenantSlug("");
@@ -315,13 +333,14 @@ export default function MasterPanel() {
                       <Button variant="outline" size="sm" onClick={() => handleStartEdit(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary">
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openAdminManager(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary">
-                        <Users className="w-3 h-3 mr-2" /> Admins
-                      </Button>
-                      <div className="h-4 w-px bg-zinc-800 mx-1 hidden md:block" />
-                      <Button size="sm" className="bg-primary/10 hover:bg-primary hover:text-black text-primary border border-primary/20 transition-all font-bold" asChild>
+                      <Button variant="outline" size="sm" className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary" asChild>
                         <a href={`https://${tenant.slug}.lojit.com.br/admin`} target="_blank" rel="noopener noreferrer">
                           <Settings className="w-3 h-3 mr-2" /> Painel
+                        </a>
+                      </Button>
+                      <Button size="sm" className="bg-primary/10 hover:bg-primary hover:text-black text-primary border border-primary/20 transition-all font-bold" asChild>
+                         <a href={`https://${tenant.slug}.lojit.com.br`} target="_blank" rel="noopener noreferrer">
+                          <Globe className="w-3 h-3 mr-2" /> Loja
                         </a>
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.id)} className="text-zinc-600 hover:text-red-500 hover:bg-red-500/5">
