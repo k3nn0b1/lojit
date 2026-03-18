@@ -86,16 +86,24 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
   };
 
   useEffect(() => {
-    if (settings) {
+      const getHex = (colorStr: string | undefined) => {
+        if (!colorStr) return "#000000";
+        if (colorStr.startsWith('#')) return colorStr;
+        try {
+          return hslStringToHex(colorStr);
+        } catch (e) {
+          return "#000000";
+        }
+      };
+
       setFormData({
         ...settings,
-        primary_hex: hslStringToHex(settings.primary_color),
-        secondary_hex: hslStringToHex(settings.secondary_color),
-        background_hex: hslStringToHex(settings.background_color),
+        primary_hex: getHex(settings.primary_color),
+        secondary_hex: getHex(settings.secondary_color),
+        background_hex: getHex(settings.background_color),
         background_type: settings.background_type || "solid",
         background_config: settings.background_config || {}
       });
-    }
   }, [settings]);
 
   if (loading || !formData) return (
