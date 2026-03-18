@@ -51,7 +51,25 @@ const Login = () => {
               navigate("/"); // App.tsx tratará o roteamento para o MasterPanel
             }
           } else {
-            // Verificar se é admin do tenant atual
+            // 1. Verificar se é um Master Admin (Permissão Global)
+            const { data: masterAdmins, error: masterErr } = await supabase
+              .from("master_admins")
+              .select("user_id")
+              .eq("user_id", uid)
+              .single();
+
+            const isMasterGlobally = !masterErr && !!masterAdmins;
+
+            if (isMasterGlobally) {
+              sessionStorage.setItem("admin_auth", "true");
+              setMasterSessionValid(true);
+              setAdminSessionValid(true); // Também valida admin para entrar na rota /admin
+              toast.success("Autenticado como Master");
+              navigate("/admin");
+              return;
+            }
+
+            // 2. Se não for Master, verificar se é admin deste tenant específico
             const { data: admins, error: adminErr } = await supabase
               .from("admins")
               .select("user_id")
