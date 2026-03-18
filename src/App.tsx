@@ -11,6 +11,8 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
 const TenantNotFound = lazy(() => import("./pages/TenantNotFound"));
 const MasterPanel = lazy(() => import("./pages/MasterPanel"));
+import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { TenantProvider, useTenantContext } from "@/contexts/TenantContext";
@@ -168,11 +170,32 @@ const MasterGuard = () => {
 };
 
 const AppContent = () => {
-  const { settings, loading } = useStoreSettings();
+  const { settings, loading: settingsLoading } = useStoreSettings();
   const { isMaster, tenantId, loading: tenantLoading, error: tenantError } = useTenantContext();
+  const loading = settingsLoading || tenantLoading;
 
-  // Ainda resolvendo o tenant
-  if (tenantLoading) {
+  // 0. Se o lojista não for encontrado (URL inválida)
+  if (tenantError && !isMaster) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 text-center">
+        <div className="max-w-md space-y-6">
+           <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8" />
+           </div>
+           <h1 className="text-2xl font-black text-white tracking-widest uppercase">PLATAFORMA NÃO REGISTRADA</h1>
+           <p className="text-zinc-500 text-sm font-medium">{tenantError}</p>
+           <div className="pt-4">
+              <Button asChild className="bg-primary hover:bg-primary/90 text-black font-black w-full h-12">
+                 <a href="https://lojit.com.br">VOLTAR PARA LOJIT</a>
+              </Button>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ainda resolvendo o tenant (apenas para lojas, não para o master)
+  if (tenantLoading && !isMaster) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-6">
