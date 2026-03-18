@@ -119,7 +119,11 @@ export default function MasterPanel() {
       setNewTenantName("");
       setNewTenantSlug("");
     } catch (error: any) {
-      toast.error("Erro ao criar lojista e blueprint");
+      if (error.code === "23505") {
+          toast.error("Este subdomínio (slug) já está sendo usado por outra loja. Escolha um nome diferente.");
+      } else {
+          toast.error("Erro ao criar lojista e blueprint. Verifique os dados.");
+      }
       console.error(error);
     } finally {
       setIsCreating(false);
