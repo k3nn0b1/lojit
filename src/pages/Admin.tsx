@@ -842,20 +842,24 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                     <Label>Buscar (nome do cliente ou ID)</Label>
                     <Input placeholder="Ex: João ou 8fbd..." value={pedidoSearch} onChange={(e) => setPedidoSearch(e.target.value)} />
                   </div>
-                  <div>
-                    <Label>Status</Label>
-                    <select
-                      className="w-full rounded-md border px-3 py-2 bg-background text-foreground"
-                      value={pedidoStatusFilter}
-                      onChange={(e) => setPedidoStatusFilter(e.target.value)}
+                  <div className="w-full md:w-[220px]">
+                    <Label className="mb-2 block text-xs font-bold uppercase tracking-widest text-primary/80">Status</Label>
+                    <Select
+                      value={pedidoStatusFilter || "todos"}
+                      onValueChange={(val) => setPedidoStatusFilter(val === "todos" ? "" : val)}
                     >
-                      <option value="">Todos</option>
-                      <option value="pendente">Pendente</option>
-                      <option value="concluido">Concluído</option>
-                      <option value="devolvido">Devolvido</option>
-<option value="parcialmente_devolvido">Parcialmente Devolvido</option>
-                      <option value="cancelado">Cancelado</option>
-                    </select>
+                      <SelectTrigger className="w-full bg-background border-border hover:border-primary/50 transition-smooth">
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="pendente">Pendente</SelectItem>
+                        <SelectItem value="concluido">Concluído</SelectItem>
+                        <SelectItem value="devolvido">Devolvido</SelectItem>
+                        <SelectItem value="parcialmente_devolvido">Parcialmente Devolvido</SelectItem>
+                        <SelectItem value="cancelado">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
