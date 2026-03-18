@@ -306,18 +306,20 @@ export default function MasterPanel() {
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Shield className="text-black w-6 h-6" />
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-4">
+               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-2xl shadow-primary/20 transition-transform hover:rotate-3 duration-300">
+                  <Shield className="text-black w-7 h-7" />
                </div>
-               <h1 className="text-4xl font-display font-black tracking-tighter text-white">
-                lojit<span className="text-primary italic">.master</span>
-              </h1>
+               <div>
+                 <h1 className="text-5xl font-display tracking-tight text-white leading-none">
+                  LOJIT <span className="text-primary">MASTER</span>
+                </h1>
+                <p className="text-zinc-500 text-[10px] font-bold tracking-[0.3em] uppercase mt-1.5 opacity-80">
+                  Infraestrutura Centralizada de E-commerce
+                </p>
+               </div>
             </div>
-            <p className="text-zinc-500 text-sm font-medium tracking-widest uppercase">
-              Infraestrutura Centralizada de E-commerce
-            </p>
           </div>
           <Button 
             variant="outline" 
