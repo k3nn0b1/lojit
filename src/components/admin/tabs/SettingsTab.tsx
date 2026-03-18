@@ -195,7 +195,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="instagram">Instagram (Link ou @)</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                   <Input 
                       id="instagram" 
                       value={formData.instagram_url} 
@@ -203,20 +203,20 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                       placeholder="Ex: @minhaloja"
                       className="flex-1"
                   />
-                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
                     <Switch 
                       id="show_instagram" 
                       checked={formData.show_instagram} 
                       onCheckedChange={checked => setFormData({...formData, show_instagram: checked})}
                     />
-                    <Label htmlFor="show_instagram" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
+                    <Label htmlFor="show_instagram" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="whatsapp">WhatsApp (Número com DDD)</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                   <Input 
                       id="whatsapp" 
                       value={formData.whatsapp} 
@@ -224,20 +224,20 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                       placeholder="Ex: 5575981284738"
                       className="flex-1"
                   />
-                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
                     <Switch 
                       id="show_whatsapp" 
                       checked={formData.show_whatsapp} 
                       onCheckedChange={checked => setFormData({...formData, show_whatsapp: checked})}
                     />
-                    <Label htmlFor="show_whatsapp" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
+                    <Label htmlFor="show_whatsapp" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
                   </div>
                 </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="youtube">YouTube (Link do Canal)</Label>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                   <Input 
                       id="youtube" 
                       value={formData.youtube_url} 
@@ -245,13 +245,13 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                       placeholder="Ex: https://youtube.com/@seucanal"
                       className="flex-1"
                   />
-                  <div className="flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border">
+                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
                     <Switch 
                       id="show_youtube" 
                       checked={formData.show_youtube} 
                       onCheckedChange={checked => setFormData({...formData, show_youtube: checked})}
                     />
-                    <Label htmlFor="show_youtube" className="text-xs font-bold cursor-pointer">MOSTRAR NO RODAPÉ</Label>
+                    <Label htmlFor="show_youtube" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
                   </div>
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
           <div className="grid gap-2">
             <Label>Logo da Loja</Label>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                 {formData.logo_url && (
                     <div className="h-20 w-auto min-w-[80px] rounded-md border border-border overflow-hidden bg-white/5 p-2 flex items-center justify-center">
                         <img src={formData.logo_url} alt="Logo Preview" className="h-full w-full object-contain" />

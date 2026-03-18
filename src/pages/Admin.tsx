@@ -817,16 +817,16 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         </div>
 
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-              <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
-              <TabsTrigger value="products">Produtos</TabsTrigger>
-              <TabsTrigger value="stock">Estoque</TabsTrigger>
-              <TabsTrigger value="sizes">Tamanhos</TabsTrigger>
-              <TabsTrigger value="images">Imagens</TabsTrigger>
-              <TabsTrigger value="clientes">Clientes</TabsTrigger>
-              <TabsTrigger value="categories">Categorias</TabsTrigger>
-              <TabsTrigger value="config">Configurações</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-start md:justify-center p-1 bg-muted/50 backdrop-blur-sm border border-border">
+              <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2 px-4 transition-all">Pedidos</TabsTrigger>
+              <TabsTrigger value="products" className="flex-1 md:flex-none py-2 px-4 transition-all">Produtos</TabsTrigger>
+              <TabsTrigger value="stock" className="flex-1 md:flex-none py-2 px-4 transition-all">Estoque</TabsTrigger>
+              <TabsTrigger value="sizes" className="flex-1 md:flex-none py-2 px-4 transition-all">Tamanhos</TabsTrigger>
+              <TabsTrigger value="images" className="flex-1 md:flex-none py-2 px-4 transition-all">Imagens</TabsTrigger>
+              <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2 px-4 transition-all">Clientes</TabsTrigger>
+              <TabsTrigger value="categories" className="flex-1 md:flex-none py-2 px-4 transition-all">Categorias</TabsTrigger>
+              <TabsTrigger value="config" className="flex-1 md:flex-none py-2 px-4 transition-all">Configurações</TabsTrigger>
             </TabsList>
 
 
