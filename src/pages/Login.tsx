@@ -88,7 +88,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative w-full">
-      <Header cartItemCount={0} onCartClick={() => {}} />
+      <Header cartItemCount={0} onCartClick={() => {}} showCart={!isMaster} />
       <div className="flex-grow container mx-auto px-4 py-16 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardHeader>
@@ -114,7 +114,7 @@ const Login = () => {
           </div>
         </Card>
       </div>
-      <Footer />
+      <Footer minimal={isMaster} />
     </div>
   );
 };
