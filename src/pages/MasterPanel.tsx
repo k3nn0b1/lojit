@@ -205,6 +205,7 @@ export default function MasterPanel() {
   const openAdminManager = async (tenant: Tenant) => {
     setManagingAdminsTenant(tenant);
     setIsLoadingAdmins(true);
+    setTenantAdmins([]);
     try {
       const { data, error } = await supabase
         .from("admins")
@@ -221,6 +222,61 @@ export default function MasterPanel() {
     } finally {
       setIsLoadingAdmins(false);
     }
+  };
+
+  const handleAddAdmin = async () => {
+    if (!managingAdminsTenant || !newAdminEmail) return;
+    setIsLoadingAdmins(true);
+    try {
+      let targetUserId = newAdminEmail;
+
+      // Se parecer um e-mail, tentar buscar o UUID automaticamente via RPC
+      if (newAdminEmail.includes("@")) {
+          const { data: foundId, error: rpcError } = await supabase.rpc("get_user_id_by_email", {
+              p_email: newAdminEmail.trim().toLowerCase()
+          });
+
+          if (rpcError || !foundId) {
+              throw new Error("Usuário não encontrado com este e-mail no sistema. Certifique-se que ele já se cadastrou.");
+          }
+          targetUserId = foundId;
+      }
+
+      const { error } = await supabase
+        .from("admins")
+        .insert([{
+            user_id: targetUserId,
+            tenant_id: managingAdminsTenant.id
+        }]);
+
+      if (error) {
+          if (error.code === "23503") throw new Error("ID de usuário inválido ou inexistente.");
+          throw error;
+      }
+
+      toast.success("Administrador vinculado com sucesso!");
+      setNewAdminEmail("");
+      openAdminManager(managingAdminsTenant); // Refresh
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao vincular usuário");
+    } finally {
+      setIsLoadingAdmins(false);
+    }
+  };
+
+  const handleRemoveAdmin = async (adminId: string) => {
+      if (!confirm("Remover acesso deste administrador?")) return;
+      setIsLoadingAdmins(true);
+      try {
+          const { error } = await supabase.from("admins").delete().eq("id", adminId);
+          if (error) throw error;
+          toast.success("Acesso removido");
+          if (managingAdminsTenant) openAdminManager(managingAdminsTenant);
+      } catch (error) {
+          toast.error("Erro ao remover");
+      } finally {
+          setIsLoadingAdmins(false);
+      }
   };
 
   const handleLogout = async () => {
@@ -343,6 +399,9 @@ export default function MasterPanel() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                      <Button variant="outline" size="sm" onClick={() => openAdminManager(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary" title="Gerenciar Usuários">
+                        <Users className="w-3 h-3" />
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => handleStartEdit(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary">
                         <Pencil className="w-3 h-3" />
                       </Button>
@@ -434,10 +493,25 @@ export default function MasterPanel() {
           </DialogHeader>
           
           <div className="py-6 space-y-6">
-             <div className="bg-zinc-950 p-4 border border-zinc-800 rounded-xl space-y-3">
-                 <p className="text-[10px] font-bold text-primary uppercase tracking-tighter">Vincular Novo Administrador</p>
-                 <div className="flex gap-2 text-xs">
-                     <p className="text-zinc-500">Atualmente, apenas administradores já existentes no Supabase podem ser vinculados. Para novas senhas, use o painel de autenticação do Supabase.</p>
+             <div className="bg-zinc-950 p-4 border border-zinc-800 rounded-xl space-y-4">
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-tighter">Vincular Administrador</p>
+                    <p className="text-[10px] text-zinc-500 uppercase">Insira o e-mail ou o UUID do lojista</p>
+                 </div>
+                 <div className="flex gap-2">
+                     <Input 
+                        placeholder="E-mail (ex: lojista@email.com) ou UUID" 
+                        value={newAdminEmail}
+                        onChange={e => setNewAdminEmail(e.target.value)}
+                        className="bg-black border-zinc-700 text-xs h-9"
+                     />
+                     <Button 
+                        onClick={handleAddAdmin} 
+                        disabled={isLoadingAdmins || !newAdminEmail}
+                        className="bg-primary text-black font-bold text-xs h-9"
+                     >
+                        Vincular
+                     </Button>
                  </div>
              </div>
 
@@ -459,7 +533,12 @@ export default function MasterPanel() {
                                        <p className="text-xs font-mono text-zinc-400">{admin.user_id}</p>
                                    </div>
                                </div>
-                               <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:bg-red-500/10 h-7 w-7 p-0">
+                               <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => handleRemoveAdmin(admin.id!)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:bg-red-500/10 h-7 w-7 p-0"
+                               >
                                    <X className="w-3 h-3" />
                                </Button>
                            </div>

@@ -16,11 +16,10 @@ const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
   const [shouldRenderBg, setShouldRenderBg] = React.useState(true);
 
   const colors = useMemo(() => {
-    if (!settings) return null;
     return {
-      primary: hslStringToHex(settings.primary_color),
-      secondary: hslStringToHex(settings.secondary_color),
-      background: hslStringToHex(settings.background_color),
+      primary: settings?.primary_color ? hslStringToHex(settings.primary_color) : "#08c0d9",
+      secondary: settings?.secondary_color ? hslStringToHex(settings.secondary_color) : "#08c0d9",
+      background: settings?.background_color ? hslStringToHex(settings.background_color) : "#000000",
     };
   }, [settings]);
 
@@ -34,9 +33,9 @@ const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!settings || !colors) return null;
+  if (!colors) return null;
 
-  const isSolid = !settings.background_type || settings.background_type === 'solid';
+  const isSolid = !settings?.background_type || settings.background_type === 'solid';
 
   const renderBackground = () => {
     const type = forceType || settings?.background_type;
