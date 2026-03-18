@@ -284,12 +284,17 @@ export default function MasterPanel() {
 
   return (
     <div className="min-h-screen bg-[#020202] text-white p-4 md:p-8 font-sans relative overflow-hidden">
-      {/* Background Etéreo de Sombra e Movimento */}
+      {/* Background Etéreo de Sombra e Movimento (Shadow Movement) */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-zinc-900 rounded-full blur-[100px]"></div>
-        <div className="absolute inset-0 bg-[#020202]/80 backdrop-blur-[1px]"></div>
+        {/* Luzes de Plasma Dinâmicas */}
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-[#23e7e3]/15 rounded-full blur-[160px] animate-pulse"></div>
+        <div className="absolute top-[20%] -right-[5%] w-[45%] h-[45%] bg-[#23e7e3]/10 rounded-full blur-[140px] animate-pulse [animation-delay:2s]"></div>
+        <div className="absolute -bottom-[15%] left-[20%] w-[55%] h-[55%] bg-[#23e7e3]/10 rounded-full blur-[180px] animate-pulse [animation-delay:4s]"></div>
+        <div className="absolute bottom-[10%] left-[40%] w-[30%] h-[30%] bg-zinc-800/20 rounded-full blur-[120px] animate-pulse [animation-delay:1s]"></div>
+        
+        {/* Overlay de Grão e Profundidade */}
+        <div className="absolute inset-0 bg-[#020202]/40 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#020202] via-transparent to-transparent opacity-80"></div>
       </div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
