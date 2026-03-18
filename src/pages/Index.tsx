@@ -350,18 +350,25 @@ const Index = () => {
         </section>
 
 
-        {/* Localização / Mapa */}
-        <section className="container mx-auto px-4 py-8 md:py-12" data-aos="fade-up">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Localização</h2>
-          <div className="relative w-full h-[420px] md:h-[700px] rounded-xl shadow-lg overflow-hidden ring-1 ring-white/10" style={{ filter: "grayscale(1) contrast(1.2) invert(1) opacity(0.8)" }}>
+        <section className="container mx-auto px-4 py-16 md:py-24" data-aos="fade-up">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white leading-none">
+              LOCALIZAÇÃO
+            </h2>
+            <div className="h-1 w-20 bg-primary mx-auto mt-4 rounded-full" />
+          </div>
+          <div className="relative w-full h-[400px] md:h-[600px] rounded-3xl shadow-2xl overflow-hidden border-2 border-primary/20 group">
+            {/* Efeito de overlay para deixar o mapa com aspecto dark de verdade */}
+            <div className="absolute inset-0 bg-background/20 pointer-events-none z-10 transition-opacity group-hover:bg-transparent" />
             <iframe
               title="Mapa - Localização"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Feira de Santana, Bahia")}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}
-              className="w-full h-full border-0"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Feira de Santana, Bahia")}&t=&z=16&ie=UTF8&iwloc=B&output=embed`}
+              className="w-full h-full border-0 grayscale-[0.8] contrast-[1.1] brightness-[0.9]"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
             />
+            <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-primary/30 rounded-3xl" />
           </div>
         </section>
         </div>
