@@ -114,10 +114,10 @@ export default function MasterPanel() {
             opening_hours: "Configurar Horário de Funcionamento no Painel",
             instagram_url: "https://www.instagram.com/seuinstagram/",
             // Títulos Seção Hero (Destaque)
-            hero_title_l1: "TITULO",
-            hero_title_l2: "SUBTITULO",
-            hero_title_l3: "COMPLEMENTO",
-            hero_phrase: "Subtítulo da página principal",
+            hero_title_l1: "CAMISAS",
+            hero_title_l2: "DE TIME",
+            hero_title_l3: "",
+            hero_phrase: "A maior variedade de regatas e camisas de time com qualidade premium.",
             // Vitrine conforme imagem (Novos campos)
             collection_title_l1: "SESSÃO DE",
             collection_title_l2: "PRODUTOS",

@@ -38,14 +38,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   return (
     <section id="products" className="min-h-screen py-16 md:py-24" data-aos="fade-up">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12 space-y-4">
-          <h2 className="text-4xl md:text-6xl font-display text-foreground">
-            NOSSA <span className="text-primary glow-neon">COLEÇÃO</span>
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            As melhores camisas de futebol do mundo
-          </p>
-        </div>
+        {/* Título dinâmico removido daqui e movido para o Index.tsx para evitar duplicidade */}
 
         {/* Category Filter */}
         <div className="flex flex-wrap gap-3 justify-center mb-12">
