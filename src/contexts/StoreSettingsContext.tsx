@@ -153,8 +153,9 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
   const fetchSettings = async () => {
-    // Se não temos tenantId (ainda carregando ou é master), não buscar
+    // Se não temos tenantId (é master), não buscar e liberar o loading
     if (!tenantId) {
+      setSettings({ ...defaultSettings, store_name: "Painel Master" });
       setLoading(false);
       return;
     }
@@ -225,10 +226,11 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    // Só buscar settings quando o tenant estiver resolvido (ou se for master, pular)
-    if (!tenantLoading) {
-      fetchSettings();
-    }
+    // Se o tenant está carregando, esperamos.
+    if (tenantLoading) return;
+
+    // Se o tenant foi resolvido (ou é master), buscamos as configurações
+    fetchSettings();
   }, [tenantId, tenantLoading]);
 
   return (

@@ -217,18 +217,14 @@ const AppContent = () => {
     );
   }
 
-  // Bloqueia a exibição até que o carregamento termine E tenhamos o nome da loja real.
-  if (loading || !settings?.store_name) {
+  // Bloqueia a exibição da LOJA até que o carregamento termine. 
+  // O Master Panel ignora essa trava.
+  if (!isMaster && (loading || !settings?.store_name)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-6">
-          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-primary font-bold text-xl tracking-[0.2em] animate-pulse">CARREGANDO</span>
-            <div className="h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
-              <div className="h-full bg-primary animate-progress-loading" />
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <div className="flex flex-col items-center gap-4">
+           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+           <p className="text-zinc-500 font-mono text-xs animate-pulse">CARREGANDO HUB LOJIT...</p>
         </div>
       </div>
     );

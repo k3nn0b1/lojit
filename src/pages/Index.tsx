@@ -130,8 +130,12 @@ const Index = () => {
           if (!error && data) {
             const normalized = (data as any[]).map(p => normalizeProductStock(p) as Product);
             setProducts(sortProducts(normalized));
+          } else {
+            setProducts([]); // Nova loja = sem produtos
           }
-        } catch {}
+        } catch {
+            setProducts([]);
+        }
         
         channel = supabase
           .channel("products-realtime-index")
@@ -289,7 +293,7 @@ const Index = () => {
       )
       .join("\n\n")}\n\n💰 *TOTAL: ${formatBRL(total)}*\n\nPedido ID: ${pedidoId ?? "—"}`;
 
-    const cleanPhone = (settings?.whatsapp || "5575981284738").replace(/\D/g, "");
+    const cleanPhone = (settings?.whatsapp || "5575999999999").replace(/\D/g, "");
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
 
 
@@ -329,7 +333,7 @@ const Index = () => {
         >
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Sobre nós</h2>
           <div className="max-w-3xl mx-auto text-muted-foreground text-center leading-relaxed space-y-4">
-            {(settings?.about_us || "").split('\n').map((text, i) => (
+            {(settings?.about_us || "Seja bem-vindo à nossa loja! Estamos preparando o melhor conteúdo para você. Em breve, mais informações sobre nossa história e valores.").split('\n').filter(Boolean).map((text, i) => (
               <p key={i}>{text}</p>
             ))}
           </div>
@@ -342,7 +346,7 @@ const Index = () => {
           <div className="relative w-full h-[420px] md:h-[700px] rounded-xl shadow-lg overflow-hidden ring-1 ring-white/10" style={{ filter: "invert(100%) hue-rotate(180deg)" }}>
             <iframe
               title="Mapa - Localização"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Adenil Falcão, 1887 Feira de Santana")}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(settings?.address || "Feira de Santana, Bahia")}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}
               className="w-full h-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
