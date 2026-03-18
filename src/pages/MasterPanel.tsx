@@ -590,22 +590,28 @@ export default function MasterPanel() {
                             placeholder="E-mail (ex: lojista@email.com)" 
                             value={newAdminEmail}
                             onChange={e => setNewAdminEmail(e.target.value)}
-                            className="bg-black border-zinc-700 text-xs h-10"
+                            className="bg-black/60 border-zinc-800 text-white h-12 focus:border-primary transition-all"
                         />
                         <Input 
                             type="password"
                             placeholder="Senha de acesso" 
                             value={newAdminPassword}
                             onChange={e => setNewAdminPassword(e.target.value)}
-                            className="bg-black border-zinc-700 text-xs h-10"
+                            className="bg-black/60 border-zinc-800 text-white h-12 focus:border-primary transition-all"
                         />
                      </div>
                      <Button 
                         onClick={handleAddAdmin} 
                         disabled={isLoadingAdmins || !newAdminEmail || !newAdminPassword}
-                        className="bg-primary text-black font-black text-xs h-10 uppercase tracking-widest"
+                        className="w-full h-12 font-black text-black shadow-xl group transition-all"
+                        style={{ backgroundColor: themeColor }}
                      >
-                        {isLoadingAdmins ? <Loader2 className="w-4 h-4 animate-spin" /> : "CADASTRAR E VINCULAR"}
+                        {isLoadingAdmins ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                            <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform" />
+                        )}
+                        CADASTRAR E VINCULAR
                      </Button>
                  </div>
              </div>
