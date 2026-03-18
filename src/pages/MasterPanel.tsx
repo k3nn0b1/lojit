@@ -100,12 +100,13 @@ export default function MasterPanel() {
         .insert([{
           tenant_id: newTenant.id,
           store_name: newTenantName,
-          primary_color: "#00f5ff", // Ciano lojit
+          primary_color: "#00f5ff", 
           background_color: "#000000",
-          footer_info: `Plataforma lojit - Loja ${newTenantName}.`,
-          address: "Endereço da Loja",
-          whatsapp: "(00) 00000-0000",
-          opening_hours: "Segunda a Sexta: 08:00 às 18:00"
+          secondary_color: "#1a1a1a",
+          footer_info: `© ${new Date().getFullYear()} ${newTenantName} - lojit`,
+          address: "Endereço não configurado",
+          whatsapp: "(75) 00000-0000",
+          opening_hours: "Segunda a Sábado: 08:00 às 20:00"
         }]);
 
       if (settingsError) throw settingsError;
