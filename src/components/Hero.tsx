@@ -53,7 +53,7 @@ const Hero = () => {
           data-aos-delay="200"
         >
           <div className="space-y-4">
-            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] tracking-tighter uppercase italic flex flex-col items-center justify-center">
+            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] tracking-tighter uppercase flex flex-col items-center justify-center">
               <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                 {settings?.hero_title_l1 || "CAMISAS"}
               </span>

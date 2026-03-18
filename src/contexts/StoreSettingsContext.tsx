@@ -53,11 +53,11 @@ const defaultSettings: StoreSettings = {
   hero_phrase: "",
   about_us: "",
   footer_info: "",
-  primary_color: "0 0% 100%",
-  secondary_color: "0 0% 100%",
-  background_color: "0 0% 5%",
+  primary_color: "179 78% 52%", // Ciano Elite (#23e7e3)
+  secondary_color: "179 78% 52%",
+  background_color: "240 0% 8%", // Escuro base (#141414)
   background_url: null,
-  background_type: "bg3",
+  background_type: "bg4",
   background_config: {},
   opening_hours: "",
   show_instagram: true,
@@ -87,25 +87,32 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const applyColors = (s: StoreSettings) => {
     const root = document.documentElement;
-    
-    // Parse background HSL para determinar se é claro ou escuro
-    // Adicionada verificação de segurança (parts[2]) para evitar crash em cores Hex
-    const parts = (s.background_color || "0 0% 0%").split(' ');
+
+    // Converter HEX para HSL caso venha do Blueprint ou Banco em formato #######
+    let primaryHSL = s.primary_color || "179 78% 52%";
+    let secondaryHSL = s.secondary_color || "179 78% 52%";
+    let backgroundHSL = s.background_color || "240 0% 8%";
+
+    if (primaryHSL.startsWith('#')) primaryHSL = hexToHSL(primaryHSL);
+    if (secondaryHSL.startsWith('#')) secondaryHSL = hexToHSL(secondaryHSL);
+    if (backgroundHSL.startsWith('#')) backgroundHSL = hexToHSL(backgroundHSL);
+
+    // Se o fundo for HEX, converter para HSL para a lógica de contraste abaixo
+    const finalBgHSL = backgroundHSL;
+    const parts = finalBgHSL.split(' ');
     const lightnessPart = parts[2] || "0%";
     const lValue = parseInt(lightnessPart.replace('%', '') || '0');
     
-    // Se a cor começar com # (Hex), assumimos que é escuro por padrão se for #000000
-    const isLight = s.background_color?.startsWith('#') 
-      ? (s.background_color === '#ffffff' || s.background_color.toLowerCase() === '#fff')
-      : lValue > 50;
-
+    // Determinar se o tema é claro ou escuro
+    const isLight = lValue > 50;
+    
     // Base colors from settings
-    root.style.setProperty("--primary", s.primary_color);
-    root.style.setProperty("--secondary", s.secondary_color);
-    root.style.setProperty("--background", s.background_color);
+    root.style.setProperty("--primary", primaryHSL);
+    root.style.setProperty("--secondary", secondaryHSL);
+    root.style.setProperty("--background", backgroundHSL);
     root.style.setProperty("--font-family", s.font_family || "Inter");
-    root.style.setProperty("--ring", s.primary_color);
-    root.style.setProperty("--accent", s.primary_color);
+    root.style.setProperty("--ring", primaryHSL);
+    root.style.setProperty("--accent", primaryHSL);
     
     // Automatic Contrast Adjustment
     if (isLight) {
