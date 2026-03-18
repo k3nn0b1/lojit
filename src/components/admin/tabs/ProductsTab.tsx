@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Pencil, Trash2, Plus, Image as ImageIcon, ChevronDown, ChevronUp, Loader2, Upload, X } from "lucide-react";
 import { formatBRL, parseSupabaseError, normalizeCategory, sortSizes } from "@/lib/utils";
+import { removeFromCloudinary } from "@/lib/cloudinary";
 import {
   Select,
   SelectContent,
@@ -175,15 +176,22 @@ const ProductsTab = ({
   };
 
   const handleRemoveProduct = async (id: number) => {
-    if (!confirm("Deseja realmente excluir este produto?")) return;
+    if (!confirm("Deseja realmente excluir este produto e suas fotos permanentemente?")) return;
     if (IS_SUPABASE_READY && tenantId) {
       try {
+        const target = storedProducts.find(p => p.id === id);
+        if (target) {
+            if (target.publicId) await removeFromCloudinary(target.publicId);
+            if (target.publicId2) await removeFromCloudinary(target.publicId2);
+            if (target.publicId3) await removeFromCloudinary(target.publicId3);
+        }
+
         const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
         if (error) throw error;
         setStoredProducts((prev) => prev.filter((p) => p.id !== id));
-        toast.success("Produto removido");
+        toast.success("Produto e imagens removidos com sucesso");
       } catch (e: any) {
-        toast.error("Falha ao remover no Supabase");
+        toast.error("Falha ao remover produto");
       }
     }
   };

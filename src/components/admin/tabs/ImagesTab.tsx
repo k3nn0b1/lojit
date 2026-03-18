@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { parseSupabaseError } from "@/lib/utils";
 import { Image as ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { removeFromCloudinary } from "@/lib/cloudinary";
 
 interface ImagesTabProps {
   tenantId?: string | null;
@@ -55,6 +56,15 @@ const ImagesTab = ({
   const handleReplaceProductImage = async (id: number, index: number, file: File) => {
     setUploading(true);
     try {
+      // 1. Localizar o produto atual para deletar a imagem antiga do Cloudinary (se houver)
+      const target = storedProducts.find(p => p.id === id);
+      if (target) {
+        const suffix = index === 1 ? "" : index;
+        const oldPublicId = target[`publicId${suffix}`];
+        if (oldPublicId) await removeFromCloudinary(oldPublicId);
+      }
+
+      // 2. Fazer upload da nova imagem
       const uploaded = await uploadToCloudinary(file);
       const suffix = index === 1 ? "" : index;
       const payload = { [`image${suffix}`]: uploaded.secure_url, [`publicId${suffix}`]: uploaded.public_id };
@@ -76,10 +86,19 @@ const ImagesTab = ({
   };
 
   const handleRemoveProductImage = async (id: number, index: number) => {
-    if (!confirm(`Deseja remover a foto ${index} deste produto?`)) return;
+    if (!confirm(`Deseja remover a foto ${index} deste produto permanentemente?`)) return;
     
     setUploading(true);
     try {
+      // 1. Localizar o produto atual para deletar a imagem do Cloudinary
+      const target = storedProducts.find(p => p.id === id);
+      if (target) {
+        const suffix = index === 1 ? "" : index;
+        const currentPublicId = target[`publicId${suffix}`];
+        if (currentPublicId) await removeFromCloudinary(currentPublicId);
+      }
+
+      // 2. Limpar referências no Banco
       const suffix = index === 1 ? "" : index;
       const payload = { [`image${suffix}`]: null, [`publicId${suffix}`]: null };
 
