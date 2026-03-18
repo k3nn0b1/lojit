@@ -9,7 +9,7 @@ const Footer = () => {
   const address = settings?.address || "";
   const whatsapp = settings?.whatsapp || "";
   const youtube = settings?.youtube_url || "";
-  const footerInfo = settings?.footer_info 
+  const footerInfo = (settings?.footer_info || "") 
     ? settings.footer_info.replace("lojit Store", storeName) 
     : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : `© ${new Date().getFullYear()} lojit. Todos os direitos reservados.`;
 
@@ -76,7 +76,7 @@ const Footer = () => {
 
               {showWhats && (
                 <a
-                  href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
+                  href={`https://wa.me/${(whatsapp || "").replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-smooth group text-sm"
