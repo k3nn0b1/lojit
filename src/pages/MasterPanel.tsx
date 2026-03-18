@@ -95,26 +95,35 @@ export default function MasterPanel() {
       const newTenant = tenantData as Tenant;
 
       try {
-        // 2. Criar BLUEPRINT COMPLETO lojit (Configurações Padrão)
+        // 2. Criar BLUEPRINT COMPLETO lojit (Configurações Padrão Conforme Imagens)
         const { error: settingsError } = await supabase
           .from("store_settings")
           .insert([{
             tenant_id: newTenant.id,
             store_name: newTenantName,
-            primary_color: "#00d8ff", 
-            secondary_color: "#0a0a0a",
+            primary_color: "#08c0d9", 
+            secondary_color: "#08c0d9",
             background_color: "#000000",
             text_color: "#ffffff",
-            footer_info: `© ${new Date().getFullYear()} ${newTenantName} - Plataforma lojit`,
+            font_family: "Inter",
+            background_type: "bg3", // Corresponde ao estilo Etereo/Shadow
+            footer_info: `© ${new Date().getFullYear()} ${newTenantName} - Plataforma Lojit`,
             address: "Configurar Endereço no Painel",
             whatsapp: "(75) 90000-0000",
-            opening_hours: "Segunda a Sábado: 08:00 às 20:00",
-            hero_title: `BEM-VINDO À ${newTenantName.toUpperCase()}`,
-            hero_subtitle: "As melhores seleções e ofertas exclusivas.",
-            cta_text: "VER PRODUTOS",
+            opening_hours: "Configurar Horário de Funcionamento no Painel",
+            instagram_url: "https://www.instagram.com/seuinstagram/",
+            // Títulos conforme imagem
+            hero_title_l1: "TITULO",
+            hero_title_l2: "SUBTITULO",
+            hero_title_l3: "COMPLEMENTO",
+            hero_phrase: "Subtítulo da página principal",
+            // Texto do Sobre Nós completo
+            about_us: `Somos uma empresa comprometida em oferecer produtos de alta qualidade para quem valoriza estilo, conforto e autenticidade. Trabalhamos com itens cuidadosamente selecionados, sempre buscando unir excelência, durabilidade e um ótimo custo-benefício.\n\nNosso foco está em proporcionar a melhor experiência para cada cliente, com atendimento ágil, envio seguro e atenção em cada detalhe do processo. Acreditamos que cada compra deve ser mais do que uma simples aquisição — deve ser uma experiência positiva, confiável e satisfatória.\n\nAqui, você encontra dedicação, compromisso e o cuidado necessário para garantir que você receba exatamente o que procura, com qualidade e confiança.`,
+            // Flags de visibilidade
             show_whatsapp: true,
             show_instagram: true,
-            show_youtube: false
+            show_youtube: false,
+            cta_text: "VER PRODUTOS"
           }]);
 
         if (settingsError) throw settingsError;
