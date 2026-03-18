@@ -368,49 +368,55 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
               />
             </div>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="about_us">Sobre Nós</Label>
-            <Textarea 
-                id="about_us" 
-                value={formData.about_us} 
-                onChange={e => setFormData({...formData, about_us: e.target.value})}
-                rows={5}
-                className="resize-none"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid gap-6 border-b border-border/50 pb-6">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Sobre Nós (Institucional)</h4>
             <div className="grid gap-2">
-              <Label htmlFor="footer_info">Informações do Footer (Copyright)</Label>
-              <Input 
-                  id="footer_info" 
-                  value={formData.footer_info} 
-                  onChange={e => setFormData({...formData, footer_info: e.target.value})}
+              <Textarea 
+                  id="about_us" 
+                  value={formData.about_us} 
+                  onChange={e => setFormData({...formData, about_us: e.target.value})}
+                  rows={5}
+                  className="resize-none"
               />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="font_family">Fonte do Site</Label>
-              <Select 
-                value={formData.font_family || "'Inter', sans-serif"} 
-                onValueChange={value => setFormData({...formData, font_family: value})}
-              >
-                <SelectTrigger id="font_family" className="bg-card border-border">
-                  <SelectValue placeholder="Selecione a fonte" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                  <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
-                  <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
-                  <SelectItem value="'Pacifico', cursive">Pacifico (Manuscrita)</SelectItem>
-                  <SelectItem value="'Iosevka Charon', monospace">Iosevka Charon (Programador)</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-border/50 space-y-8">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-sm font-medium">Cores do Sistema (HEX)</h4>
+          <div className="grid gap-6 border-b border-border/50 pb-6">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Rodapé e Fontes</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="footer_info">Informações do Footer (Copyright)</Label>
+                <Input 
+                    id="footer_info" 
+                    value={formData.footer_info} 
+                    onChange={e => setFormData({...formData, footer_info: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="font_family">Fonte do Site</Label>
+                <Select 
+                  value={formData.font_family || "'Inter', sans-serif"} 
+                  onValueChange={value => setFormData({...formData, font_family: value})}
+                >
+                  <SelectTrigger id="font_family" className="bg-card border-border">
+                    <SelectValue placeholder="Selecione a fonte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
+                    <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
+                    <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
+                    <SelectItem value="'Pacifico', cursive">Pacifico (Manuscrita)</SelectItem>
+                    <SelectItem value="'Iosevka Charon', monospace">Iosevka Charon (Programador)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 space-y-8">
+            <div className="grid gap-6">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Cores do Sistema (HEX)</h4>
                 {suggestedColors.length > 0 && (
                   <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
                     <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
@@ -461,8 +467,8 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
               </div>
             </div>
 
-            <div>
-              <h4 className="text-sm font-medium mb-4">Background do Site</h4>
+            <div className="grid gap-6">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Background do Site</h4>
               <div className="space-y-6">
                 <div className="grid gap-2">
                     <Label className="text-xs uppercase text-muted-foreground">Tipo de Estilo de Fundo</Label>
