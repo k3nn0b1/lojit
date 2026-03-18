@@ -319,7 +319,19 @@ export default function MasterPanel() {
               Infraestrutura Centralizada de E-commerce
             </p>
           </div>
-          <Button variant="outline" className="border-zinc-800 hover:bg-zinc-900 text-zinc-400" onClick={handleLogout}>
+          <Button 
+            variant="outline" 
+            className="border-zinc-800 hover:bg-zinc-900 text-white transition-all duration-300" 
+            onClick={handleLogout}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = themeColor;
+              e.currentTarget.style.color = themeColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
             <LogOut className="w-4 h-4 mr-2" /> Encerrar Sessão
           </Button>
         </header>
@@ -559,8 +571,13 @@ export default function MasterPanel() {
             </div>
           </div>
           <DialogFooter className="border-t border-zinc-900 pt-6">
-            <Button variant="ghost" onClick={() => setEditingTenant(null)} className="text-zinc-500">Descartar</Button>
-            <Button onClick={handleUpdateTenant} disabled={isUpdating} className="bg-primary text-black font-extrabold h-12 px-8 shadow-lg shadow-primary/20">
+            <Button variant="ghost" onClick={() => setEditingTenant(null)} className="text-zinc-400 hover:text-white hover:bg-zinc-800">Descartar</Button>
+            <Button 
+                onClick={handleUpdateTenant} 
+                disabled={isUpdating} 
+                className="font-extrabold h-12 px-8 shadow-xl text-black transition-all"
+                style={{ backgroundColor: themeColor }}
+            >
               {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
               ATUALIZAR PLATAFORMA
             </Button>
@@ -659,7 +676,21 @@ export default function MasterPanel() {
           </div>
 
           <DialogFooter className="border-t border-zinc-900 pt-6">
-             <Button variant="outline" onClick={() => setManagingAdminsTenant(null)} className="border-zinc-800 hover:bg-zinc-900">Fechar</Button>
+             <Button 
+                variant="outline" 
+                onClick={() => setManagingAdminsTenant(null)} 
+                className="border-zinc-800 hover:bg-zinc-900 text-white transition-all duration-300"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = themeColor;
+                  e.currentTarget.style.color = themeColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "";
+                  e.currentTarget.style.color = "";
+                }}
+             >
+                Fechar
+             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
