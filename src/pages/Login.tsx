@@ -25,69 +25,45 @@ const Login = () => {
     setLoading(true);
     try {
       if (IS_SUPABASE_READY) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: user, password: pass });
-        if (error || !data?.user) {
-          toast.error("Credenciais inválidas");
-        } else {
-          const uid = data.user.id;
+        // 1. Tentar Login oficial do Supabase (Para Master Admins)
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: user, password: pass });
+        
+        if (!authError && authData?.user) {
+          const uid = authData.user.id;
           
-          if (isMaster) {
-            // Verificar se é Master Admin
-            const { data: masterAdmins, error: masterErr } = await supabase
-              .from("master_admins")
-              .select("user_id")
-              .eq("user_id", uid)
-              .single();
+          // Verificar se é Master Admin (Permissão Global)
+          const { data: masterAdmins, error: masterErr } = await supabase
+            .from("master_admins")
+            .select("user_id")
+            .eq("user_id", uid)
+            .single();
 
-            const isMasterAdmin = !masterErr && !!masterAdmins;
-
-            if (!isMasterAdmin) {
-              toast.error("Acesso restrito a Master Admins");
-              await supabase.auth.signOut();
-            } else {
-              sessionStorage.setItem("admin_auth", "true");
-              setMasterSessionValid(true);
-              toast.success("Autenticado como Master");
-              navigate("/"); // App.tsx tratará o roteamento para o MasterPanel
-            }
-          } else {
-            // 1. Verificar se é um Master Admin (Permissão Global)
-            const { data: masterAdmins, error: masterErr } = await supabase
-              .from("master_admins")
-              .select("user_id")
-              .eq("user_id", uid)
-              .single();
-
-            const isMasterGlobally = !masterErr && !!masterAdmins;
-
-            if (isMasterGlobally) {
-              sessionStorage.setItem("admin_auth", "true");
-              setMasterSessionValid(true);
-              setAdminSessionValid(true); // Também valida admin para entrar na rota /admin
-              toast.success("Autenticado como Master");
-              navigate("/admin");
-              return;
-            }
-
-            // 2. Se não for Master, verificar se é admin deste tenant específico
-            const { data: admins, error: adminErr } = await supabase
-              .from("admins")
-              .select("user_id")
-              .eq("user_id", uid)
-              .eq("tenant_id", tenantId);
-
-            const isAdmin = !adminErr && Array.isArray(admins) && admins.length > 0;
-
-            if (!isAdmin) {
-              toast.error("Acesso restrito a administradores desta loja");
-              await supabase.auth.signOut();
-            } else {
-              sessionStorage.setItem("admin_auth", "true");
-              setAdminSessionValid(true);
-              toast.success("Autenticado");
-              navigate("/admin");
-            }
+          if (!masterErr && !!masterAdmins) {
+            sessionStorage.setItem("admin_auth", "true");
+            setMasterSessionValid(true);
+            setAdminSessionValid(true);
+            toast.success("Autenticado como Master");
+            navigate("/admin");
+            return;
           }
+        }
+
+        // 2. Se falhar ou não for Master, tentar o Login Simplificado (Tabela public.admins)
+        const { data: localAdmin, error: localErr } = await supabase
+          .from("admins")
+          .select("id")
+          .eq("email", user.toLowerCase().trim())
+          .eq("password", pass)
+          .eq("tenant_id", tenantId)
+          .single();
+
+        if (localAdmin) {
+          sessionStorage.setItem("admin_auth", "true");
+          setAdminSessionValid(true);
+          toast.success("Autenticado");
+          navigate("/admin");
+        } else {
+          toast.error("Credenciais inválidas");
         }
       } else {
         if (user === "admin" && pass === "nimda") {
