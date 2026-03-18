@@ -85,10 +85,16 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   const applyColors = (s: StoreSettings) => {
     const root = document.documentElement;
     
-    // Parse background HSL to determine if it's light or dark
-    const parts = s.background_color.split(' ');
-    const lValue = parseInt(parts[2]?.replace('%', '') || '0');
-    const isLight = lValue > 50;
+    // Parse background HSL para determinar se é claro ou escuro
+    // Adicionada verificação de segurança (parts[2]) para evitar crash em cores Hex
+    const parts = (s.background_color || "0 0% 0%").split(' ');
+    const lightnessPart = parts[2] || "0%";
+    const lValue = parseInt(lightnessPart.replace('%', '') || '0');
+    
+    // Se a cor começar com # (Hex), assumimos que é escuro por padrão se for #000000
+    const isLight = s.background_color?.startsWith('#') 
+      ? (s.background_color === '#ffffff' || s.background_color.toLowerCase() === '#fff')
+      : lValue > 50;
 
     // Base colors from settings
     root.style.setProperty("--primary", s.primary_color);
