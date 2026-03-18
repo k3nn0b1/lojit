@@ -214,20 +214,23 @@ const AppContent = () => {
   // Se é o painel master, renderizar rotas do master
   if (isMaster) {
     return (
-      <BrowserRouter>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          </div>
-        }>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin" element={<MasterGuard />} />
-            <Route path="/" element={<MasterGuard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+      <div className="relative min-h-screen flex flex-col">
+        <BackgroundManager forceType="bg4" />
+        <BrowserRouter>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+              <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            </div>
+          }>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/admin" element={<MasterGuard />} />
+              <Route path="/" element={<MasterGuard />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </div>
     );
   }
 

@@ -7,7 +7,11 @@ import AnimatedBackground3 from '@/assets/backgrounds/background3';
 import AnimatedBackground4 from '@/assets/backgrounds/background4';
 import FootballBackground from './FootballBackground';
 
-const BackgroundManager: React.FC = () => {
+interface BackgroundManagerProps {
+  forceType?: string;
+}
+
+const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
   const { settings } = useStoreSettings();
   const [shouldRenderBg, setShouldRenderBg] = React.useState(true);
 
@@ -35,12 +39,9 @@ const BackgroundManager: React.FC = () => {
   const isSolid = !settings.background_type || settings.background_type === 'solid';
 
   const renderBackground = () => {
-    if (!shouldRenderBg) return null;
-    if (isSolid) {
-      return <FootballBackground mode="hero" />;
-    }
+    const type = forceType || settings?.background_type;
 
-    switch (settings.background_type) {
+    switch (type) {
       case 'bg1':
         return <AnimatedBackground1 primaryColor={colors.primary} secondaryColor={colors.background} />;
       case 'bg2':
@@ -50,7 +51,7 @@ const BackgroundManager: React.FC = () => {
       case 'bg4':
         return <AnimatedBackground4 color={colors.primary + 'CC'} />;
       default:
-        return null;
+        return isSolid ? <FootballBackground mode="hero" /> : null;
     }
   };
 

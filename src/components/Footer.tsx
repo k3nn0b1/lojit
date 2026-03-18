@@ -27,19 +27,22 @@ const Footer = ({ minimal = false }: FooterProps) => {
     <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm mt-auto w-full">
       <div className="container mx-auto px-4 py-8">
         {minimal ? (
-          <div className="flex flex-col items-center justify-center gap-3 text-center">
-            <p className="text-sm font-medium text-foreground">© 2026 Painel Master. Todos os direitos reservados.</p>
-            <p className="text-xs text-muted-foreground">
-              Desenvolvemos soluções personalizadas pra empresas. Contato: {" "}
-              <a 
-                href="https://wa.me/5575981284738" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline font-bold"
-              >
-                75 98128-4738
-              </a>
-            </p>
+          <div className="flex flex-col items-center justify-center gap-4 text-center">
+            <h2 className="text-2xl font-black tracking-tighter uppercase italic text-primary">Painel Master</h2>
+            <div className="space-y-1 opacity-80 hover:opacity-100 transition-opacity">
+              <p className="text-xs font-medium text-foreground tracking-widest uppercase">© 2026 Painel Master. Todos os direitos reservados.</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                Desenvolvemos soluções personalizadas pra empresas. Contato: {" "}
+                <a 
+                  href="https://wa.me/5575981284738" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                   75 98128-4738
+                </a>
+              </p>
+            </div>
           </div>
         ) : (
           <>
