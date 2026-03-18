@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { setAdminSessionValid } from "@/App";
+import { setAdminSessionValid, setMasterSessionValid } from "@/App";
 import { useTenant } from "@/hooks/use-tenant";
 
 const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -46,7 +46,7 @@ const Login = () => {
               await supabase.auth.signOut();
             } else {
               sessionStorage.setItem("admin_auth", "true");
-              setAdminSessionValid(true);
+              setMasterSessionValid(true);
               toast.success("Autenticado como Master");
               navigate("/"); // App.tsx tratará o roteamento para o MasterPanel
             }

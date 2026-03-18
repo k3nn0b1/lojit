@@ -29,6 +29,13 @@ export const setAdminSessionValid = (valid: boolean) => {
   isSessionValid = valid;
 };
 
+// Variável global para sessão Master (resetada no F5)
+let isMasterSessionValid = false;
+
+export const setMasterSessionValid = (valid: boolean) => {
+  isMasterSessionValid = valid;
+};
+
 const AdminGuard = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
@@ -115,6 +122,16 @@ const MasterGuard = () => {
       if (!isMaster) {
           navigate("/", { replace: true });
           return;
+      }
+
+      // Segurança: Se não for uma sessão válida (resetada no F5), desloga
+      if (!isMasterSessionValid) {
+        if (IS_SUPABASE_READY) {
+          await supabase.auth.signOut();
+        }
+        setIsAuth(false);
+        navigate("/login", { replace: true });
+        return;
       }
       
       try {
