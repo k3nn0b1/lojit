@@ -323,15 +323,16 @@ const Index = () => {
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
         <div className="flex-grow">
         <Hero />
-        <div className="container mx-auto px-4 pt-16 pb-8 text-center" data-aos="fade-up">
-           <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-4 uppercase italic">
-             <span className="text-white">{settings?.collection_title_l1 || "NOSSA"}</span>{" "}
-             <span className="text-primary glow-text">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
-           </h2>
-           <p className="text-zinc-400 font-medium text-lg md:text-xl max-w-2xl mx-auto">
-             {settings?.collection_subtitle || "As melhores camisas de futebol do mundo disponíveis para você."}
-           </p>
-        </div>
+        <header className="text-center space-y-4 mb-16 relative">
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
+          <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-none flex flex-col items-center justify-center">
+            <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{settings?.collection_title_l1 || "NOSSA"}</span>
+            <span className="text-primary glow-text -mt-2 drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
+          </h2>
+          <p className="text-zinc-500 font-medium tracking-[0.2em] uppercase text-xs md:text-sm max-w-xs mx-auto">
+            {settings?.collection_subtitle || "As melhores camisas de futebol do mundo"}
+          </p>
+        </header>
         <ProductGrid products={products} onAddToCart={handleAddToCart} />
 
         {/* Sobre Nós */}
