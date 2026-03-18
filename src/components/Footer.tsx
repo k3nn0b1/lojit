@@ -10,8 +10,8 @@ const Footer = () => {
   const whatsapp = settings?.whatsapp || "";
   const youtube = settings?.youtube_url || "";
   const footerInfo = settings?.footer_info 
-    ? settings.footer_info.replace("FUT75 Store", storeName) 
-    : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : `© ${new Date().getFullYear()}. Todos os direitos reservados.`;
+    ? settings.footer_info.replace("lojit Store", storeName) 
+    : storeName ? `© ${new Date().getFullYear()} ${storeName}. Todos os direitos reservados.` : `© ${new Date().getFullYear()} lojit. Todos os direitos reservados.`;
 
   // Flags de visibilidade (default para true se não existirem nas configurações antigas)
   const showInsta = settings?.show_instagram !== false;

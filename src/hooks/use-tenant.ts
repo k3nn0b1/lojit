@@ -14,7 +14,7 @@ export const useTenant = () => {
     tenant,
     /** UUID do tenant atual (null se master ou não resolvido) */
     tenantId,
-    /** Slug do subdomínio (ex: "fut75", "loja1") */
+    /** Slug do subdomínio (ex: "lojit", "loja1") */
     tenantSlug,
     /** True se estamos no painel master (master.dominio.com) */
     isMaster,

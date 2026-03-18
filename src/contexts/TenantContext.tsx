@@ -29,15 +29,15 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
  * Extrai o slug do subdomínio a partir do hostname.
  * 
  * Exemplos:
- * - "loja1.fut75.com.br"     → "loja1"
- * - "master.fut75.com.br"    → "master"
- * - "localhost"               → usa VITE_DEFAULT_TENANT_SLUG ou "fut75"
+ * - "loja1.lojit.com.br"     → "loja1"
+ * - "master.lojit.com.br"    → "master"
+ * - "localhost"               → usa VITE_DEFAULT_TENANT_SLUG ou "lojit"
  * - "loja1.localhost"         → "loja1"
- * - "fut75.com.br"           → usa VITE_DEFAULT_TENANT_SLUG ou "fut75"
- * - "www.fut75.com.br"       → usa VITE_DEFAULT_TENANT_SLUG ou "fut75"
+ * - "lojit.com.br"           → usa VITE_DEFAULT_TENANT_SLUG ou "lojit"
+ * - "www.lojit.com.br"       → usa VITE_DEFAULT_TENANT_SLUG ou "lojit"
  */
 function extractSlugFromHostname(hostname: string): string {
-  const defaultSlug = import.meta.env.VITE_DEFAULT_TENANT_SLUG || "fut75";
+  const defaultSlug = import.meta.env.VITE_DEFAULT_TENANT_SLUG || "lojit";
 
   // Desenvolvimento local: localhost sem subdomínio
   if (hostname === "localhost" || hostname === "127.0.0.1") {

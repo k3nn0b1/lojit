@@ -105,7 +105,7 @@ export default function MasterPanel() {
               PAINEL MASTER
             </h1>
             <p className="text-muted-foreground flex items-center gap-2">
-              <Shield className="w-4 h-4" /> Gerenciamento Centralizado FUT75
+              <Shield className="w-4 h-4" /> Gerenciamento Centralizado lojit
             </p>
           </div>
           <Button variant="outline" className="border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={handleLogout}>
@@ -148,11 +148,11 @@ export default function MasterPanel() {
                         className="bg-black/40 border-zinc-700 text-white pl-3 pr-24"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs font-mono">
-                        .fut75.com.br
+                        .lojit.com.br
                       </div>
                     </div>
                     <p className="text-[10px] text-zinc-500 leading-tight">
-                      * O slug será usado na URL. Ex: mystore.fut75.com.br
+                      * O slug será usado na URL. Ex: mystore.lojit.com.br
                     </p>
                   </div>
                   <Button type="submit" disabled={isCreating} className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
@@ -183,19 +183,19 @@ export default function MasterPanel() {
                       <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">{tenant.name}</h3>
                       <div className="flex items-center gap-3 text-sm text-zinc-400">
                         <span className="flex items-center gap-1 bg-zinc-800/80 px-2 py-0.5 rounded text-xs font-mono">
-                          <LinkIcon className="w-3 h-3" /> {tenant.slug}.fut75.com.br
+                          <LinkIcon className="w-3 h-3" /> {tenant.slug}.lojit.com.br
                         </span>
                         <span className="text-[10px]">Criado em {new Date(tenant.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
                       <Button variant="outline" size="sm" className="flex-1 md:flex-none bg-zinc-800 border-zinc-700 hover:bg-zinc-700" asChild>
-                        <a href={`https://${tenant.slug}.fut75.com.br/admin`} target="_blank" rel="noopener noreferrer">
+                        <a href={`https://${tenant.slug}.lojit.com.br/admin`} target="_blank" rel="noopener noreferrer">
                           <Settings className="w-3 h-3 mr-2" /> Acessar Admin
                         </a>
                       </Button>
                       <Button variant="outline" size="sm" className="flex-1 md:flex-none bg-zinc-800 border-zinc-700 hover:bg-zinc-700" asChild>
-                         <a href={`https://${tenant.slug}.fut75.com.br`} target="_blank" rel="noopener noreferrer">
+                         <a href={`https://${tenant.slug}.lojit.com.br`} target="_blank" rel="noopener noreferrer">
                           <Globe className="w-3 h-3 mr-2" /> Ver Loja
                         </a>
                       </Button>
