@@ -53,15 +53,15 @@ const Hero = () => {
           data-aos-delay="200"
         >
           <div className="space-y-4">
-            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] tracking-tighter uppercase flex flex-col items-center justify-center">
+            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] uppercase flex flex-col items-center justify-center">
               <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                 {settings?.hero_title_l1 || "CAMISAS"}
               </span>
-              <span className="text-primary glow-neon -mt-2 drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
+              <span className="text-primary glow-neon drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
                 {settings?.hero_title_l2 || "DE TIME"}
               </span>
               {settings?.hero_title_l3 && (
-                <span className="text-primary glow-neon -mt-2 drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
+                <span className="text-primary glow-neon drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
                   {settings?.hero_title_l3}
                 </span>
               )}
