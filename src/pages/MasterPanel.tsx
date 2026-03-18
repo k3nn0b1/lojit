@@ -94,45 +94,49 @@ export default function MasterPanel() {
 
       const newTenant = tenantData as Tenant;
 
-      // 2. Criar BLUEPRINT COMPLETO lojit (Configurações Padrão)
-      const { error: settingsError } = await supabase
-        .from("store_settings")
-        .insert([{
-          tenant_id: newTenant.id,
-          store_name: newTenantName,
-          primary_color: "#00d8ff", 
-          secondary_color: "#0a0a0a",
-          background_color: "#000000",
-          text_color: "#ffffff",
-          footer_info: `© ${new Date().getFullYear()} ${newTenantName} - Plataforma lojit`,
-          address: "Configurar Endereço no Painel",
-          whatsapp: "(75) 90000-0000",
-          opening_hours: "Segunda a Sábado: 08:00 às 20:00",
-          // Campos de texto para evitar erros na Home
-          hero_title: `BEM-VINDO À ${newTenantName.toUpperCase()}`,
-          hero_subtitle: "As melhores seleções e ofertas exclusivas.",
-          cta_text: "VER PRODUTOS",
-          // Outros campos essenciais
-          show_whatsapp: true,
-          show_instagram: true,
-          show_youtube: false
-        }]);
-
-      if (settingsError) throw settingsError;
-
-      // 3. Vincular o MASTER ADMIN atual como admin da nova loja para ele conseguir entrar no admin dela de imediato
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-          await supabase.from("admins").insert([{
-              user_id: user.id,
-              tenant_id: newTenant.id
+      try {
+        // 2. Criar BLUEPRINT COMPLETO lojit (Configurações Padrão)
+        const { error: settingsError } = await supabase
+          .from("store_settings")
+          .insert([{
+            tenant_id: newTenant.id,
+            store_name: newTenantName,
+            primary_color: "#00d8ff", 
+            secondary_color: "#0a0a0a",
+            background_color: "#000000",
+            text_color: "#ffffff",
+            footer_info: `© ${new Date().getFullYear()} ${newTenantName} - Plataforma lojit`,
+            address: "Configurar Endereço no Painel",
+            whatsapp: "(75) 90000-0000",
+            opening_hours: "Segunda a Sábado: 08:00 às 20:00",
+            hero_title: `BEM-VINDO À ${newTenantName.toUpperCase()}`,
+            hero_subtitle: "As melhores seleções e ofertas exclusivas.",
+            cta_text: "VER PRODUTOS",
+            show_whatsapp: true,
+            show_instagram: true,
+            show_youtube: false
           }]);
-      }
 
-      toast.success("Plataforma criada e Master vinculada!");
-      setTenants([newTenant, ...tenants]);
-      setNewTenantName("");
-      setNewTenantSlug("");
+        if (settingsError) throw settingsError;
+
+        // 3. Vincular o MASTER ADMIN atual
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            await supabase.from("admins").insert([{
+                user_id: user.id,
+                tenant_id: newTenant.id
+            }]);
+        }
+
+        toast.success("Plataforma criada com sucesso!");
+        setTenants([newTenant, ...tenants]);
+        setNewTenantName("");
+        setNewTenantSlug("");
+      } catch (innerError: any) {
+        // Erro críco ao criar blueprint: deletar o tenant para não deixar lixo e liberar o slug
+        await supabase.from("tenants").delete().eq("id", newTenant.id);
+        throw innerError;
+      }
     } catch (error: any) {
       if (error.code === "23505") {
           toast.error("Este subdomínio (slug) já está sendo usado por outra loja. Escolha um nome diferente.");
