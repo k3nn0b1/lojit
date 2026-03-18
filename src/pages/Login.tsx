@@ -104,9 +104,11 @@ const Login = () => {
                 <Label>Senha</Label>
                 <Input type="password" value={pass} onChange={(e) => setPass(e.target.value)} />
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-muted-foreground">Sessão expira ao fechar/atualizar a página</p>
-                <Button type="submit" disabled={loading}>{loading ? "Entrando..." : "Entrar"}</Button>
+              <div className="flex flex-col items-center gap-4 pt-2">
+                <p className="text-xs text-muted-foreground text-center">Sessão expira ao fechar/atualizar a página</p>
+                <Button type="submit" disabled={loading} className="w-full md:w-[200px]">
+                  {loading ? "Entrando..." : "Entrar"}
+                </Button>
               </div>
             </form>
           </div>
