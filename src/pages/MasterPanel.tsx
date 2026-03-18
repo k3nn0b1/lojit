@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Tenant {
@@ -213,7 +213,7 @@ export default function MasterPanel() {
     try {
       const { data, error } = await supabase
         .from("admins")
-        .select("id, user_id")
+        .select("id, user_id, email")
         .eq("tenant_id", tenant.id);
 
       if (error) throw error;
@@ -525,10 +525,11 @@ export default function MasterPanel() {
                            <div key={admin.id} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-zinc-800/50 rounded-lg group">
                                <div className="flex items-center gap-3">
                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                                       <Key className="w-3 h-3 text-primary" />
+                                       <Mail className="w-3 h-3 text-primary" />
                                    </div>
                                    <div>
-                                       <p className="text-xs font-mono text-zinc-400">{admin.user_id}</p>
+                                       <p className="text-xs font-bold text-zinc-100">{admin.email || "Lojista Vinculado"}</p>
+                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Acesso: ••••••••</p>
                                    </div>
                                </div>
                                <Button 
