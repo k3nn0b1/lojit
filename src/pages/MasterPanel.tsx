@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Tenant {
@@ -47,11 +47,14 @@ export default function MasterPanel() {
   const [newAdminPassword, setNewAdminPassword] = useState("");
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
-
+  const [themeColor, setThemeColor] = useState("#23e7e3");
+  const [showThemePicker, setShowThemePicker] = useState(false);
+ 
   useEffect(() => {
     document.title = "Painel Master Lojit";
     fetchTenants();
-  }, []);
+    document.documentElement.style.setProperty('--primary', themeColor);
+  }, [themeColor]);
 
   const fetchTenants = async () => {
     setLoading(true);
@@ -287,9 +290,9 @@ export default function MasterPanel() {
       {/* Background Etéreo de Sombra e Movimento (Shadow Movement) */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Luzes de Plasma Dinâmicas */}
-        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-[#23e7e3]/15 rounded-full blur-[160px] animate-pulse"></div>
-        <div className="absolute top-[20%] -right-[5%] w-[45%] h-[45%] bg-[#23e7e3]/10 rounded-full blur-[140px] animate-pulse [animation-delay:2s]"></div>
-        <div className="absolute -bottom-[15%] left-[20%] w-[55%] h-[55%] bg-[#23e7e3]/10 rounded-full blur-[180px] animate-pulse [animation-delay:4s]"></div>
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[160px] animate-pulse" style={{ backgroundColor: `${themeColor}26` }}></div>
+        <div className="absolute top-[20%] -right-[5%] w-[45%] h-[45%] rounded-full blur-[140px] animate-pulse [animation-delay:2s]" style={{ backgroundColor: `${themeColor}1a` }}></div>
+        <div className="absolute -bottom-[15%] left-[20%] w-[55%] h-[55%] rounded-full blur-[180px] animate-pulse [animation-delay:4s]" style={{ backgroundColor: `${themeColor}1a` }}></div>
         <div className="absolute bottom-[10%] left-[40%] w-[30%] h-[30%] bg-zinc-800/20 rounded-full blur-[120px] animate-pulse [animation-delay:1s]"></div>
         
         {/* Overlay de Grão e Profundidade */}
@@ -402,23 +405,96 @@ export default function MasterPanel() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                      <Button variant="outline" size="sm" onClick={() => openAdminManager(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary" title="Gerenciar Usuários">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => openAdminManager(tenant)}
+                        className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
+                        style={{ borderHoverColor: themeColor }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = themeColor;
+                          e.currentTarget.style.color = themeColor;
+                          e.currentTarget.style.backgroundColor = `${themeColor}10`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "";
+                          e.currentTarget.style.color = "";
+                          e.currentTarget.style.backgroundColor = "";
+                        }}
+                        title="Gerenciar Usuários"
+                      >
                         <Users className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleStartEdit(tenant)} className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary">
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleStartEdit(tenant)}
+                        className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = themeColor;
+                          e.currentTarget.style.color = themeColor;
+                          e.currentTarget.style.backgroundColor = `${themeColor}10`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "";
+                          e.currentTarget.style.color = "";
+                          e.currentTarget.style.backgroundColor = "";
+                        }}
+                      >
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="sm" className="bg-zinc-950 border-zinc-800 hover:border-primary/50 text-zinc-400 hover:text-primary" asChild>
+
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = themeColor;
+                          e.currentTarget.style.color = themeColor;
+                          e.currentTarget.style.backgroundColor = `${themeColor}10`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "";
+                          e.currentTarget.style.color = "";
+                          e.currentTarget.style.backgroundColor = "";
+                        }}
+                        asChild
+                      >
                         <a href={`https://${tenant.slug}.lojit.com.br/admin`} target="_blank" rel="noopener noreferrer">
                           <Settings className="w-3 h-3 mr-2" /> Painel
                         </a>
                       </Button>
-                      <Button size="sm" className="bg-primary/10 hover:bg-primary hover:text-black text-primary border border-primary/20 transition-all font-bold" asChild>
+
+                      <Button 
+                        size="sm" 
+                        className="transition-all font-bold"
+                        style={{ 
+                          backgroundColor: `${themeColor}15`, 
+                          color: themeColor,
+                          border: `1px solid ${themeColor}30`
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = themeColor;
+                          e.currentTarget.style.color = "#000";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = `${themeColor}15`;
+                          e.currentTarget.style.color = themeColor;
+                        }}
+                        asChild
+                      >
                          <a href={`https://${tenant.slug}.lojit.com.br`} target="_blank" rel="noopener noreferrer">
                           <Globe className="w-3 h-3 mr-2" /> Loja
                         </a>
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteTenant(tenant.id)} className="text-zinc-600 hover:text-red-500 hover:bg-red-500/5">
+
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeleteTenant(tenant.id)} 
+                        className="text-zinc-700 hover:text-red-500 hover:bg-red-500/5 transition-colors ml-2"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -574,6 +650,30 @@ export default function MasterPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Seletor de Cores Flutuante */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <div className={`flex flex-col gap-2 mb-3 bg-zinc-900 border border-white/10 p-2 rounded-xl transition-all duration-300 ${showThemePicker ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+          {["#23e7e3", "#8b5cf6", "#fbbf24", "#ef4444", "#3b82f6"].map(color => (
+            <button
+              key={color}
+              onClick={() => {
+                setThemeColor(color);
+                document.documentElement.style.setProperty('--primary', color);
+              }}
+              className="w-8 h-8 rounded-full border border-white/20 transition-transform active:scale-90"
+              style={{ backgroundColor: color }}
+            ></button>
+          ))}
+        </div>
+        <Button
+          onClick={() => setShowThemePicker(!showThemePicker)}
+          className="w-12 h-12 rounded-full shadow-xl bg-zinc-900 border border-white/10 text-white hover:bg-zinc-800"
+          style={{ borderColor: themeColor }}
+        >
+          <Palette className="w-6 h-6" style={{ color: themeColor }} />
+        </Button>
+      </div>
     </div>
   );
 }
