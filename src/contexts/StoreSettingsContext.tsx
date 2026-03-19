@@ -222,30 +222,38 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       // 1. Atualizar store_settings
-      const { error } = await supabase
+      const { error: settingsError } = await supabase
         .from("store_settings")
         .update(newSettings)
         .eq("tenant_id", tenantId);
 
-      if (error) throw error;
+      if (settingsError) throw settingsError;
 
       // 2. Sincronizar 'store_name' com a tabela 'tenants', se necessário
       if (newSettings.store_name) {
-        await supabase
+        const { error: tenantError } = await supabase
           .from("tenants")
           .update({ name: newSettings.store_name })
           .eq("id", tenantId);
+        
+        if (tenantError) {
+          console.error("Erro ao sincronizar nome com a tabela tenants:", tenantError);
+          // Opcional: throw tenantError se quiser que o salvamento falhe completamente por falta de sincronia
+          throw tenantError;
+        }
       }
       
       const updated = { ...settings, ...newSettings } as StoreSettings;
       setSettings(updated);
       applyColors(updated);
       updateMetadata(updated);
-      // Atualizar cache (separado por tenant)
+      
+      // Atualizar cache local apenas se as atualizações no banco foram bem-sucedidas
       localStorage.setItem(`store_settings_cache_${tenantId}`, JSON.stringify(updated));
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating settings:", error);
+      // Re-lançamos para que o componente (SettingsTab) possa disparar o toast de erro
       throw error;
     }
   };
