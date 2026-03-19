@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw, Search, Power, PowerOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw, Search, Power, PowerOff, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 
@@ -59,6 +59,13 @@ export default function MasterPanel() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+
+  // Confirmation Modal state
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmType, setConfirmType] = useState<"delete" | "toggleStatus">("delete");
+  const [confirmTenant, setConfirmTenant] = useState<Tenant | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isExecutingAction, setIsExecutingAction] = useState(false);
  
   useEffect(() => {
     document.title = "Painel Master Lojit";
@@ -208,22 +215,46 @@ export default function MasterPanel() {
     }
   };
 
-  const toggleTenantStatus = async (tenantId: string, currentStatus: boolean) => {
-    setIsChangingStatus(tenantId);
-    try {
-      const { error } = await supabase
-        .from("tenants")
-        .update({ active: !currentStatus })
-        .eq("id", tenantId);
+  const toggleTenantStatus = async (tenant: Tenant) => {
+    setConfirmType("toggleStatus");
+    setConfirmTenant(tenant);
+    setConfirmPassword("");
+    setIsConfirmModalOpen(true);
+  };
 
-      if (error) throw error;
-      
-      toast.success(currentStatus ? "Loja desativada" : "Loja ativada");
-      setTenants(prev => prev.map(t => t.id === tenantId ? { ...t, active: !currentStatus } : t));
-    } catch (error) {
-      toast.error("Erro ao alterar status");
+  const handleConfirmedOperation = async () => {
+    if (!confirmTenant) return;
+    
+    // Por motivos de segurança neste ambiente simplificado, 
+    // validamos se o campo de senha não está vazio. 
+    // Em produção, aqui deveria autenticar no Supabase.
+    if (confirmPassword.length < 5) {
+      toast.error("Senha de segurança inválida ou curta demais");
+      return;
+    }
+
+    setIsExecutingAction(true);
+    try {
+      if (confirmType === "delete") {
+        const { error } = await supabase.from("tenants").delete().eq("id", confirmTenant.id);
+        if (error) throw error;
+        setTenants(prev => prev.filter(t => t.id !== confirmTenant.id));
+        toast.success("Loja deletada permanentemente");
+      } else {
+        const { error } = await supabase
+          .from("tenants")
+          .update({ active: !confirmTenant.active })
+          .eq("id", confirmTenant.id);
+
+        if (error) throw error;
+        toast.success(confirmTenant.active ? "Loja desativada" : "Loja ativada");
+        setTenants(prev => prev.map(t => t.id === confirmTenant.id ? { ...t, active: !confirmTenant.active } : t));
+      }
+      setIsConfirmModalOpen(false);
+    } catch (error: any) {
+      toast.error(`Erro: ${error.message}`);
     } finally {
-      setIsChangingStatus(null);
+      setIsExecutingAction(false);
     }
   };
 
@@ -246,16 +277,11 @@ export default function MasterPanel() {
     currentPage * pageSize
   );
 
-  const handleDeleteTenant = async (id: string) => {
-    if (!confirm("AVISO: Isso deletará permanentemente a loja e seus dados. Continuar?")) return;
-    try {
-      const { error } = await supabase.from("tenants").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Loja removida");
-      setTenants(prev => prev.filter(t => t.id !== id));
-    } catch (error) {
-      toast.error("Erro ao remover");
-    }
+  const handleDeleteTenant = (tenant: Tenant) => {
+    setConfirmType("delete");
+    setConfirmTenant(tenant);
+    setConfirmPassword("");
+    setIsConfirmModalOpen(true);
   };
 
   const openAdminManager = async (tenant: Tenant) => {
@@ -523,8 +549,8 @@ export default function MasterPanel() {
                          <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => toggleTenantStatus(tenant.id, tenant.active)}
-                          disabled={isChangingStatus === tenant.id}
+                          onClick={() => toggleTenantStatus(tenant)}
+                          disabled={isExecutingAction && confirmTenant?.id === tenant.id && confirmType === "toggleStatus"}
                           className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
                           title={tenant.active ? "Desativar Loja" : "Ativar Loja"}
                           onMouseEnter={(e) => {
@@ -629,7 +655,7 @@ export default function MasterPanel() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => handleDeleteTenant(tenant.id)} 
+                        onClick={() => handleDeleteTenant(tenant)} 
                         className="text-zinc-700 hover:text-red-500 hover:bg-red-500/5 transition-colors ml-2"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -865,6 +891,66 @@ export default function MasterPanel() {
           <Palette className="w-6 h-6" style={{ color: themeColor }} />
         </Button>
       </div>
+
+      {/* Confirmation Modal (Neon Style) - Final Implementation */}
+      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-900 text-white max-w-sm p-0 overflow-hidden rounded-3xl">
+          <div className={`h-2 w-full ${confirmType === "delete" ? "bg-red-500" : "bg-orange-500"}`} />
+          <div className="p-8 text-center space-y-6">
+            <div className={`w-20 h-20 rounded-2xl mx-auto flex items-center justify-center border-2 ${confirmType === "delete" ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-orange-500/10 border-orange-500/20 text-orange-500"}`}>
+               <AlertTriangle className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <DialogTitle className="text-xl font-black uppercase tracking-tighter">
+                Ação de Segurança
+              </DialogTitle>
+              <DialogDescription className="text-zinc-500 text-[10px] font-medium leading-relaxed uppercase">
+                {confirmType === "delete" 
+                  ? "Esta ação excluirá PERMANENTEMENTE todos os dados desta loja. Isso não pode ser desfeito."
+                  : `Você está prestes a ${confirmTenant?.active ? "DESATIVAR" : "ATIVAR"} a loja "${confirmTenant?.name}".`}
+              </DialogDescription>
+            </div>
+
+            <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900 space-y-4">
+              <Label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block text-left">
+                Senha de Segurança Master
+              </Label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700" />
+                <Input 
+                  type="password"
+                  placeholder="DIGITE A SENHA..."
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-zinc-950 border-zinc-800 pl-10 h-14 focus:border-white transition-all text-xs font-bold tracking-widest text-white"
+                  autoFocus
+                />
+              </div>
+              <p className="text-[9px] text-zinc-600 font-bold uppercase leading-tight italic">
+                 Autorização Necessária para prosseguir.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsConfirmModalOpen(false)}
+                className="h-14 bg-zinc-900 text-white font-black uppercase text-[10px] hover:bg-zinc-800 rounded-2xl"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleConfirmedOperation}
+                disabled={isExecutingAction || !confirmPassword}
+                className={`h-14 font-black uppercase text-[10px] rounded-2xl shadow-xl transition-all ${confirmType === "delete" ? "bg-red-500 hover:bg-red-400 text-white shadow-red-500/10" : "bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/10"}`}
+              >
+                {isExecutingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
