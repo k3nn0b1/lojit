@@ -466,19 +466,19 @@ export default function MasterPanel() {
                 <div className="flex items-center gap-2">
                    <Button 
                       onClick={() => setFilterStatus("all")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "all" ? 'bg-primary border-primary text-zinc-950 shadow-[0_0_15px_-5px_var(--primary)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "all" ? 'bg-white border-white text-black' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      TODOS
                    </Button>
                    <Button 
                       onClick={() => setFilterStatus("active")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "active" ? 'bg-emerald-500 border-emerald-500 text-zinc-950 shadow-[0_0_15px_-5px_#10b981]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-emerald-400'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "active" ? 'bg-emerald-500 border-emerald-500 text-black' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      ATIVOS
                    </Button>
                    <Button 
                       onClick={() => setFilterStatus("inactive")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "inactive" ? 'bg-rose-500 border-rose-500 text-zinc-950 shadow-[0_0_15px_-5px_#f43f5e]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-rose-400'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "inactive" ? 'bg-rose-500 border-rose-500 text-black' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      INATIVOS
                    </Button>
