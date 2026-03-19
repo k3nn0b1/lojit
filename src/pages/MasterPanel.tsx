@@ -465,26 +465,20 @@ export default function MasterPanel() {
                 {/* Filters */}
                 <div className="flex items-center gap-2">
                    <Button 
-                      variant="ghost" 
-                      size="sm" 
                       onClick={() => setFilterStatus("all")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "all" ? 'bg-primary border-primary text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "all" ? 'bg-primary border-primary text-zinc-950 shadow-[0_0_15px_-5px_var(--primary)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-zinc-100'}`}
                    >
                      TODOS
                    </Button>
                    <Button 
-                      variant="ghost" 
-                      size="sm" 
                       onClick={() => setFilterStatus("active")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "active" ? 'bg-emerald-500 border-emerald-500 text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "active" ? 'bg-emerald-500 border-emerald-500 text-zinc-950 shadow-[0_0_15px_-5px_#10b981]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-emerald-400'}`}
                    >
                      ATIVOS
                    </Button>
                    <Button 
-                      variant="ghost" 
-                      size="sm" 
                       onClick={() => setFilterStatus("inactive")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "inactive" ? 'bg-rose-500 border-rose-500 text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "inactive" ? 'bg-rose-500 border-rose-500 text-zinc-950 shadow-[0_0_15px_-5px_#f43f5e]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:text-zinc-950 hover:bg-rose-400'}`}
                    >
                      INATIVOS
                    </Button>
