@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 
@@ -393,10 +393,22 @@ export default function MasterPanel() {
 
           {/* Tenants List */}
           <main className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <Globe className="w-4 h-4" /> Lojistas Conectados
-              </h2>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <div className="flex items-center gap-4">
+                <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                  <Globe className="w-4 h-4" /> Lojistas Conectados
+                </h2>
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={fetchTenants}
+                    className="h-8 px-2 text-zinc-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Atualizar Lista"
+                >
+                    <RotateCw className={`w-3 h-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    <span className="text-[10px] font-bold">RECARREGAR</span>
+                </Button>
+              </div>
               <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20 font-bold">
                 {tenants.length} TOTAL
               </span>

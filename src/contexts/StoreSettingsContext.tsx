@@ -221,12 +221,21 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!tenantId) throw new Error("Tenant não resolvido");
 
     try {
+      // 1. Atualizar store_settings
       const { error } = await supabase
         .from("store_settings")
         .update(newSettings)
         .eq("tenant_id", tenantId);
 
       if (error) throw error;
+
+      // 2. Sincronizar 'store_name' com a tabela 'tenants', se necessário
+      if (newSettings.store_name) {
+        await supabase
+          .from("tenants")
+          .update({ name: newSettings.store_name })
+          .eq("id", tenantId);
+      }
       
       const updated = { ...settings, ...newSettings } as StoreSettings;
       setSettings(updated);
