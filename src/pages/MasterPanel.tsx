@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw, Search, Power, PowerOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 
@@ -50,6 +50,11 @@ export default function MasterPanel() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [themeColor, setThemeColor] = useState("#23e7e3");
   const [showThemePicker, setShowThemePicker] = useState(false);
+  
+  // Search & Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [isChangingStatus, setIsChangingStatus] = useState<string | null>(null);
  
   useEffect(() => {
     document.title = "Painel Master Lojit";
@@ -198,6 +203,33 @@ export default function MasterPanel() {
       setIsUpdating(false);
     }
   };
+
+  const toggleTenantStatus = async (tenantId: string, currentStatus: boolean) => {
+    setIsChangingStatus(tenantId);
+    try {
+      const { error } = await supabase
+        .from("tenants")
+        .update({ active: !currentStatus })
+        .eq("id", tenantId);
+
+      if (error) throw error;
+      
+      toast.success(currentStatus ? "Loja desativada" : "Loja ativada");
+      setTenants(prev => prev.map(t => t.id === tenantId ? { ...t, active: !currentStatus } : t));
+    } catch (error) {
+      toast.error("Erro ao alterar status");
+    } finally {
+      setIsChangingStatus(null);
+    }
+  };
+
+  const filteredTenants = tenants.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          t.slug.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === "all" ? true : 
+                         filterStatus === "active" ? t.active : !t.active;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleDeleteTenant = async (id: string) => {
     if (!confirm("AVISO: Isso deletará permanentemente a loja e seus dados. Continuar?")) return;
@@ -393,31 +425,71 @@ export default function MasterPanel() {
 
           {/* Tenants List */}
           <main className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between px-2 mb-2">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-6 px-2 mb-6">
+              <div className="flex items-center justify-between">
                 <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                   <Globe className="w-4 h-4" /> Lojistas Conectados
                 </h2>
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={fetchTenants}
-                    className="h-8 px-2 text-zinc-500 hover:text-primary hover:bg-primary/10 transition-colors"
-                    title="Atualizar Lista"
-                >
-                    <RotateCw className={`w-3 h-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    <span className="text-[10px] font-bold">RECARREGAR</span>
-                </Button>
+                <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20 font-bold">
+                  {filteredTenants.length} EXIBIDOS ({tenants.length} TOTAL)
+                </span>
               </div>
-              <span className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full border border-primary/20 font-bold">
-                {tenants.length} TOTAL
-              </span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Search Bar */}
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-primary transition-colors" />
+                  <Input 
+                    placeholder="Pesquisar por nome ou subdomínio..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-zinc-900/50 border-zinc-800 h-10 pl-10 focus:border-primary transition-all text-sm"
+                  />
+                </div>
+
+                {/* Filters */}
+                <div className="flex items-center gap-2">
+                   <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setFilterStatus("all")}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "all" ? 'bg-primary text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                   >
+                     TODOS
+                   </Button>
+                   <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setFilterStatus("active")}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "active" ? 'bg-green-500 text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                   >
+                     ATIVOS
+                   </Button>
+                   <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setFilterStatus("inactive")}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "inactive" ? 'bg-red-500 text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                   >
+                     INATIVOS
+                   </Button>
+                   <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={fetchTenants}
+                        className="h-10 w-10 p-0 text-zinc-500 hover:text-primary hover:bg-primary/10 transition-colors ml-auto"
+                        title="Atualizar Lista"
+                    >
+                        <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-              {tenants.map((tenant) => (
-                <Card key={tenant.id} className="bg-zinc-900/30 border-zinc-900 hover:border-zinc-800 transition-all group overflow-hidden">
-                  <div className="h-1 w-full bg-primary/5 group-hover:bg-primary/40 transition-colors" />
+               {filteredTenants.map((tenant) => (
+                <Card key={tenant.id} className={`bg-zinc-900/30 border-zinc-900 hover:border-zinc-800 transition-all group overflow-hidden ${!tenant.active ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                  <div className={`h-1 w-full transition-colors ${tenant.active ? 'bg-primary/5 group-hover:bg-primary/40' : 'bg-red-500/20'}`} />
                   <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
@@ -439,10 +511,33 @@ export default function MasterPanel() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => openAdminManager(tenant)}
+                         <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => toggleTenantStatus(tenant.id, tenant.active)}
+                          disabled={isChangingStatus === tenant.id}
+                          className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
+                          title={tenant.active ? "Desativar Loja" : "Ativar Loja"}
+                          onMouseEnter={(e) => {
+                            const color = tenant.active ? "#ef4444" : "#22c55e";
+                            e.currentTarget.style.borderColor = color;
+                            e.currentTarget.style.color = color;
+                            e.currentTarget.style.backgroundColor = `${color}10`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "";
+                            e.currentTarget.style.color = "";
+                            e.currentTarget.style.backgroundColor = "";
+                          }}
+                        >
+                          {isChangingStatus === tenant.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 
+                           tenant.active ? <PowerOff className="w-3 h-3" /> : <Power className="w-3 h-3" />}
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => openAdminManager(tenant)}
                         className="bg-zinc-950 border-zinc-800 text-zinc-400 transition-all duration-300"
                         onMouseEnter={(e) => {
                           e.currentTarget.style.borderColor = themeColor;
@@ -535,10 +630,10 @@ export default function MasterPanel() {
                 </Card>
               ))}
 
-              {tenants.length === 0 && !loading && (
+               {filteredTenants.length === 0 && !loading && (
                 <div className="text-center py-24 border border-zinc-900 border-dashed rounded-3xl bg-zinc-950/50">
                    <Globe className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
-                   <p className="text-zinc-600 font-medium">Inicie sua rede criando o primeiro lojista.</p>
+                   <p className="text-zinc-600 font-medium">Nenhum lojista encontrado para os filtros atuais.</p>
                 </div>
               )}
             </div>

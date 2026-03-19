@@ -11,6 +11,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
 const TenantNotFound = lazy(() => import("./pages/TenantNotFound"));
 const MasterPanel = lazy(() => import("./pages/MasterPanel"));
+const StoreDisabled = lazy(() => import("./pages/StoreDisabled"));
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -172,7 +173,7 @@ const MasterGuard = () => {
 
 const AppContent = () => {
   const { settings, loading: settingsLoading } = useStoreSettings();
-  const { isMaster, tenantId, loading: tenantLoading, error: tenantError } = useTenantContext();
+  const { tenant, isMaster, tenantId, loading: tenantLoading, error: tenantError } = useTenantContext();
   const loading = settingsLoading || tenantLoading;
 
   // 0. Se o lojista não for encontrado (URL inválida)
@@ -193,6 +194,15 @@ const AppContent = () => {
         </div>
       </div>
     );
+  }
+
+  // 0.1 Se a loja existe mas está desativada
+  if (tenant && !tenant.active && !isMaster) {
+     return (
+        <Suspense fallback={null}>
+           <StoreDisabled />
+        </Suspense>
+     );
   }
 
   // Ainda resolvendo o tenant (apenas para lojas, não para o master)

@@ -87,8 +87,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // 2. Tentar buscar pelo Slug Primeiro
         let query = supabase
           .from("tenants")
-          .select("*")
-          .eq("active", true);
+          .select("*");
 
         // Se o hostname for diferente do padrão lojit, pode ser um domínio customizado
         if (!hostname.endsWith("lojit.com.br") && hostname !== "localhost") {
