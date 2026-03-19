@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw, Search, Power, PowerOff } from "lucide-react";
+import { Plus, Settings, Globe, Shield, LogOut, Loader2, Link as LinkIcon, Pencil, Check, X, Trash2, Users, Key, Mail, Eye, EyeOff, Palette, RotateCw, Search, Power, PowerOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { encryptPassword, decryptPassword } from "@/lib/encryption";
 
@@ -55,6 +55,10 @@ export default function MasterPanel() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [isChangingStatus, setIsChangingStatus] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
  
   useEffect(() => {
     document.title = "Painel Master Lojit";
@@ -230,6 +234,17 @@ export default function MasterPanel() {
                          filterStatus === "active" ? t.active : !t.active;
     return matchesSearch && matchesStatus;
   });
+
+  // Reset page when filtering or searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus]);
+
+  const totalPages = Math.ceil(filteredTenants.length / pageSize);
+  const paginatedTenants = filteredTenants.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const handleDeleteTenant = async (id: string) => {
     if (!confirm("AVISO: Isso deletará permanentemente a loja e seus dados. Continuar?")) return;
@@ -453,7 +468,7 @@ export default function MasterPanel() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setFilterStatus("all")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "all" ? 'bg-primary text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "all" ? 'bg-primary border-primary text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      TODOS
                    </Button>
@@ -461,7 +476,7 @@ export default function MasterPanel() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setFilterStatus("active")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "active" ? 'bg-green-500 text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "active" ? 'bg-emerald-500 border-emerald-500 text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      ATIVOS
                    </Button>
@@ -469,7 +484,7 @@ export default function MasterPanel() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => setFilterStatus("inactive")}
-                      className={`text-[10px] font-bold h-10 px-4 transition-all ${filterStatus === "inactive" ? 'bg-red-500 text-black' : 'bg-zinc-900/50 text-zinc-400 hover:text-white'}`}
+                      className={`text-[10px] font-bold h-10 px-4 transition-all border ${filterStatus === "inactive" ? 'bg-rose-500 border-rose-500 text-zinc-950' : 'bg-transparent border-zinc-800 text-zinc-400 hover:text-white'}`}
                    >
                      INATIVOS
                    </Button>
@@ -487,7 +502,7 @@ export default function MasterPanel() {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
-               {filteredTenants.map((tenant) => (
+               {paginatedTenants.map((tenant) => (
                 <Card key={tenant.id} className={`bg-zinc-900/30 border-zinc-900 hover:border-zinc-800 transition-all group overflow-hidden ${!tenant.active ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                   <div className={`h-1 w-full transition-colors ${tenant.active ? 'bg-primary/5 group-hover:bg-primary/40' : 'bg-red-500/20'}`} />
                   <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -630,10 +645,39 @@ export default function MasterPanel() {
                 </Card>
               ))}
 
-               {filteredTenants.length === 0 && !loading && (
+              {filteredTenants.length === 0 && !loading && (
                 <div className="text-center py-24 border border-zinc-900 border-dashed rounded-3xl bg-zinc-950/50">
                    <Globe className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
                    <p className="text-zinc-600 font-medium">Nenhum lojista encontrado para os filtros atuais.</p>
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2 pt-4 border-t border-zinc-900">
+                  <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
+                    Página {currentPage} de {totalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-white disabled:opacity-30 h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-white disabled:opacity-30 h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
