@@ -57,11 +57,11 @@ const Hero = () => {
               <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                 {settings?.hero_title_l1 || "CAMISAS"}
               </span>
-              <span className="text-primary glow-neon drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
+              <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
                 {settings?.hero_title_l2 || "DE TIME"}
               </span>
               {settings?.hero_title_l3 && (
-                <span className="text-primary glow-neon drop-shadow-[0_0_20px_rgba(8,192,217,0.5)]">
+                <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
                   {settings?.hero_title_l3}
                 </span>
               )}
