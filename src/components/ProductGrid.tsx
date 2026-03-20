@@ -36,7 +36,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   };
 
   return (
-    <section id="products" className="min-h-screen py-10 md:py-20" data-aos="fade-up">
+    <section id="products" className="min-h-screen pt-4 pb-16 md:pb-32" data-aos="fade-up">
       <div className="container mx-auto px-4 md:px-8">
         {/* Título dinâmico removido daqui e movido para o Index.tsx para evitar duplicidade */}
 
