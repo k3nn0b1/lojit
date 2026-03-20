@@ -2,8 +2,10 @@ import React from 'react';
 import { ShieldAlert, MessageCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WhatsappIcon } from '@/components/icons/WhatsappIcon';
+import { useStoreSettings } from '@/contexts/StoreSettingsContext';
 
 const StoreDisabled = () => {
+  const { settings } = useStoreSettings();
   const supportNumber = "75981284738";
   const whatsappUrl = `https://wa.me/55${supportNumber}?text=Olá,%20minha%20loja%20está%20desativada%20e%20gostaria%20de%20reativá-la.`;
 
@@ -21,9 +23,19 @@ const StoreDisabled = () => {
           <div className="absolute -inset-[1px] bg-gradient-to-br from-primary/30 to-secondary/30 rounded-[40px] -z-10 opacity-50"></div>
           
           <div className="mb-8 relative">
-            <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-              <ShieldAlert className="w-12 h-12" />
-            </div>
+            {settings?.logo_url ? (
+              <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 transform -rotate-3 hover:rotate-0 transition-transform duration-500 overflow-hidden p-4">
+                <img 
+                  src={settings.logo_url} 
+                  alt={settings.store_name} 
+                  className="w-full h-full object-contain filter drop-shadow-2xl"
+                />
+              </div>
+            ) : (
+              <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                <ShieldAlert className="w-12 h-12" />
+              </div>
+            )}
           </div>
 
           <h1 className="text-4xl font-black text-white tracking-tight uppercase leading-none mb-4">
