@@ -323,13 +323,13 @@ const Index = () => {
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
         <div className="flex-grow">
         <Hero />
-        <header className="text-center space-y-3 mb-10 md:mb-16 relative">
+        <header className="text-center space-y-4 mb-20 md:mb-32 relative pt-10 md:pt-20">
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
-          <h2 className="text-5xl md:text-7xl font-black uppercase leading-[0.9] flex flex-col items-center justify-center">
+          <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.85] flex flex-col items-center justify-center">
             <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{settings?.collection_title_l1 || "NOSSA"}</span>
-            <span className="text-primary glow-text drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
+            <span className="text-primary glow-text drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)] tracking-tighter">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
           </h2>
-          <p className="text-zinc-500 font-medium tracking-[0.2em] uppercase text-[10px] md:text-sm max-w-xs mx-auto">
+          <p className="text-zinc-500 font-medium tracking-[0.3em] uppercase text-[10px] md:text-sm max-w-sm mx-auto mt-6">
             {settings?.collection_subtitle || "As melhores camisas de futebol do mundo"}
           </p>
         </header>
