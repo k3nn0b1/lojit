@@ -150,7 +150,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   return (
     <>
       <Card 
-        className="group overflow-hidden border-border/50 bg-card hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full"
+        className="group overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full rounded-2xl md:rounded-[2rem]"
       >
         <div 
           className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
@@ -192,62 +192,36 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             </motion.div>
           </AnimatePresence>
 
-          {productPhotos.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-              
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 hidden md:flex gap-1 z-20">
-                {productPhotos.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 rounded-full transition-all ${
-                      currentPhotoIndex === i ? "w-4 bg-primary" : "w-1.5 bg-white/50"
-                    }`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          {isSoldOut && (
-            <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground z-30">Esgotado</Badge>
-          )}
-          <Badge className="absolute top-3 right-3 bg-primary/90 text-primary-foreground z-30">
-            {product.category}
-          </Badge>
+          <div className="absolute top-2 left-2 flex flex-col gap-1 z-30">
+            {isSoldOut && (
+              <Badge className="bg-destructive text-destructive-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">Esgotado</Badge>
+            )}
+            <Badge className="bg-primary/90 text-primary-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">
+              {product.category}
+            </Badge>
+          </div>
         </div>
 
-        <CardContent className="p-3 md:p-4 flex-grow flex flex-col space-y-2 md:space-y-3">
-          <h3 className="font-display text-base md:text-xl text-foreground line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem]">
+        <CardContent className="p-3 md:p-5 flex-grow flex flex-col space-y-2">
+          <h3 className="font-display text-sm md:text-lg text-foreground line-clamp-2 leading-tight uppercase font-black h-[2.5rem] md:h-[3rem]">
             {product.name}
           </h3>
           
-          <div className="flex items-center justify-between">
-            <span className="text-lg md:text-2xl font-bold text-primary">
+          <div className="flex items-center justify-between mt-auto">
+            <span className="text-lg md:text-2xl font-black text-primary drop-shadow-[0_0_10px_rgba(var(--primary),0.2)]">
               {formatBRL(product.price)}
             </span>
           </div>
         </CardContent>
 
-        <CardFooter className="p-3 md:p-4 pt-0 mt-auto">
+        <CardFooter className="p-3 md:p-5 pt-0 mt-auto">
           <Button
             onClick={() => setIsDetailsOpen(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black transition-smooth h-10 md:h-12 text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-primary/20"
             size="lg"
             disabled={isSoldOut}
           >
-            <ShoppingCart className="w-4 h-4 mr-2" />
+            <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 mr-2" />
             COMPRAR
           </Button>
         </CardFooter>

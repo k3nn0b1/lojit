@@ -36,22 +36,22 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   };
 
   return (
-    <section id="products" className="min-h-screen py-16 md:py-24" data-aos="fade-up">
+    <section id="products" className="min-h-screen py-8 md:py-24" data-aos="fade-up">
       <div className="container mx-auto px-4">
         {/* Título dinâmico removido daqui e movido para o Index.tsx para evitar duplicidade */}
 
         {/* Category Filter */}
-        <div className="flex flex-wrap gap-3 justify-center mb-12">
+        <div className="flex flex-wrap gap-2 md:gap-3 justify-center mb-8 md:mb-12">
           {categories.map((category) => (
             <Button
               key={category}
               onClick={() => handleCategoryChange(category)}
               variant={selectedCategory === category ? "default" : "outline"}
-              className={
+              className={`text-xs md:text-sm h-9 md:h-10 ${
                 selectedCategory === category
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground glow-soft font-bold"
-                  : "border-primary/30 hover:border-primary hover:bg-primary/10 hover:text-foreground font-bold"
-              }
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground glow-soft font-black uppercase tracking-wider"
+                  : "border-primary/20 hover:border-primary hover:bg-primary/5 hover:text-foreground font-bold uppercase tracking-wider text-muted-foreground"
+              }`}
             >
               {category}
             </Button>
@@ -59,7 +59,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8 overflow-hidden">
           {visibleProducts.map((product) => (
             <div key={product.id}>
               <ProductCard
