@@ -341,7 +341,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <div className="space-y-6">
                   {product.description && (
                     <div className="space-y-2">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Sobre este produto</h4>
+                      <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Sobre este produto</h4>
                       <p className="text-sm text-muted-foreground/80 leading-relaxed whitespace-pre-wrap">{product.description}</p>
                     </div>
                   )}
@@ -349,7 +349,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   {!isSoldOut && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Escolha seu tamanho</h4>
+                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Escolha seu tamanho</h4>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {displaySizes.map((size) => {
