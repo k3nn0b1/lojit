@@ -14,9 +14,28 @@ interface HeaderProps {
 const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true }: HeaderProps) => {
   const { settings } = useStoreSettings();
   const storeName = settings?.store_name || "";
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Aparece após 100px de scroll OU se houver itens no carrinho
+      if (window.scrollY > 150 || cartItemCount > 0) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Check initial state
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [cartItemCount]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80">
+    <header className={`fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-xl bg-background/80 transition-all duration-500 transform ${
+      isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
+    }`}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {settings?.logo_url ? (
