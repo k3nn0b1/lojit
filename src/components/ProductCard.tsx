@@ -333,23 +333,23 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               {/* Content Section */}
               <div className="p-6 md:p-8 flex flex-col">
                 <DialogHeader className="text-left space-y-2 mb-6">
-                  <Badge variant="outline" className="w-fit text-primary border-primary/30 uppercase tracking-widest">{product.category}</Badge>
-                  <DialogTitle className="text-2xl md:text-4xl font-display leading-tight">{product.name}</DialogTitle>
-                  <div className="text-3xl font-bold text-primary">{formatBRL(product.price)}</div>
+                  <Badge variant="outline" className="w-fit text-primary border-primary/30 uppercase tracking-[0.2em] text-[10px]">{product.category}</Badge>
+                  <DialogTitle className="text-xl md:text-3xl font-display leading-tight">{product.name}</DialogTitle>
+                  <div className="text-2xl font-bold text-primary">{formatBRL(product.price)}</div>
                 </DialogHeader>
 
                 <div className="space-y-6">
                   {product.description && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Sobre este produto</h4>
-                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Sobre este produto</h4>
+                      <p className="text-sm text-muted-foreground/80 leading-relaxed whitespace-pre-wrap">{product.description}</p>
                     </div>
                   )}
 
                   {!isSoldOut && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Escolha seu tamanho</h4>
+                        <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Escolha seu tamanho</h4>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {displaySizes.map((size) => {
@@ -358,18 +358,18 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                           const isSelected = selectedSize === key;
                           
                           return (
-                            <div key={key} className="flex flex-col items-center gap-1">
+                            <div key={key} className="flex flex-col items-center gap-1.5">
                               <button
                                 onClick={() => setSelectedSize(key)}
-                                className={`h-12 w-12 flex items-center justify-center rounded-lg border-2 transition-all font-bold text-lg ${
+                                className={`min-w-[3.5rem] h-11 flex items-center justify-center rounded-xl border-2 transition-all font-black text-xs px-3 leading-tight text-center ${
                                   isSelected
-                                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                                    : "border-border hover:border-primary/50 bg-background/50 text-foreground"
+                                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
+                                    : "border-border hover:border-primary/50 bg-background/50 text-foreground opacity-70"
                                 }`}
                               >
                                 {key}
                               </button>
-                              <span className="text-[10px] text-muted-foreground font-bold">{qty ?? 0} un</span>
+                              <span className="text-[9px] text-muted-foreground font-bold">{qty ?? 0} un</span>
                             </div>
                           );
                         })}
