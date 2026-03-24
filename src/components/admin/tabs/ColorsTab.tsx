@@ -135,7 +135,7 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {globalColors.map((c) => (
-            <div key={c.id} className="flex items-center justify-between rounded-xl border p-3 bg-background/50 backdrop-blur-sm group hover:border-primary/50 transition-all">
+            <div key={c.id} className="flex items-center justify-between rounded-xl border p-3 bg-muted group hover:border-primary transition-all shadow-sm">
               {editingId === c.id ? (
                 <div className="flex flex-col gap-2 w-full">
                   <div className="flex gap-2">

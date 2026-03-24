@@ -881,7 +881,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-start md:justify-center p-1 bg-muted/50 backdrop-blur-sm border border-border">
+          <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-start md:justify-center p-1 bg-muted border border-border shadow-md">
               <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2 px-4 transition-all">Pedidos</TabsTrigger>
               <TabsTrigger value="products" className="flex-1 md:flex-none py-2 px-4 transition-all">Produtos</TabsTrigger>
               <TabsTrigger value="stock" className="flex-1 md:flex-none py-2 px-4 transition-all">Estoque</TabsTrigger>
@@ -955,7 +955,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                       </thead>
                       <tbody>
                         {visiblePedidos.map((p) => (
-                          <tr key={p.id} onClick={() => setPedidoDetalhesId(p.id)} className="hover:bg-muted/40 cursor-pointer">
+                          <tr key={p.id} onClick={() => setPedidoDetalhesId(p.id)} className="hover:bg-muted transition-colors cursor-pointer">
                             <td className="px-3 py-2 align-middle whitespace-nowrap">
                               <TooltipProvider>
                                 <Tooltip>

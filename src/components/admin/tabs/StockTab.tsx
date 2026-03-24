@@ -114,7 +114,7 @@ const StockTab = ({
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/40 bg-card/10 backdrop-blur-md overflow-hidden">
+      <Card className="border-border/40 bg-card shadow-xl overflow-hidden">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -131,12 +131,12 @@ const StockTab = ({
               value={stockQuery}
               onChange={(e) => handleQueryChange(e.target.value)}
               placeholder="Buscar por nome, categoria ou ID..."
-              className="h-12 bg-muted/20 border-border/40 hover:border-primary/40 focus:border-primary/60 transition-all rounded-xl pl-12"
+              className="h-12 bg-muted/30 border-border/40 hover:border-primary/40 focus:border-primary/60 transition-all rounded-xl pl-12"
             />
             <Plus className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
 
-          <div className="rounded-2xl border border-border/40 overflow-hidden bg-background/20 backdrop-blur-sm">
+          <div className="rounded-2xl border border-border/40 overflow-hidden bg-muted/20">
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent border-none">
@@ -191,7 +191,7 @@ const StockTab = ({
                           <TableCell colSpan={5} className="p-0">
                             <div className="p-8 border-t border-primary/10 bg-gradient-to-b from-primary/[0.02] to-transparent animate-in fade-in slide-in-from-top-2 duration-300">
                               <Tabs defaultValue="stock" className="w-full">
-                                <TabsList className="bg-muted/30 p-1 rounded-2xl border border-border/40 mb-8 border-primary/20">
+                                <TabsList className="bg-muted p-1 rounded-2xl border border-border/40 mb-8 border-primary/10 shadow-inner">
                                   <TabsTrigger value="stock" className="rounded-xl px-8 h-10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase tracking-widest text-[10px]">
                                     <Layers className="w-4 h-4 mr-2" /> Estoque & Variantes
                                   </TabsTrigger>
@@ -271,7 +271,7 @@ const StockTab = ({
                                 </TabsContent>
 
                                 <TabsContent value="edit" className="mt-0 outline-none">
-                                  <div className="bg-card/40 rounded-[2.5rem] border border-border/40 p-8 space-y-8">
+                                  <div className="bg-muted/30 rounded-[2.5rem] border border-border/40 p-8 space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                       <div className="space-y-6">
                                         <div className="space-y-2">
@@ -372,7 +372,7 @@ const StockTab = ({
 
       {/* Pagination */}
       {filteredStock.length > 0 && (
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/40 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card p-6 rounded-3xl border border-border/40 shadow-xl">
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
             <Layers className="w-4 h-4" />
             <span>Exibir {pageSize} por página</span>

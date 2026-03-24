@@ -181,7 +181,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-8 h-auto p-1.5 bg-muted/30">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-8 h-auto p-1.5 bg-muted shadow-md border-border/20">
           <TabsTrigger value="geral" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Geral</TabsTrigger>
           <TabsTrigger value="contato" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Contatos</TabsTrigger>
           <TabsTrigger value="identidade" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Identidade Visual</TabsTrigger>
@@ -210,7 +210,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
                   <div className="space-y-3">
                     <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">LOGOTIPO DA LOJA</Label>
-                    <div className="flex items-center gap-4 p-3 rounded-xl border border-border/40 bg-muted/10 backdrop-blur-sm">
+                    <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted shadow-sm">
                       {formData.logo_url && (
                         <div className="relative group p-1.5 rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
                           <img src={formData.logo_url} alt="Logo" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" />
@@ -271,7 +271,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     </div>
                     <div className="space-y-2 flex flex-col justify-center">
                       <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
-                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
+                      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg border shadow-sm">
                         <Switch checked={formData.show_whatsapp} onCheckedChange={c => setFormData({...formData, show_whatsapp: c})} />
                         <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
                       </div>
@@ -321,7 +321,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     </div>
                     <div className="space-y-2 flex flex-col justify-center">
                       <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
-                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
+                      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg border shadow-sm">
                         <Switch checked={formData.show_youtube} onCheckedChange={c => setFormData({...formData, show_youtube: c})} />
                         <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
                       </div>
@@ -339,7 +339,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     Cores do Sistema <span className="text-[10px] text-muted-foreground font-medium">Paleta Principal</span>
                   </h3>
                   {suggestedColors.length > 0 && (
-                    <div className="flex items-center gap-4 bg-muted/20 px-4 py-2 rounded-xl border border-primary/10">
+                    <div className="flex items-center gap-4 bg-muted px-4 py-2 rounded-xl border border-primary/20 shadow-md">
                       <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
                       <div className="flex gap-2">
                         {suggestedColors.map(color => (
@@ -601,7 +601,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
         </Card>
       </Tabs>
 
-      <div className="sticky bottom-0 z-50 bg-background/80 backdrop-blur-md pt-4 pb-6 border-t border-border/40 mt-10">
+      <div className="sticky bottom-0 z-50 bg-card pt-4 pb-6 border-t border-border mt-10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="hidden md:block">
             {settings.updated_at && (
