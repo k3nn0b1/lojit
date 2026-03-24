@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -145,6 +145,22 @@ const [adminCart, setAdminCart] = useState<AdminCartItem[]>([]);
 const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 const [selectedSize, setSelectedSize] = useState<string | null>(null);
 const [quantity, setQuantity] = useState<string>('1');
+const [refreshingOrders, setRefreshingOrders] = useState(false);
+
+const fetchPedidos = async () => {
+  if (!IS_SUPABASE_READY) return;
+  setRefreshingOrders(true);
+  try {
+    const { data, error } = await supabase
+      .from("pedidos")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .order("data_criacao", { ascending: false });
+    if (!error && data) setPedidos(sortPedidos(data as any[]));
+  } finally {
+    setRefreshingOrders(false);
+  }
+};
 
 // Cliente (opcional)
 const [informarCliente, setInformarCliente] = useState(true);
@@ -368,16 +384,11 @@ const sortPedidos = (list: any[]) => {
 
 // Carregamento inicial e realtime
 useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-  const fetchPedidos = async () => {
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("data_criacao", { ascending: false });
-    if (!error && data) setPedidos(sortPedidos(data as any[]));
-  };
   void fetchPedidos();
+}, [tenantId]);
+
+useEffect(() => {
+  if (!IS_SUPABASE_READY) return;
 
   const channel = supabase
     .channel("pedidos-realtime")
@@ -866,8 +877,18 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           {/* Pedidos */}
           <TabsContent value="pedidos" className="mt-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Pedidos</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={fetchPedidos} 
+                  disabled={refreshingOrders}
+                  className="h-9 gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${refreshingOrders ? 'animate-spin text-primary' : ''}`} />
+                  {refreshingOrders ? 'Atualizando...' : 'Atualizar'}
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-col md:flex-row gap-3 md:items-end">

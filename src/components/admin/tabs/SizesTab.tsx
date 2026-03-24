@@ -4,8 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { parseSupabaseError, sortSizes } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface SizesTabProps {
   tenantId?: string | null;
@@ -18,12 +26,14 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
   const [newGlobalSize, setNewGlobalSize] = useState("");
   const [editingSize, setEditingSize] = useState<string | null>(null);
   const [sizeEditValue, setSizeEditValue] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const saveGlobalSizes = async (next: string[]) => {
     const removed = globalSizes.filter((s) => !next.includes(s));
     const normalized = sortSizes(next);
     setGlobalSizes(normalized);
     if (IS_SUPABASE_READY && tenantId) {
+      setSaving(true);
       try {
         const rows = normalized.map((name) => ({ name, tenant_id: tenantId }));
         const { error: upsertErr } = await supabase.from("sizes").upsert(rows, { onConflict: "name,tenant_id" });
@@ -37,10 +47,29 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         toast.success("Tamanhos atualizados");
       } catch (e: any) {
         toast.error("Falha ao salvar tamanhos no Supabase", { description: parseSupabaseError(e) });
+      } finally {
+        setSaving(false);
       }
     } else {
       toast.error("Supabase não configurado.");
     }
+  };
+
+  const handleUpdateSize = async () => {
+    if (!editingSize) return;
+    const raw = sizeEditValue.trim().toUpperCase();
+    if (!raw) return;
+    if (raw === editingSize) {
+      setEditingSize(null);
+      return;
+    }
+    if (globalSizes.includes(raw)) {
+      toast.error("Tamanho já existe");
+      return;
+    }
+    const next = sortSizes([...globalSizes.filter((x) => x !== editingSize), raw]);
+    await saveGlobalSizes(next);
+    setEditingSize(null);
   };
 
   return (
@@ -74,84 +103,65 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
           {globalSizes.map((s) => (
-            <div key={s} className="flex items-center justify-between rounded-md border px-3 py-2 bg-background">
-              {editingSize === s ? (
-                <div className="flex items-center gap-2 w-full">
-                  <Input
-                    value={sizeEditValue}
-                    onChange={(e) => setSizeEditValue(e.target.value)}
-                    placeholder="Editar tamanho"
-                  />
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      const raw = sizeEditValue.trim().toUpperCase();
-                      if (!raw) return;
-                      if (raw === s) {
-                        setEditingSize(null);
-                        setSizeEditValue("");
-                        return;
-                      }
-                      if (globalSizes.includes(raw)) {
-                        toast.error("Tamanho já existe");
-                        return;
-                      }
-                      const next = sortSizes([...globalSizes.filter((x) => x !== s), raw]);
+            <div key={s} className="flex items-center justify-between rounded-xl border border-border/40 px-4 py-3 bg-card hover:border-primary/30 transition-all group">
+              <span className="truncate flex-1 font-bold text-sm tracking-wide">{s}</span>
+              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingSize(s);
+                    setSizeEditValue(s);
+                  }}
+                  title="Editar"
+                  className="h-9 w-9 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => {
+                    if (confirm(`Deseja remover o tamanho "${s}"?`)) {
+                      const next = globalSizes.filter((x) => x !== s);
                       saveGlobalSizes(next);
-                      setEditingSize(null);
-                      setSizeEditValue("");
-                      toast.success("Tamanho atualizado");
-                    }}
-                    title="Salvar"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setEditingSize(null);
-                      setSizeEditValue("");
-                    }}
-                    title="Cancelar"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <span className="truncate flex-1 font-semibold">{s}</span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingSize(s);
-                        setSizeEditValue(s);
-                      }}
-                      title="Editar"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => {
-                        if (confirm(`Deseja remover o tamanho "${s}"?`)) {
-                          const next = globalSizes.filter((x) => x !== s);
-                          saveGlobalSizes(next);
-                        }
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </>
-              )}
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
+
+        <Dialog open={!!editingSize} onOpenChange={(open) => !open && setEditingSize(null)}>
+          <DialogContent className="bg-card text-primary/90 border border-primary sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-foreground text-xl">Editar Tamanho</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Altere o nome do tamanho global. Isso afetará todos os produtos que usam este tamanho.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6">
+              <Input
+                value={sizeEditValue}
+                onChange={(e) => setSizeEditValue(e.target.value)}
+                placeholder="Ex: PP, P, M, G..."
+                className="h-14 text-lg font-bold text-center uppercase border-primary/20 focus:border-primary bg-muted/20"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdateSize()}
+              />
+            </div>
+            <DialogFooter className="flex flex-row gap-2">
+              <Button variant="outline" onClick={() => setEditingSize(null)} className="flex-1 h-12">Cancelar</Button>
+              <Button onClick={handleUpdateSize} disabled={saving} className="flex-1 h-12 font-bold uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground">
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Salvar Alteração"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

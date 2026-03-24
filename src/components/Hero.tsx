@@ -83,7 +83,7 @@ const Hero = () => {
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto border-primary/40 hover:border-primary hover:bg-primary/10 text-foreground font-bold text-lg px-10 py-7 rounded-full transition-smooth hover:scale-105 active:scale-95"
+              className="w-full sm:w-auto border-primary/40 hover:bg-primary hover:text-primary-foreground font-bold text-lg px-10 py-7 rounded-full transition-smooth hover:scale-105 active:scale-95"
               onClick={scrollToAbout}
             >
               SOBRE NÓS
