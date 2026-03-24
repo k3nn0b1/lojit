@@ -135,16 +135,16 @@ export default function MasterPanel() {
             opening_hours: "Configurar Horário de Funcionamento no Painel",
             instagram_url: "https://www.instagram.com/seuinstagram/",
             // Títulos Seção Hero (Destaque)
-            hero_title_l1: "CAMISAS",
-            hero_title_l2: "DE TIME",
+            hero_title_l1: "BEM-VINDO",
+            hero_title_l2: "À NOSSA LOJA",
             hero_title_l3: "",
-            hero_phrase: "A maior variedade de regatas e camisas de time com qualidade premium.",
+            hero_phrase: "Confira nossa coleção exclusiva de produtos com qualidade premium e atendimento personalizado.",
             // Vitrine conforme imagem (Novos campos)
-            collection_title_l1: "SESSÃO DE",
-            collection_title_l2: "PRODUTOS",
-            collection_subtitle: "Subtítulo da Sessão",
+            collection_title_l1: "NOSSA",
+            collection_title_l2: "COLEÇÃO",
+            collection_subtitle: "Confira nossa seleção de produtos exclusivos",
             // Texto do Sobre Nós completo
-            about_us: `Somos uma empresa comprometida em oferecer produtos de alta qualidade para quem valoriza estilo, conforto e autenticidade. Trabalhamos com itens cuidadosamente selecionados, sempre buscando unir excelência, durabilidade e um ótimo custo-benefício.\n\nNosso foco está em proporcionar a melhor experiênca para cada cliente, com atendimento ágil, envio seguro e atenção em cada detalhe do processo. Acreditamos que cada compra deve ser mais do que uma simples aquisição — deve ser uma experiência positiva, confiável e satisfatória.\n\nAqui, você encontra dedicação, compromisso e o cuidado necessário para garantir que você receba exatamente o que procura, com qualidade e confiança.`,
+            about_us: `Seja bem-vindo à nossa loja! Somos uma empresa comprometida em oferecer produtos de alta qualidade para quem valoriza estilo, conforto e autenticidade. Trabalhamos com itens cuidadosamente selecionados, sempre buscando unir excelência, durabilidade e um ótimo custo-benefício.\n\nNosso foco está em proporcionar a melhor experiência para cada cliente, com atendimento ágil, envio seguro e atenção em cada detalhe do processo. Acreditamos que cada compra deve ser mais do que uma simples aquisição — deve ser uma experiência positiva, confiável e satisfatória.\n\nAqui, você encontra dedicação, compromisso e o cuidado necessário para garantir que você receba exatamente o que procura, com qualidade e confiança.`,
             // Flags de visibilidade
             show_whatsapp: true,
             show_instagram: true,
