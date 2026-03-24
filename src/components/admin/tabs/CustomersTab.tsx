@@ -151,9 +151,9 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY }: CustomersTabProps) => {
           </CardTitle>
           <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Base de dados e contatos da loja</p>
         </CardHeader>
-        <CardContent className="p-8 space-y-10">
+        <CardContent className="p-4 md:p-8 space-y-10">
           {/* Form: Novo Cliente */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-muted/10 p-6 rounded-[2rem] border border-primary/10 shadow-inner">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 bg-muted/10 p-4 md:p-6 rounded-2xl md:rounded-[2rem] border border-primary/10 shadow-inner">
             <div className="md:col-span-5 space-y-1.5">
                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Nome Completo</Label>
                <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Ex: João Silva" className="h-12 bg-background border-primary/10" />

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Check, X } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Select,
@@ -218,7 +218,60 @@ const OrdersTab = ({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto rounded-xl border border-primary/10 bg-muted/5">
+              {/* Cards para Mobile */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {visiblePedidos.map((p) => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => setPedidoDetalhesId(p.id)}
+                    className="p-5 rounded-2xl bg-muted/10 border border-primary/10 space-y-4 relative overflow-hidden active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] font-black text-primary/40 leading-none">#{pedidoSeq[p.id] || '—'}</span>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase leading-none">{new Date(p.data_criacao).toLocaleDateString()}</span>
+                        </div>
+                        <h4 className="font-black text-sm uppercase truncate max-w-[150px]">{p.cliente_nome}</h4>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-primary leading-none text-base">{formatBRL(Number(p.valor_total || 0))}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-primary/5">
+                      <div className="flex items-center gap-2">
+                        {p.status === 'pendente' && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black uppercase text-[9px]">Pendente</Badge>}
+                        {p.status === 'concluido' && <Badge className="bg-green-500/10 text-green-500 border-green-500/20 font-black uppercase text-[9px]">Concluído</Badge>}
+                        {p.status === 'devolvido' && <Badge className="bg-red-500/10 text-red-500 border-red-500/20 font-black uppercase text-[9px]">Devolvido</Badge>}
+                        {p.status === 'parcialmente_devolvido' && <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 font-black uppercase text-[9px]">P. Devolvido</Badge>}
+                        {p.status === 'cancelado' && <Badge variant="outline" className="font-black uppercase text-[9px]">Cancelado</Badge>}
+                      </div>
+                      
+                      {p.status === 'pendente' && (
+                        <div className="flex gap-2">
+                          <Button 
+                            className="h-8 w-8 bg-green-600 rounded-full p-0"
+                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
+                          >
+                             <Check className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            className="h-8 w-8 rounded-full p-0"
+                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
+                          >
+                             <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tabela para Desktop */}
+              <div className="hidden md:block overflow-x-auto rounded-xl border border-primary/10 bg-muted/5">
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="bg-muted/40 border-b border-primary/10">
@@ -260,7 +313,7 @@ const OrdersTab = ({
                           {p.status === 'cancelado' && <Badge variant="outline" className="font-black uppercase tracking-tighter text-[9px]">Cancelado</Badge>}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-2 text-[10px] font-black">
                              {p.status === 'pendente' ? (
                                <>
                                  <Button 

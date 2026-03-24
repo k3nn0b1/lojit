@@ -451,8 +451,52 @@ const ProductsTab = ({
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <CardContent className="p-0 pb-6">
+          {/* Layout de Cartões para Mobile */}
+          <div className="grid grid-cols-1 gap-4 md:hidden p-4">
+            {visibleProducts.map((p) => (
+              <div 
+                key={p.id} 
+                onClick={() => setActiveTab("stock")}
+                className="p-4 rounded-2xl bg-muted/10 border border-primary/10 space-y-4 active:scale-[0.98] transition-all"
+              >
+                <div className="flex gap-4">
+                  <div className="w-16 h-16 rounded-xl border border-primary/10 overflow-hidden shrink-0 bg-muted">
+                    <img src={p.image || "/placeholder.png"} className="w-full h-full object-cover" alt="" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-sm uppercase truncate">{p.name}</div>
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">REF: #{p.id}</div>
+                    <Badge variant="outline" className="border-primary/20 text-muted-foreground text-[8px] font-black uppercase h-4 px-1.5">{p.category}</Badge>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-black text-primary text-base leading-none">{formatBRL(p.price)}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-primary/5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-black text-muted-foreground leading-none mb-1">Estoque Total</span>
+                    <span className="font-black text-sm">{p.stock} <span className="text-[10px] opacity-40">un</span></span>
+                  </div>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase bg-muted/20 px-2 py-1 rounded-lg">
+                    {p.sizes.join(' · ')}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10"
+                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tabela para Desktop */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full border-collapse">
                 <thead>
                     <tr className="bg-primary/5 border-b border-primary/10">

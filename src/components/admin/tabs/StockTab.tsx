@@ -214,7 +214,78 @@ const StockTab = ({
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Layout de Cartões para Mobile */}
+          <div className="grid grid-cols-1 gap-4 md:hidden p-4">
+            {visibleStock.map((p) => {
+              const isExpanded = expandedProductId === p.id;
+              const sortedSizes = sortSizes(p.sizes || []);
+              
+              return (
+                <div 
+                  key={p.id} 
+                  className={`p-4 rounded-2xl bg-muted/10 border border-primary/10 transition-all ${isExpanded ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20' : ''}`}
+                >
+                  <div className="flex items-center gap-4 cursor-pointer" onClick={() => setExpandedProductId(isExpanded ? null : p.id!)}>
+                    <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center border border-primary/10 overflow-hidden shrink-0">
+                      {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-muted-foreground" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-xs uppercase truncate leading-tight mb-1">{p.name}</div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[8px] uppercase font-black border-primary/20 text-muted-foreground h-4 px-1">{p.category}</Badge>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`h-1.5 w-1.5 rounded-full ${p.stock > 10 ? 'bg-green-500' : p.stock > 0 ? 'bg-amber-500' : 'bg-destructive'}`} />
+                          <span className="font-black text-[10px]">{p.stock || 0} un</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className={`h-8 w-8 rounded-lg ${isExpanded ? 'bg-primary text-black' : ''}`}>
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-primary/5 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="grid grid-cols-2 gap-3">
+                        {sortedSizes.map((s) => (
+                          <div key={s} className="p-3 rounded-xl bg-card/60 border border-primary/10 space-y-2">
+                            <div className="flex items-center justify-between text-[10px] font-black text-primary uppercase">{s}</div>
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-black text-muted-foreground uppercase opacity-60 block">Qtd</span>
+                              <Input
+                                type="number"
+                                min={0}
+                                className="h-7 text-sm font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
+                                value={Number((p.stockBySize || {})[s] || 0)}
+                                onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                         <div className="space-y-0.5">
+                            <p className="text-[9px] font-black text-primary uppercase">Total Consolidado</p>
+                            <p className="text-xl font-black text-foreground">{p.stock || 0} <span className="text-xs opacity-40">unidades</span></p>
+                         </div>
+                         <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-9 px-4 border-primary/20 font-black text-[9px] uppercase tracking-widest"
+                            onClick={() => setExpandedProductId(null)}
+                         >
+                            Fechar
+                         </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader className="bg-muted/10 border-b border-primary/5">
                 <TableRow className="hover:bg-transparent border-none">

@@ -146,20 +146,20 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
   return (
     <div className="space-y-8 pb-20">
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="bg-muted/40 p-1.5 rounded-2xl border border-primary/10 mb-8 border-b-2 h-auto grid grid-cols-2 md:flex md:w-fit mx-auto gap-1">
-          <TabsTrigger value="geral" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+        <TabsList className="bg-muted/40 p-1.5 rounded-2xl border border-primary/10 mb-8 h-auto grid grid-cols-3 md:flex md:w-fit mx-auto gap-1">
+          <TabsTrigger value="geral" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Geral
           </TabsTrigger>
-          <TabsTrigger value="contato" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+          <TabsTrigger value="contato" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Contatos
           </TabsTrigger>
-          <TabsTrigger value="identidade" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+          <TabsTrigger value="identidade" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Identidade
           </TabsTrigger>
-          <TabsTrigger value="secoes" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+          <TabsTrigger value="secoes" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Layout
           </TabsTrigger>
-          <TabsTrigger value="outros" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+          <TabsTrigger value="outros" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Avançado
           </TabsTrigger>
         </TabsList>
@@ -167,7 +167,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
         <Card className="bg-card/30 backdrop-blur-sm border-primary/10 shadow-2xl overflow-hidden">
           <CardContent className="p-0">
             {/* Aba Geral */}
-            <TabsContent value="geral" className="p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+            <TabsContent value="geral" className="p-5 md:p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
                <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Globe className="w-5 h-5" />
@@ -217,7 +217,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Contato */}
-            <TabsContent value="contato" className="p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+            <TabsContent value="contato" className="p-5 md:p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
                <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Phone className="w-5 h-5" />
@@ -257,7 +257,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Identidade Visual */}
-            <TabsContent value="identidade" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+            <TabsContent value="identidade" className="p-5 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
                <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Palette className="w-5 h-5" />
@@ -335,7 +335,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Layout/Seções */}
-            <TabsContent value="secoes" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+            <TabsContent value="secoes" className="p-5 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
                <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Layout className="w-5 h-5" />
@@ -375,7 +375,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Avançado */}
-            <TabsContent value="outros" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+            <TabsContent value="outros" className="p-5 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
                <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
                     <Settings className="w-5 h-5" />
