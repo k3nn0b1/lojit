@@ -448,51 +448,63 @@ useEffect(() => {
 // Realtime de categorias
 useEffect(() => {
   if (!IS_SUPABASE_READY) return;
-  const channel = supabase
-    .channel('categories-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, async () => {
+    // Initial fetch
+    const fetchCats = async () => {
       const { data } = await supabase
         .from('categories')
         .select('name')
         .eq('tenant_id', tenantId)
         .order('name', { ascending: true });
       if (data) setCategories((data as any[]).map(c => c.name));
-    })
-    .subscribe();
+    };
+    void fetchCats();
+
+    const channel = supabase
+      .channel('categories-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, fetchCats)
+      .subscribe();
   return () => { try { supabase.removeChannel(channel); } catch {} };
 }, [tenantId]);
 
 // Realtime de tamanhos
 useEffect(() => {
   if (!IS_SUPABASE_READY) return;
-  const channel = supabase
-    .channel('sizes-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'sizes' }, async () => {
+    // Initial fetch
+    const fetchSizes = async () => {
       const { data } = await supabase
         .from('sizes')
         .select('name')
         .eq('tenant_id', tenantId)
         .order('name', { ascending: true });
       if (data) setGlobalSizes((data as any[]).map(s => s.name));
-    })
-    .subscribe();
+    };
+    void fetchSizes();
+
+    const channel = supabase
+      .channel('sizes-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sizes' }, fetchSizes)
+      .subscribe();
   return () => { try { supabase.removeChannel(channel); } catch {} };
 }, [tenantId]);
 
 // Realtime de cores
 useEffect(() => {
   if (!IS_SUPABASE_READY) return;
-  const channel = supabase
-    .channel('colors-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'colors' }, async () => {
+    // Initial fetch
+    const fetchColors = async () => {
       const { data } = await supabase
         .from('colors')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('name', { ascending: true });
       if (data) setGlobalColors(data as any[]);
-    })
-    .subscribe();
+    };
+    void fetchColors();
+
+    const channel = supabase
+      .channel('colors-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'colors' }, fetchColors)
+      .subscribe();
   return () => { try { supabase.removeChannel(channel); } catch {} };
 }, [tenantId]);
 
