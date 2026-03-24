@@ -28,38 +28,32 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
   const [sizeEditValue, setSizeEditValue] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const saveGlobalSizes = async (next: string[]) => {
-    const removed = globalSizes.filter((s) => !next.includes(s));
-    const normalized = sortSizes(next);
-    setGlobalSizes(normalized);
-    if (IS_SUPABASE_READY && tenantId) {
-      setSaving(true);
-      try {
-        const rows = normalized.map((name) => ({ name, tenant_id: tenantId }));
-        const { error: upsertErr } = await supabase.from("sizes").upsert(rows, { onConflict: "name,tenant_id" });
-        if (upsertErr) throw upsertErr;
+  const handleAddSize = async () => {
+    const raw = newGlobalSize.trim().toUpperCase();
+    if (!raw) return;
+    if (globalSizes.includes(raw)) {
+      toast.error("Tamanho já existe");
+      return;
+    }
+    if (!IS_SUPABASE_READY || !tenantId) return;
 
-        if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("sizes").delete().in("name", removed).eq("tenant_id", tenantId);
-          if (delErr) throw delErr;
-        }
-
-        toast.success("Tamanhos atualizados");
-      } catch (e: any) {
-        toast.error("Falha ao salvar tamanhos no Supabase", { description: parseSupabaseError(e) });
-      } finally {
-        setSaving(false);
-      }
-    } else {
-      toast.error("Supabase não configurado.");
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("sizes").insert({ name: raw, tenant_id: tenantId });
+      if (error) throw error;
+      toast.success("Tamanho adicionado");
+      setNewGlobalSize("");
+    } catch (e: any) {
+      toast.error("Erro ao adicionar", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleUpdateSize = async () => {
     if (!editingSize) return;
     const raw = sizeEditValue.trim().toUpperCase();
-    if (!raw) return;
-    if (raw === editingSize) {
+    if (!raw || raw === editingSize) {
       setEditingSize(null);
       return;
     }
@@ -67,9 +61,43 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
       toast.error("Tamanho já existe");
       return;
     }
-    const next = sortSizes([...globalSizes.filter((x) => x !== editingSize), raw]);
-    await saveGlobalSizes(next);
-    setEditingSize(null);
+    if (!IS_SUPABASE_READY || !tenantId) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("sizes")
+        .update({ name: raw })
+        .eq("name", editingSize)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      toast.success("Tamanho atualizado");
+      setEditingSize(null);
+    } catch (e: any) {
+      toast.error("Erro ao atualizar", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveSize = async (name: string) => {
+    if (!IS_SUPABASE_READY || !tenantId) return;
+    if (!confirm(`Deseja remover o tamanho "${name}"?`)) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("sizes")
+        .delete()
+        .eq("name", name)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      toast.success("Tamanho removido");
+    } catch (e: any) {
+      toast.error("Erro ao remover", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -85,18 +113,8 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
             onChange={(e) => setNewGlobalSize(e.target.value)}
           />
           <Button
-            onClick={() => {
-              const raw = newGlobalSize.trim().toUpperCase();
-              if (!raw) return;
-              if (globalSizes.includes(raw)) {
-                toast.error("Tamanho já existe");
-                return;
-              }
-              const next = sortSizes([...globalSizes, raw]);
-              saveGlobalSizes(next);
-              setNewGlobalSize("");
-              toast.success("Tamanho adicionado");
-            }}
+            onClick={handleAddSize}
+            disabled={saving}
           >
             Adicionar
           </Button>
@@ -122,12 +140,8 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => {
-                    if (confirm(`Deseja remover o tamanho "${s}"?`)) {
-                      const next = globalSizes.filter((x) => x !== s);
-                      saveGlobalSizes(next);
-                    }
-                  }}
+                  onClick={() => handleRemoveSize(s)}
+                  disabled={saving}
                 >
                   <X className="h-4 w-4" />
                 </Button>

@@ -424,6 +424,8 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                         <SelectItem value="bg2">Topográfico (Interactive Flow)</SelectItem>
                         <SelectItem value="bg3">Auroras (Radial Gradient)</SelectItem>
                         <SelectItem value="bg4">Etereo (Shadow Movement)</SelectItem>
+                        <SelectItem value="bg5">Fumaça Dinâmica (Smoke Effect)</SelectItem>
+                        <SelectItem value="bg6">Linhas de Luz (Floating Paths)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

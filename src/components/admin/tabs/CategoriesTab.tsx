@@ -28,31 +28,80 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
   const [categoryEditValue, setCategoryEditValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
+  const [saving, setSaving] = useState(false);
 
   const totalPages = Math.ceil(categories.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const visibleCategories = categories.slice(startIndex, startIndex + pageSize);
 
-  const saveCategories = async (next: string[]) => {
-    const removed = categories.filter((c) => !next.includes(c));
-    setCategories(next);
-    if (IS_SUPABASE_READY && tenantId) {
-      try {
-        const rows = next.map((name) => ({ name, tenant_id: tenantId }));
-        const { error: upsertErr } = await supabase.from("categories").upsert(rows, { onConflict: "name,tenant_id" });
-        if (upsertErr) throw upsertErr;
+  const handleAddCategory = async () => {
+    const val = newCategory.trim();
+    if (!val) return;
+    if (categories.includes(val)) {
+      toast.error("Categoria já existe");
+      return;
+    }
+    if (!IS_SUPABASE_READY || !tenantId) return;
 
-        if (removed.length > 0) {
-          const { error: delErr } = await supabase.from("categories").delete().in("name", removed).eq("tenant_id", tenantId);
-          if (delErr) throw delErr;
-        }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("categories").insert({ name: val, tenant_id: tenantId });
+      if (error) throw error;
+      toast.success("Categoria adicionada");
+      setNewCategory("");
+    } catch (e: any) {
+      toast.error("Erro ao adicionar", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-        toast.success("Categorias atualizadas");
-      } catch (e: any) {
-        toast.error("Falha ao salvar categorias no Supabase", { description: parseSupabaseError(e) });
-      }
-    } else {
-      toast.error("Supabase não configurado.");
+  const handleEditCategory = async (oldName: string) => {
+    const val = categoryEditValue.trim();
+    if (!val || val === oldName) {
+      setEditingCategory(null);
+      return;
+    }
+    if (categories.includes(val)) {
+      toast.error("Categoria já existe");
+      return;
+    }
+    if (!IS_SUPABASE_READY || !tenantId) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ name: val })
+        .eq("name", oldName)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      toast.success("Categoria atualizada");
+      setEditingCategory(null);
+    } catch (e: any) {
+      toast.error("Erro ao atualizar", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveCategory = async (name: string) => {
+    if (!IS_SUPABASE_READY || !tenantId) return;
+    if (!confirm(`Deseja remover a categoria "${name}"?`)) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("name", name)
+        .eq("tenant_id", tenantId);
+      if (error) throw error;
+      toast.success("Categoria removida");
+    } catch (e: any) {
+      toast.error("Erro ao remover", { description: parseSupabaseError(e) });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -69,18 +118,8 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
             onChange={(e) => setNewCategory(e.target.value)} 
           />
           <Button
-            onClick={() => {
-              const val = newCategory.trim();
-              if (!val) return;
-              if (categories.includes(val)) {
-                toast.error("Categoria já existe");
-                return;
-              }
-              const next = [...categories, val];
-              saveCategories(next);
-              setNewCategory("");
-              toast.success("Categoria adicionada");
-            }}
+            onClick={handleAddCategory}
+            disabled={saving}
           >
             Adicionar
           </Button>
@@ -103,25 +142,9 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                       size="icon"
                       className="h-8 w-8 text-primary"
 
-                      onClick={() => {
-                        const val = categoryEditValue.trim();
-                        if (!val) return;
-                        if (val === c) {
-                          setEditingCategory(null);
-                          setCategoryEditValue("");
-                          return;
-                        }
-                        if (categories.includes(val)) {
-                          toast.error("Categoria já existe");
-                          return;
-                        }
-                        const next = [...categories.filter((x) => x !== c), val];
-                        saveCategories(next);
-                        setEditingCategory(null);
-                        setCategoryEditValue("");
-                        toast.success("Categoria atualizada");
-                      }}
+                      onClick={() => handleEditCategory(c)}
                       title="Salvar"
+                      disabled={saving}
                     >
                       <Check className="h-4 w-4" />
                     </Button>
@@ -134,6 +157,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                         setCategoryEditValue("");
                       }}
                       title="Cancelar"
+                      disabled={saving}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -159,12 +183,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-foreground"
-                      onClick={() => {
-                        if (confirm(`Deseja remover a categoria "${c}"?`)) {
-                          const next = categories.filter((x) => x !== c);
-                          saveCategories(next);
-                        }
-                      }}
+                      onClick={() => handleRemoveCategory(c)}
                     >
                       <X className="h-4 w-4" />
                     </Button>
