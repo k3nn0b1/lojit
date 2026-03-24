@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import {
   parseSupabaseError,
   normalizeProductStock,
@@ -12,6 +13,7 @@ import {
   sortPedidos
 } from "@/lib/utils";
 import { AdminProduct, Pedido, Color } from "@/lib/types";
+import { useTenant } from "@/hooks/use-tenant";
 
 // Tab Components
 import OrdersTab from "@/components/admin/tabs/OrdersTab";
@@ -28,7 +30,7 @@ import SettingsTab from "@/components/admin/tabs/SettingsTab";
 import NewOrderModal from "@/components/admin/modals/NewOrderModal";
 
 const Admin = () => {
-  const tenantId = window.location.hostname.split('.')[0] || 'default';
+  const { tenantId, isReady, loading: tenantLoading } = useTenant();
   const [activeTab, setActiveTab] = useState("pedidos");
   
   // Shared States
@@ -123,8 +125,34 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    void fetchData();
-  }, [tenantId]);
+    if (isReady && tenantId) {
+      fetchPedidos();
+      fetchData();
+    }
+  }, [isReady, tenantId]);
+
+  if (tenantLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-10 w-10 animate-spin text-primary" />
+          <p className="font-bold text-primary animate-pulse tracking-widest uppercase">Carregando painel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isReady) {
+     return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4 max-w-md p-8 rounded-3xl border-2 border-dashed border-primary/20 bg-card">
+          <div className="text-4xl text-primary font-black animate-bounce">!</div>
+          <h2 className="text-2xl font-black uppercase tracking-widest text-primary">Acesso Negado</h2>
+          <p className="text-muted-foreground font-medium italic">Não foi possível identificar sua loja. Verifique o subdomínio e tente novamente.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Realtime Subscriptions
   useEffect(() => {
