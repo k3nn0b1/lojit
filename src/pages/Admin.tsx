@@ -809,6 +809,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
     if (typeof fields.price !== "undefined") payload.price = fields.price;
     if (typeof fields.stock === "number" && Number.isFinite(fields.stock)) payload.stock = fields.stock;
     if (typeof fields.description !== "undefined") payload.description = fields.description;
+    if (typeof fields.colors !== "undefined") payload.colors = fields.colors;
 
     if (IS_SUPABASE_READY) {
       try {
@@ -1049,6 +1050,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               ALLOWED_TYPES={ALLOWED_TYPES}
               handleStockBySizeChange={handleStockBySizeChange}
               navigateStock={handleNavigateStock}
+              globalColors={globalColors}
             />
           </TabsContent>
 
@@ -1058,6 +1060,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               tenantId={tenantId}
               storedProducts={storedProducts}
               globalSizes={globalSizes}
+              globalColors={globalColors}
               expandedProductId={expandedProductId}
               setExpandedProductId={setExpandedProductId}
               handleStockBySizeChange={handleStockBySizeChange}

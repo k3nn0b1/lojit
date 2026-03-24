@@ -5,7 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Pencil, ChevronDown, ChevronUp } from "lucide-react";
+import { Pencil, ChevronDown, ChevronUp, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { formatBRL, sortSizes, rankSize } from "@/lib/utils";
 import {
   Select,
@@ -19,6 +20,7 @@ interface StockTabProps {
   tenantId?: string | null;
   storedProducts: any[];
   globalSizes: string[];
+  globalColors?: any[];
   expandedProductId: number | null;
   setExpandedProductId: React.Dispatch<React.SetStateAction<number | null>>;
   handleStockBySizeChange: (id: number, size: string, newStock: number) => void;
@@ -37,6 +39,7 @@ const StockTab = ({
   tenantId,
   storedProducts,
   globalSizes,
+  globalColors = [],
   expandedProductId,
   setExpandedProductId,
   handleStockBySizeChange,
@@ -183,6 +186,34 @@ const StockTab = ({
                                     onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), description: e.target.value } }))}
                                     placeholder="Detalhes do produto"
                                   />
+                                </div>
+                                <div className="grid gap-1">
+                                  <Label className="text-xs">Cores Disponíveis</Label>
+                                  <div className="flex flex-wrap gap-2 mt-1">
+                                    {globalColors.map((c) => {
+                                      const currentColors = (editFields[p.id]?.colors || p.colors || []) as any[];
+                                      const isSelected = currentColors.some(pc => pc.name === c.name);
+                                      return (
+                                        <Badge
+                                          key={c.name}
+                                          variant={isSelected ? "default" : "outline"}
+                                          className="cursor-pointer flex items-center gap-1.5 py-1"
+                                          onClick={() => {
+                                            const nextColors = isSelected
+                                              ? currentColors.filter(pc => pc.name !== c.name)
+                                              : [...currentColors, { name: c.name, hex: c.hex }];
+                                            setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), colors: nextColors } }));
+                                          }}
+                                        >
+                                          <div className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                                          {c.name}
+                                        </Badge>
+                                      );
+                                    })}
+                                    {globalColors.length === 0 && (
+                                      <p className="text-[10px] text-muted-foreground italic">Nenhuma cor global cadastrada.</p>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div className="grid gap-1">
