@@ -194,62 +194,58 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             {/* Aba Geral */}
             <TabsContent value="geral" className="p-6 md:p-10 m-0 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <Label htmlFor="store_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    NOME DA LOJA <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">Exibido no Título</span>
-                  </Label>
-                  <Input 
-                    id="store_name" 
-                    value={formData.store_name} 
-                    onChange={e => setFormData({...formData, store_name: e.target.value})}
-                    placeholder="Ex: Minha Loja"
-                    className="h-12 border-border/50 focus:border-primary transition-all"
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">LOGOTIPO DA LOJA</Label>
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    {formData.logo_url && (
-                      <div className="relative group p-2 rounded-xl bg-card/40 border border-border/50 flex-shrink-0 backdrop-blur-sm">
-                        <img src={formData.logo_url} alt="Logo" className="h-16 w-auto object-contain transition-transform group-hover:scale-105" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center backdrop-blur-[2px]">
-                          <button onClick={() => setFormData({...formData, logo_url: ""})} className="p-1.5 bg-destructive rounded-full text-destructive-foreground hover:scale-110 transition-transform">
-                            <X className="w-4 h-4" />
-                          </button>
+                <div className="flex flex-col gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="store_name" className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      NOME DA LOJA <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">EXIBIDO NO TÍTULO</span>
+                    </Label>
+                    <Input 
+                      id="store_name" 
+                      value={formData.store_name} 
+                      onChange={e => setFormData({...formData, store_name: e.target.value})}
+                      placeholder="Ex: Minha Loja"
+                      className="h-14 text-base font-semibold border-border/50 focus:border-primary transition-all bg-muted/20"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">LOGOTIPO DA LOJA</Label>
+                    <div className="flex items-center gap-4 p-3 rounded-xl border border-border/40 bg-muted/10 backdrop-blur-sm">
+                      {formData.logo_url && (
+                        <div className="relative group p-1.5 rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
+                          <img src={formData.logo_url} alt="Logo" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" />
                         </div>
+                      )}
+                      <div className="flex-1">
+                        <Label htmlFor="logo-upload" className="flex items-center justify-center w-full h-12 rounded-lg border border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all gap-2">
+                          {uploading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
+                          <span className="text-xs font-black uppercase tracking-widest text-primary/80">{uploading ? "Salvando..." : "Substituir Logo"}</span>
+                        </Label>
+                        <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploading} />
                       </div>
-                    )}
-                    <div className="w-full">
-                      <Label htmlFor="logo-upload" className="flex flex-col items-center justify-center w-full h-24 rounded-xl border border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all">
-                        {uploading ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary mb-1" />}
-                        <span className="text-xs font-bold uppercase tracking-widest text-primary/70">{uploading ? "Salvando..." : "Substituir Logo"}</span>
-                      </Label>
-                      <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploading} />
                     </div>
                   </div>
                 </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">ENDEREÇO COMPLETO</Label>
+                  <Label htmlFor="address" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">ENDEREÇO COMPLETO</Label>
                   <Input 
                     id="address" 
                     value={formData.address} 
                     onChange={e => setFormData({...formData, address: e.target.value})}
                     placeholder="Rua, Número, Bairro, Cidade - UF"
-                    className="h-12"
+                    className="h-14 text-base font-medium border-border/50 focus:border-primary transition-all bg-muted/20"
                   />
                 </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label htmlFor="opening_hours" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">HORÁRIO DE FUNCIONAMENTO</Label>
+                  <Label htmlFor="opening_hours" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">HORÁRIO DE FUNCIONAMENTO</Label>
                   <Textarea 
                     id="opening_hours" 
                     value={formData.opening_hours} 
                     onChange={e => setFormData({...formData, opening_hours: e.target.value})}
                     placeholder="Ex: Segunda a Sexta: 9h às 18h&#10;Sábado: 9h às 14h"
-                    rows={4}
-                    className="resize-none border-border/50 focus:border-primary"
+                    className="min-h-[120px] text-base font-medium border-border/50 focus:border-primary transition-all bg-muted/20 resize-none p-4"
                   />
                 </div>
               </div>
