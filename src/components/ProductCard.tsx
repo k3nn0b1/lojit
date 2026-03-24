@@ -266,18 +266,25 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                     }}
                     className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
                   >
-                    {productPhotos[currentPhotoIndex].publicId ? (
-                      <AdvancedImage
-                        cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
-                        alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                        className="w-full h-full object-contain pointer-events-none"
-                      />
-                    ) : (
-                      <img
-                        src={productPhotos[currentPhotoIndex].url}
-                        alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                        className="w-full h-full object-contain pointer-events-none"
-                      />
+                    {productPhotos.length > 0 && (
+                      productPhotos[currentPhotoIndex]?.publicId ? (
+                        <AdvancedImage
+                          cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                          alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
+                          className="w-full h-full object-contain pointer-events-none"
+                        />
+                      ) : (
+                        <img
+                          src={productPhotos[currentPhotoIndex]?.url}
+                          alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
+                          className="w-full h-full object-contain pointer-events-none"
+                        />
+                      )
+                    )}
+                    {productPhotos.length === 0 && (
+                      <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20">
+                         <span className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-40">Sem imagem</span>
+                      </div>
                     )}
                   </motion.div>
                 </AnimatePresence>
