@@ -8,3 +8,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const IS_SUPABASE_READY = Boolean(supabaseUrl && supabaseAnonKey);

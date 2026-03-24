@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Trash2, Plus, Image as ImageIcon, ChevronDown, ChevronUp, Loader2, Upload, X } from "lucide-react";
-import { formatBRL, parseSupabaseError, normalizeCategory, sortSizes } from "@/lib/utils";
+import { Trash2, Upload, X, Search, PlusCircle } from "lucide-react";
+import { formatBRL, parseSupabaseError, sortSizes } from "@/lib/utils";
 import { removeFromCloudinary } from "@/lib/cloudinary";
 import {
   Select,
@@ -16,22 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdminProduct, Color } from "@/lib/types";
 
 interface ProductsTabProps {
-  tenantId?: string | null;
-  storedProducts: any[];
-  setStoredProducts: React.Dispatch<React.SetStateAction<any[]>>;
+  tenantId: string;
+  storedProducts: AdminProduct[];
+  setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
   categories: string[];
   globalSizes: string[];
-  globalColors?: any[];
-  distribution: Record<string, number>;
-  setDistribution: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
+  globalColors: Color[];
+  uploadToCloudinary: (file: File) => Promise<string>;
   IS_SUPABASE_READY: boolean;
-  MAX_FILE_SIZE_MB: number;
-  ALLOWED_TYPES: string[];
-  handleStockBySizeChange: (id: number, size: string, newStock: number) => void;
-  navigateStock?: (id: number, name: string) => void;
 }
 
 const ProductsTab = ({
@@ -40,17 +35,24 @@ const ProductsTab = ({
   setStoredProducts,
   categories,
   globalSizes,
-  globalColors = [],
-  distribution,
-  setDistribution,
+  globalColors,
   uploadToCloudinary,
   IS_SUPABASE_READY,
-  MAX_FILE_SIZE_MB,
-  ALLOWED_TYPES,
-  handleStockBySizeChange,
-  navigateStock,
 }: ProductsTabProps) => {
-  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], colors: [] as { name: string, hex: string }[], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+  const [product, setProduct] = useState({ 
+    name: "", 
+    category: "", 
+    price: 0, 
+    sizes: [] as string[], 
+    colors: [] as Color[], 
+    stock: 0, 
+    imageUrl: "", 
+    imageUrl2: "", 
+    imageUrl3: "", 
+    description: "" 
+  });
+  
+  const [distribution, setDistribution] = useState<Record<string, number>>({});
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null]);
   const [uploading, setUploading] = useState(false);
@@ -64,7 +66,7 @@ const ProductsTab = ({
       .includes(productQuery.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const visibleProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
 
@@ -79,12 +81,9 @@ const ProductsTab = ({
 
   const handleImage = (file: File | undefined, index: number) => {
     if (!file) return;
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      toast.error(`Arquivo muito grande (>${MAX_FILE_SIZE_MB}MB)`);
-      return;
-    }
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast.error("Formato não permitido. Use JPG, PNG ou WEBP.");
+    const MAX_MB = 5;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`Arquivo muito grande (>${MAX_MB}MB)`);
       return;
     }
     
@@ -104,7 +103,7 @@ const ProductsTab = ({
     handleChange("sizes", sortSizes(next));
   };
 
-  const handleColorToggle = (colorObj: { name: string, hex: string }) => {
+  const handleColorToggle = (colorObj: Color) => {
     const exists = product.colors.find(c => c.name === colorObj.name);
     const next = exists
       ? product.colors.filter((c) => c.name !== colorObj.name)
@@ -118,52 +117,38 @@ const ProductsTab = ({
       return;
     }
 
-    let imageUrl = product.imageUrl;
-    let publicId: string | undefined;
-    let imageUrl2 = product.imageUrl2;
-    let publicId2: string | undefined;
-    let imageUrl3 = product.imageUrl3;
-    let publicId3: string | undefined;
+    setUploading(true);
+    let urls: string[] = ["", "", ""];
 
-    if (imageFiles.some(f => f !== null)) {
-      setUploading(true);
-      try {
-        const uploadPromises = imageFiles.map(async (file, idx) => {
-            if (!file) return null;
-            const uploaded = await uploadToCloudinary(file);
-            return { url: uploaded.secure_url, id: uploaded.public_id, idx };
-        });
+    try {
+      const uploadPromises = imageFiles.map(async (file, idx) => {
+          if (!file) return null;
+          const url = await uploadToCloudinary(file);
+          return { url, idx };
+      });
 
-        const results = await Promise.all(uploadPromises);
-        results.forEach(res => {
-            if (!res) return;
-            if (res.idx === 0) { imageUrl = res.url; publicId = res.id; }
-            if (res.idx === 1) { imageUrl2 = res.url; publicId2 = res.id; }
-            if (res.idx === 2) { imageUrl3 = res.url; publicId3 = res.id; }
-        });
-      } catch (err: any) {
-        toast.error("Falha no upload para Cloudinary");
-        setUploading(false);
-        return;
-      }
+      const results = await Promise.all(uploadPromises);
+      results.forEach(res => {
+          if (res) urls[res.idx] = res.url;
+      });
+    } catch (err: any) {
+      toast.error("Falha no upload das imagens");
       setUploading(false);
+      return;
     }
 
     const allocatedTotal = (product.sizes || []).reduce((acc, s) => acc + (Number(distribution[s] || 0)), 0);
-    const totalStock = Number(product.stock || 0);
+    const totalStock = allocatedTotal > 0 ? allocatedTotal : Number(product.stock || 0);
 
     const baseProductForSupabase = {
       name: product.name,
       category: product.category,
       price: product.price,
       sizes: product.sizes,
-      stock: allocatedTotal > 0 ? allocatedTotal : totalStock,
-      image: imageUrl || "",
-      publicId,
-      image2: imageUrl2 || "",
-      publicId2,
-      image3: imageUrl3 || "",
-      publicId3,
+      stock: totalStock,
+      image: urls[0] || product.imageUrl,
+      image2: urls[1] || product.imageUrl2,
+      image3: urls[2] || product.imageUrl3,
       description: product.description,
       stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
       colors: product.colors,
@@ -175,138 +160,138 @@ const ProductsTab = ({
         const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
         if (error) throw error;
         setStoredProducts((prev) => [...prev, data]);
-        toast.success("Produto cadastrado");
+        toast.success("Produto cadastrado com sucesso!");
+        
+        // Reset form
         setProduct({ name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
         setImageFiles([null, null, null]);
         setImagePreviews([null, null, null]);
         setDistribution({});
       } catch (e: any) {
-        toast.error("Falha ao salvar no Supabase", { description: parseSupabaseError(e) });
+        toast.error("Erro ao salvar produto", { description: parseSupabaseError(e) });
+      } finally {
+        setUploading(false);
       }
     }
   };
 
   const handleRemoveProduct = async (id: number) => {
-    if (!confirm("Deseja realmente excluir este produto e suas fotos permanentemente?")) return;
-    if (IS_SUPABASE_READY && tenantId) {
-      try {
-        const target = storedProducts.find(p => p.id === id);
-        if (target) {
-            if (target.publicId) await removeFromCloudinary(target.publicId);
-            if (target.publicId2) await removeFromCloudinary(target.publicId2);
-            if (target.publicId3) await removeFromCloudinary(target.publicId3);
-        }
-
-        const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.filter((p) => p.id !== id));
-        toast.success("Produto e imagens removidos com sucesso");
-      } catch (e: any) {
-        toast.error("Falha ao remover produto");
-      }
+    if (!confirm("Deseja realmente excluir este produto permanentemente?")) return;
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
+      if (error) throw error;
+      setStoredProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Produto removido");
+    } catch (e: any) {
+      toast.error("Erro ao remover produto");
     }
   };
 
-
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar Produto</CardTitle>
+    <div className="space-y-8">
+      {/* Form: Adicionar Produto */}
+      <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
+        <CardHeader className="bg-primary/5 py-4 border-b border-primary/10">
+          <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <PlusCircle className="w-5 h-5" />
+            Novo Produto
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Nome</Label>
-              <Input value={product.name} onChange={(e) => handleChange("name", e.target.value)} />
+        <CardContent className="p-6 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome do Produto</Label>
+                <Input value={product.name} onChange={(e) => handleChange("name", e.target.value)} className="h-11 bg-muted/20 border-primary/10" placeholder="Ex: Camiseta Retrô Brasil..." />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Categoria</Label>
+                  <Select value={product.category} onValueChange={(val) => handleChange("category", val)}>
+                    <SelectTrigger className="h-11 bg-muted/20 border-primary/10">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Preço (R$)</Label>
+                  <Input type="number" value={product.price || ''} onChange={(e) => handleChange("price", parseFloat(e.target.value))} className="h-11 bg-muted/20 border-primary/10 font-black text-primary" placeholder="0.00" />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select
-                value={product.category}
-                onValueChange={(val) => handleChange("category", val)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Preço (R$)</Label>
-              <Input type="number" value={product.price} onChange={(e) => handleChange("price", parseFloat(e.target.value))} />
-            </div>
-            <div>
-              <Label>Estoque Inicial Total</Label>
-              <Input type="number" value={product.stock} onChange={(e) => handleChange("stock", parseInt(e.target.value))} />
+
+            <div className="md:col-span-6 space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Descrição / Detalhes</Label>
+              <textarea 
+                className="flex min-h-[110px] w-full rounded-xl border border-primary/10 bg-muted/20 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-all"
+                placeholder="Detalhes técnicos, material, tipo de patch..."
+                value={product.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+              />
             </div>
           </div>
 
-          <div>
-            <Label>Descrição / Detalhes do Produto</Label>
-            <textarea 
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Ex: Camisa Tailandesa 1:1, tecido Dri-FIT, patch bordado..."
-              value={product.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-            />
-          </div>
-
-          <div>
-            <Label>Tamanhos Disponíveis</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {globalSizes.map((s) => (
-                <Badge
-                  key={s}
-                  variant={product.sizes.includes(s) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => handleSizeToggle(s)}
-                >
-                  {s}
-                </Badge>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">Tamanhos Disponíveis</Label>
+              <div className="flex flex-wrap gap-2">
+                {globalSizes.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => handleSizeToggle(s)}
+                    className={`h-9 px-4 rounded-xl border text-[10px] font-black transition-all ${
+                      product.sizes.includes(s) 
+                        ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20' 
+                        : 'border-primary/10 bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label>Cores Disponíveis</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {globalColors.map((c) => (
-                <Badge
-                  key={c.name}
-                  variant={product.colors.find(pc => pc.name === c.name) ? "default" : "outline"}
-                  className="cursor-pointer flex items-center gap-2"
-                  onClick={() => handleColorToggle({ name: c.name, hex: c.hex })}
-                >
-                  <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
-                  {c.name}
-                </Badge>
-              ))}
-              {globalColors.length === 0 && (
-                <p className="text-xs text-muted-foreground italic">Nenhuma cor global cadastrada na aba Cores.</p>
-              )}
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Cores Disponíveis</Label>
+              <div className="flex flex-wrap gap-2">
+                {globalColors.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => handleColorToggle(c)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[9px] font-black transition-all ${
+                      product.colors.find(pc => pc.name === c.name)
+                        ? 'bg-primary/20 border-primary text-primary shadow-lg'
+                        : 'border-primary/10 bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                    {c.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {product.sizes.length > 0 && (
-            <div className="space-y-2">
-              <Label>Distribuição de Estoque</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            <div className="space-y-4 p-5 rounded-2xl bg-muted/10 border border-primary/10">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Estoque Inicial por Tamanho</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                 {product.sizes.map((s) => (
-                  <div key={s} className="space-y-1">
-                    <Label className="text-[10px] uppercase">{s}</Label>
+                  <div key={s} className="space-y-1.5">
+                    <Label className="text-[9px] uppercase font-black text-muted-foreground block text-center">{s}</Label>
                     <Input
                       type="number"
                       min={0}
                       value={distribution[s] || ""}
                       onChange={(e) => setDistribution((prev) => ({ ...prev, [s]: parseInt(e.target.value) || 0 }))}
+                      className="h-9 bg-background border-primary/10 text-center font-bold text-xs"
                     />
                   </div>
                 ))}
@@ -314,200 +299,135 @@ const ProductsTab = ({
             </div>
           )}
 
-          <div className="grid gap-4">
-            <Label>Imagens do Produto (Até 3)</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-4">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Imagens do Produto (Até 3)</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {[0, 1, 2].map((idx) => (
-                    <div key={idx} className="flex flex-col gap-2">
+                    <div key={idx} className="group relative aspect-square rounded-2xl border-2 border-dashed border-primary/10 hover:border-primary/40 transition-all overflow-hidden bg-muted/5">
                         {imagePreviews[idx] ? (
-                            <div className="relative aspect-square rounded-lg border-2 border-primary/20 bg-muted/30 overflow-hidden flex items-center justify-center group">
-                                <img src={imagePreviews[idx]!} alt={`Preview ${idx+1}`} className="h-full w-full object-cover" />
-                                <Button 
-                                  variant="destructive" 
-                                  size="icon" 
-                                  className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => {
-                                    const nextFiles = [...imageFiles];
-                                    nextFiles[idx] = null;
-                                    setImageFiles(nextFiles);
-                                    
-                                    const nextPreviews = [...imagePreviews];
-                                    nextPreviews[idx] = null;
-                                    setImagePreviews(nextPreviews);
-                                  }}
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-0.5 rounded text-[10px] text-white font-bold">FOTO {idx+1}</div>
-                            </div>
+                            <>
+                                <img src={imagePreviews[idx]!} alt="" className="h-full w-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Button variant="destructive" size="icon" className="rounded-full shadow-2xl" onClick={() => {
+                                        const nextFiles = [...imageFiles]; nextFiles[idx] = null; setImageFiles(nextFiles);
+                                        const nextPreviews = [...imagePreviews]; nextPreviews[idx] = null; setImagePreviews(nextPreviews);
+                                    }}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </>
                         ) : (
-                            <div className="relative aspect-square">
-                                <Label 
-                                    htmlFor={`product-image-upload-${idx}`}
-                                    className="flex flex-col items-center justify-center gap-2 h-full w-full rounded-lg border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth group"
-                                >
-                                    <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-smooth">
-                                      <Upload className="w-5 h-5 text-primary" />
-                                    </div>
-                                    <div className="text-center px-2">
-                                      <span className="block text-xs font-bold text-primary">Foto {idx+1}</span>
-                                    </div>
-                                </Label>
-                                <input id={`product-image-upload-${idx}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0], idx)} />
-                            </div>
+                            <Label htmlFor={`prod-img-${idx}`} className="flex flex-col items-center justify-center gap-2 h-full cursor-pointer group-hover:bg-primary/5">
+                                <Upload className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Foto {idx+1}</span>
+                                <input id={`prod-img-${idx}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0], idx)} />
+                            </Label>
                         )}
                     </div>
                 ))}
             </div>
           </div>
 
-          <Button className="w-full" onClick={handleSubmit} disabled={uploading}>
-            {uploading ? "Fazendo upload..." : "Cadastrar Produto"}
+          <Button 
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest shadow-xl shadow-primary/20" 
+            onClick={handleSubmit} 
+            disabled={uploading}
+          >
+            {uploading ? "Salvando Dados..." : "Cadastrar Produto"}
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Produtos Cadastrados</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
+      {/* Grid: Lista de Produtos */}
+      <Card className="bg-card/30 backdrop-blur-sm border-primary/10 shadow-xl">
+        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-primary/5 px-6 pt-6">
+           <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            Produtos Ativos
+            <Badge variant="outline" className="text-[10px] ml-2 font-black border-primary/20 text-muted-foreground">{filteredProducts.length}</Badge>
+          </CardTitle>
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={productQuery}
               onChange={(e) => handleQueryChange(e.target.value)}
-              placeholder="Buscar produtos..."
+              placeholder="Pesquisar catálogo..."
+              className="pl-10 h-10 bg-muted/20 border-primary/10 rounded-full text-xs"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleProducts.map((p) => (
               <div 
                 key={p.id} 
-                className="border rounded-lg p-3 space-y-3 bg-card text-card-foreground shadow-sm hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer group/card"
-                onClick={() => navigateStock?.(p.id, p.name)}
+                className="group relative rounded-3xl border border-primary/10 bg-muted/10 overflow-hidden hover:border-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/5"
               >
-                <div className="flex items-center gap-3">
-                  {p.image && (
-                    <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">{p.category}</div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveProduct(p.id);
-                      }} 
-                      className="group"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive group-hover:text-foreground" />
-                    </Button>
-                  </div>
+                <div className="aspect-[4/3] relative overflow-hidden bg-muted">
+                    <img src={p.image || "/placeholder.png"} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    <div className="absolute top-3 left-3">
+                         <Badge className="bg-black/60 backdrop-blur-md text-white border-none text-[9px] font-black uppercase tracking-widest">{p.category}</Badge>
+                    </div>
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <Button 
+                            variant="destructive" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-full shadow-lg"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                         >
+                            <Trash2 className="w-4 h-4" />
+                         </Button>
+                    </div>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-bold">{formatBRL(p.price)}</span>
-                  <span>Estoque: {p.stock}</span>
+                <div className="p-4 space-y-3">
+                    <div className="space-y-0.5">
+                        <h4 className="font-black text-sm truncate uppercase tracking-tighter">{p.name}</h4>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">{p.sizes.join(' · ')}</p>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-primary/5">
+                        <span className="text-lg font-black text-primary">{formatBRL(p.price)}</span>
+                        <div className="text-right">
+                             <div className="text-[8px] font-black uppercase text-muted-foreground">Estoque</div>
+                             <div className="text-xs font-black">{p.stock} <span className="text-[9px] opacity-40">un</span></div>
+                        </div>
+                    </div>
                 </div>
               </div>
             ))}
           </div>
 
+          {visibleProducts.length === 0 && (
+            <div className="py-20 text-center space-y-3">
+                 <div className="text-4xl">?</div>
+                 <p className="text-muted-foreground font-medium italic">Nenhum produto encontrado.</p>
+            </div>
+          )}
+
           {/* Pagination */}
-          {filteredProducts.length > 0 && (
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
-                <span>Mostrando {pageSize} por página</span>
-                <Select
-                  value={String(pageSize)}
-                  onValueChange={(val) => {
-                    setPageSize(Number(val));
-                    setCurrentPage(1);
-                  }}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-10">
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={currentPage <= 1} 
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="h-9 px-4 font-black text-[10px] uppercase border-primary/10"
                 >
-                  <SelectTrigger className="h-8 w-[70px] bg-background">
-                    <SelectValue placeholder={String(pageSize)} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[9, 18, 36, 72].map((size) => (
-                      <SelectItem key={size} value={String(size)}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  className="h-8 text-xs font-bold uppercase tracking-wider"
-                >
-                  Anterior
+                    Anterior
                 </Button>
-
-                <div className="flex items-center gap-1">
-                  {(() => {
-                    const windowSize = 5;
-                    const pages: (number | "ellipsis")[] = [];
-                    const start = Math.max(1, currentPage - Math.floor(windowSize / 2));
-                    const end = Math.min(totalPages, start + windowSize - 1);
-                    const adjustedStart = Math.max(1, end - windowSize + 1);
-
-                    if (adjustedStart > 1) {
-                      pages.push(1);
-                      if (adjustedStart > 2) pages.push("ellipsis");
-                    }
-
-                    for (let n = adjustedStart; n <= end; n++) {
-                      pages.push(n);
-                    }
-
-                    if (end < totalPages) {
-                      if (end < totalPages - 1) pages.push("ellipsis");
-                      pages.push(totalPages);
-                    }
-
-                    return pages.map((item, idx) =>
-                      item === "ellipsis" ? (
-                        <span key={`el-${idx}`} className="px-1 text-muted-foreground">
-                          ...
-                        </span>
-                      ) : (
-                        <Button
-                          key={item}
-                          variant={currentPage === item ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(item as number)}
-                          className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
-                            currentPage === item
-                              ? "bg-primary text-primary-foreground shadow-primary/30"
-                              : "hover:bg-primary/10 hover:text-foreground"
-                          }`}
-                        >
-                          {item}
-                        </Button>
-                      )
-                    );
-                  })()}
+                <div className="flex items-center gap-1.5 px-4 font-black text-xs">
+                    <span className="text-primary">{currentPage}</span>
+                    <span className="opacity-20">/</span>
+                    <span className="text-muted-foreground">{totalPages}</span>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  className="h-8 text-xs font-bold uppercase tracking-wider"
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={currentPage >= totalPages} 
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="h-9 px-4 font-black text-[10px] uppercase border-primary/10"
                 >
-                  Próxima
+                    Próxima
                 </Button>
-              </div>
             </div>
           )}
         </CardContent>

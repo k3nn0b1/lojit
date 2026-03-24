@@ -88,3 +88,12 @@ export const normalizeProductStock = (p: any) => {
       : (typeof p.stock === 'number' ? p.stock : 0),
   };
 };
+// Função de ordenação: pendentes primeiro; depois concluídos/cancelados; dentro do grupo, mais recentes primeiro
+export const sortPedidos = (list: any[]) => {
+  return [...list].sort((a, b) => {
+    const order = (s: string) => (s === 'pendente' ? 0 : 1);
+    const diff = order(a.status) - order(b.status);
+    if (diff !== 0) return diff;
+    return new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime();
+  });
+};

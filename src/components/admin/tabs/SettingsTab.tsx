@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { hexToHSL, hslStringToHex } from "@/lib/colors";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { Loader2, Upload, X, Instagram } from "lucide-react";
+import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save } from "lucide-react";
 import { WhatsappIcon } from "../../icons/WhatsappIcon";
 import { YoutubeIcon } from "../../icons/YoutubeIcon";
 import { Switch } from "@/components/ui/switch";
@@ -22,9 +22,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UI_Badge } from "@/components/ui/badge";
 
-
 interface SettingsTabProps {
-  tenantId?: string | null;
+  tenantId: string;
 }
 
 export default function SettingsTab({ tenantId }: SettingsTabProps) {
@@ -48,7 +47,6 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Reduz a imagem para processar mais rápido e agrupar cores
       canvas.width = 50;
       canvas.height = 50;
       ctx.drawImage(img, 0, 0, 50, 50);
@@ -62,14 +60,12 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
         const b = imageData[i + 2];
         const a = imageData[i + 3];
 
-        if (a < 128) continue; // ignora transparente
+        if (a < 128) continue;
 
-        // Arredonda para reduzir variações sutis e agrupar cores similares
         const roundedR = Math.round(r / 15) * 15;
         const roundedG = Math.round(g / 15) * 15;
         const roundedB = Math.round(b / 15) * 15;
 
-        // Ignora cores muito próximas de preto ou branco (opcional, mas geralmente melhor para temas)
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         if (luminance < 0.1 || luminance > 0.9) continue;
 
@@ -77,10 +73,9 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
         colorCounts[hex] = (colorCounts[hex] || 0) + 1;
       }
 
-      // Ordena por frequência e pega a cor predominante
       const sorted = Object.entries(colorCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 1) // Apenas a mais frequente
+        .slice(0, 2)
         .map(entry => entry[0]);
 
       setSuggestedColors(sorted);
@@ -88,29 +83,26 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
   };
 
   useEffect(() => {
-      const getHex = (colorStr: string | undefined) => {
-        if (!colorStr) return "#000000";
-        if (colorStr.startsWith('#')) return colorStr;
-        try {
-          return hslStringToHex(colorStr);
-        } catch (e) {
-          return "#000000";
-        }
-      };
+    if (!settings) return;
+    const getHex = (colorStr: string | undefined) => {
+      if (!colorStr) return "#000000";
+      if (colorStr.startsWith('#')) return colorStr;
+      try { return hslStringToHex(colorStr); } catch (e) { return "#000000"; }
+    };
 
-      setFormData({
-        ...settings,
-        primary_hex: getHex(settings.primary_color),
-        secondary_hex: getHex(settings.secondary_color),
-        background_hex: getHex(settings.background_color),
-        background_type: settings.background_type || "solid",
-        background_config: settings.background_config || {}
-      });
+    setFormData({
+      ...settings,
+      primary_hex: getHex(settings.primary_color),
+      secondary_hex: getHex(settings.secondary_color),
+      background_hex: getHex(settings.background_color),
+      background_type: settings.background_type || "solid",
+      background_config: settings.background_config || {}
+    });
   }, [settings]);
 
   if (loading || !formData) return (
-    <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div className="flex items-center justify-center py-40">
+        <Loader2 className="w-10 h-10 animate-spin text-primary opacity-50" />
     </div>
   );
 
@@ -123,501 +115,308 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
           background_color: hexToHSL(formData.background_hex),
       };
 
-      // Normaliza Instagram
       if (payload.instagram_url && !payload.instagram_url.startsWith('http')) {
-        const handle = payload.instagram_url.startsWith('@') 
-          ? payload.instagram_url.substring(1) 
-          : payload.instagram_url;
+        const handle = payload.instagram_url.startsWith('@') ? payload.instagram_url.substring(1) : payload.instagram_url;
         payload.instagram_url = `https://www.instagram.com/${handle}/`;
       }
       
-      // Remove temporary hex fields
       const { primary_hex, secondary_hex, background_hex, ...finalPayload } = payload;
-
       await updateSettings(finalPayload);
-      toast.success("Configurações salvas com sucesso!");
+      toast.success("Configurações atualizadas!");
     } catch (error) {
-
-      console.error(error);
-      toast.error("Erro ao salvar configurações");
+      toast.error("Erro ao salvar");
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      setUploading(true);
-      try {
-          const { secure_url } = await uploadToCloudinary(file, "store/logo");
-          setFormData({...formData, logo_url: secure_url});
-          toast.success("Logo carregado com sucesso!");
-      } catch (error) {
-          console.error(error);
-          toast.error("Erro ao carregar logo");
-      } finally {
-          setUploading(false);
-      }
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string, path: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+        const { secure_url } = await uploadToCloudinary(file, path);
+        setFormData({...formData, [field]: secure_url});
+        toast.success("Upload concluído!");
+    } catch {
+        toast.error("Falha no upload");
+    } finally {
+        setUploading(false);
+    }
   };
-
-  const handleBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      setUploading(true);
-      try {
-          const { secure_url } = await uploadToCloudinary(file, "store/background");
-          setFormData({...formData, background_url: secure_url});
-          toast.success("Background carregado com sucesso!");
-      } catch (error) {
-          console.error(error);
-          toast.error("Erro ao carregar background");
-      } finally {
-          setUploading(false);
-      }
-  };
-
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-20">
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-8 h-auto p-1.5 bg-muted shadow-md border-border/20">
-          <TabsTrigger value="geral" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Geral</TabsTrigger>
-          <TabsTrigger value="contato" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Contatos</TabsTrigger>
-          <TabsTrigger value="identidade" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Identidade Visual</TabsTrigger>
-          <TabsTrigger value="secoes" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Seções</TabsTrigger>
-          <TabsTrigger value="outros" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Avançado</TabsTrigger>
+        <TabsList className="bg-muted/40 p-1.5 rounded-2xl border border-primary/10 mb-8 border-b-2 h-auto grid grid-cols-2 md:flex md:w-fit mx-auto gap-1">
+          <TabsTrigger value="geral" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+            Geral
+          </TabsTrigger>
+          <TabsTrigger value="contato" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+            Contatos
+          </TabsTrigger>
+          <TabsTrigger value="identidade" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+            Identidade
+          </TabsTrigger>
+          <TabsTrigger value="secoes" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+            Layout
+          </TabsTrigger>
+          <TabsTrigger value="outros" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
+            Avançado
+          </TabsTrigger>
         </TabsList>
 
-        <Card className="border-border/40 shadow-xl overflow-hidden">
+        <Card className="bg-card/30 backdrop-blur-sm border-primary/10 shadow-2xl overflow-hidden">
           <CardContent className="p-0">
             {/* Aba Geral */}
-            <TabsContent value="geral" className="p-6 md:p-10 m-0 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex flex-col gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="store_name" className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                      NOME DA LOJA <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">EXIBIDO NO TÍTULO</span>
-                    </Label>
-                    <Input 
-                      id="store_name" 
-                      value={formData.store_name} 
-                      onChange={e => setFormData({...formData, store_name: e.target.value})}
-                      placeholder="Ex: Minha Loja"
-                      className="h-14 text-base font-semibold border-border/50 focus:border-primary transition-all bg-muted/20"
-                    />
+            <TabsContent value="geral" className="p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Globe className="w-5 h-5" />
                   </div>
+                  <div>
+                    <h3 className="font-black text-lg uppercase tracking-widest text-primary">Informações da Loja</h3>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60">Dados básicos de identificação</p>
+                  </div>
+               </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">LOGOTIPO DA LOJA</Label>
-                    <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted shadow-sm">
-                      {formData.logo_url && (
-                        <div className="relative group p-1.5 rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
-                          <img src={formData.logo_url} alt="Logo" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Título Comercial (Exibido no Navegador)</Label>
+                        <Input value={formData.store_name} onChange={e => setFormData({...formData, store_name: e.target.value})} className="h-14 bg-muted/20 border-primary/10 rounded-2xl font-black text-lg shadow-xl" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Logotipo Principal</Label>
+                        <div className="p-6 rounded-[2rem] border border-primary/10 bg-muted/10 flex flex-col items-center gap-6 group hover:bg-muted/20 transition-all">
+                             {formData.logo_url ? (
+                                <div className="relative group">
+                                     <img src={formData.logo_url} className="h-24 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform" />
+                                </div>
+                             ) : (
+                                <div className="h-24 w-24 rounded-full border-2 border-dashed border-primary/20 flex items-center justify-center text-primary/20">Logo</div>
+                             )}
+                             <Label htmlFor="logo-up" className="w-full flex items-center justify-center h-12 rounded-2xl bg-primary/10 hover:bg-primary hover:text-black cursor-pointer transition-all gap-2 text-[10px] font-black uppercase tracking-widest">
+                                <Upload className="w-4 h-4" /> {uploading ? "Sincronizando..." : "Trocar Logotipo"}
+                                <input id="logo-up" type="file" className="hidden" accept="image/*" onChange={e => handleUpload(e, 'logo_url', 'store/logo')} />
+                             </Label>
                         </div>
-                      )}
-                      <div className="flex-1">
-                        <Label htmlFor="logo-upload" className="flex items-center justify-center w-full h-12 rounded-lg border border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all gap-2">
-                          {uploading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
-                          <span className="text-xs font-black uppercase tracking-widest text-primary/80">{uploading ? "Salvando..." : "Substituir Logo"}</span>
-                        </Label>
-                        <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploading} />
-                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label htmlFor="address" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">ENDEREÇO COMPLETO</Label>
-                  <Input 
-                    id="address" 
-                    value={formData.address} 
-                    onChange={e => setFormData({...formData, address: e.target.value})}
-                    placeholder="Rua, Número, Bairro, Cidade - UF"
-                    className="h-14 text-base font-medium border-border/50 focus:border-primary transition-all bg-muted/20"
-                  />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                  <Label htmlFor="opening_hours" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">HORÁRIO DE FUNCIONAMENTO</Label>
-                  <Textarea 
-                    id="opening_hours" 
-                    value={formData.opening_hours} 
-                    onChange={e => setFormData({...formData, opening_hours: e.target.value})}
-                    placeholder="Ex: Segunda a Sexta: 9h às 18h&#10;Sábado: 9h às 14h"
-                    className="min-h-[120px] text-base font-medium border-border/50 focus:border-primary transition-all bg-muted/20 resize-none p-4"
-                  />
-                </div>
-              </div>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Localização Física / SEDE</Label>
+                        <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="h-14 bg-muted/20 border-primary/10 rounded-2xl font-black text-xs shadow-xl" placeholder="Rua..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Agenda de Atendimento</Label>
+                        <Textarea value={formData.opening_hours} onChange={e => setFormData({...formData, opening_hours: e.target.value})} className="min-h-[160px] bg-muted/20 border-primary/10 rounded-[2rem] p-6 text-sm font-medium resize-none shadow-xl" />
+                    </div>
+                  </div>
+               </div>
             </TabsContent>
 
             {/* Aba Contato */}
-            <TabsContent value="contato" className="p-6 md:p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="grid grid-cols-1 gap-10 max-w-2xl">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-primary">
-                    <WhatsappIcon className="w-6 h-6" />
-                    <h3 className="font-bold uppercase tracking-widest">WhatsApp Comercial</h3>
+            <TabsContent value="contato" className="p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Phone className="w-5 h-5" />
                   </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label className="text-[10px] uppercase font-bold opacity-60">Número WhastApp</Label>
-                      <Input 
-                        value={formData.whatsapp} 
-                        onChange={e => setFormData({...formData, whatsapp: e.target.value})}
-                        placeholder="Ex: 5575981284738"
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
-                      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg border shadow-sm">
-                        <Switch checked={formData.show_whatsapp} onCheckedChange={c => setFormData({...formData, show_whatsapp: c})} />
-                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
-                      </div>
-                    </div>
+                  <div>
+                    <h3 className="font-black text-lg uppercase tracking-widest text-primary">Canais de Contato</h3>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60">Redes sociais e comunicação direta</p>
                   </div>
-                </div>
+               </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-primary">
-                    <Instagram className="w-6 h-6" />
-                    <h3 className="font-bold uppercase tracking-widest">Acesso Rápido Instagram</h3>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label className="text-[10px] uppercase font-bold opacity-60">Conta Instagram</Label>
-                      <Input 
-                        value={formData.instagram_url} 
-                        onChange={e => setFormData({...formData, instagram_url: e.target.value})}
-                        placeholder="Ex: @minhaloja"
-                        className="h-12"
-                      />
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[
+                    { icon: <WhatsappIcon className="w-5 h-5" />, label: "WhatsApp", field: 'whatsapp', showField: 'show_whatsapp', placeholder: "55..." },
+                    { icon: <Instagram className="w-5 h-5" />, label: "Instagram", field: 'instagram_url', showField: 'show_instagram', placeholder: "@..." },
+                    { icon: <YoutubeIcon className="w-5 h-5" />, label: "YouTube", field: 'youtube_url', showField: 'show_youtube', placeholder: "Canal..." }
+                  ].map(item => (
+                    <div key={item.field} className="p-8 rounded-[2.5rem] bg-muted/10 border border-primary/10 space-y-6 hover:shadow-2xl transition-all shadow-primary/5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 text-primary">
+                                {item.icon}
+                                <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 border border-primary/10">
+                                <span className="text-[8px] font-black uppercase text-muted-foreground">Exibir</span>
+                                <Switch checked={formData[item.showField]} onCheckedChange={v => setFormData({...formData, [item.showField]: v})} className="scale-75" />
+                            </div>
+                        </div>
+                        <Input 
+                            value={formData[item.field]} 
+                            onChange={e => setFormData({...formData, [item.field]: e.target.value})} 
+                            placeholder={item.placeholder}
+                            className="h-12 bg-background border-primary/10 rounded-xl font-bold text-sm"
+                        />
                     </div>
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
-                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
-                        <Switch checked={formData.show_instagram} onCheckedChange={c => setFormData({...formData, show_instagram: c})} />
-                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-primary">
-                    <YoutubeIcon className="w-6 h-6" />
-                    <h3 className="font-bold uppercase tracking-widest">Link Youtube</h3>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label className="text-[10px] uppercase font-bold opacity-60">Canal Youtube</Label>
-                      <Input 
-                        value={formData.youtube_url} 
-                        onChange={e => setFormData({...formData, youtube_url: e.target.value})}
-                        placeholder="Ex: youtube.com/@loja"
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2 flex flex-col justify-center">
-                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
-                      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg border shadow-sm">
-                        <Switch checked={formData.show_youtube} onCheckedChange={c => setFormData({...formData, show_youtube: c})} />
-                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  ))}
+               </div>
             </TabsContent>
 
             {/* Aba Identidade Visual */}
-            <TabsContent value="identidade" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-border pb-4">
-                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                    Cores do Sistema <span className="text-[10px] text-muted-foreground font-medium">Paleta Principal</span>
-                  </h3>
+            <TabsContent value="identidade" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Palette className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg uppercase tracking-widest text-primary">Identidade Cromática</h3>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60">Personalização de cores e efeitos visuais</p>
+                  </div>
+               </div>
+
+               <div className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                        { label: "Cor Primária", field: 'primary_hex' },
+                        { label: "Cor Secundária", field: 'secondary_hex' },
+                        { label: "Fundo Base", field: 'background_hex' }
+                    ].map(c => (
+                        <div key={c.field} className="p-6 rounded-[2rem] bg-muted/10 border border-primary/10 flex items-center gap-6 group hover:bg-muted/20 transition-all shadow-xl shadow-primary/5">
+                            <div className="relative shrink-0">
+                                <div className="w-14 h-14 rounded-2xl border-2 border-white/5 shadow-2xl transition-transform group-hover:scale-110" style={{ backgroundColor: formData[c.field] }} />
+                                <input type="color" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" value={formData[c.field]} onChange={e => setFormData({...formData, [c.field]: e.target.value})} />
+                            </div>
+                            <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{c.label}</h4>
+                                <code className="text-sm font-black text-primary uppercase">{formData[c.field]}</code>
+                            </div>
+                        </div>
+                    ))}
+                  </div>
+
                   {suggestedColors.length > 0 && (
-                    <div className="flex items-center gap-4 bg-muted px-4 py-2 rounded-xl border border-primary/20 shadow-md">
-                      <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
-                      <div className="flex gap-2">
-                        {suggestedColors.map(color => (
-                          <button
-                            key={color}
-                            onClick={() => setFormData({ ...formData, primary_hex: color, secondary_hex: color })}
-                            className="w-7 h-7 rounded-full border border-white/20 hover:scale-110 transition-all shadow-md active:scale-95"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-6 p-6 rounded-2xl bg-primary/5 border border-primary/10 max-w-fit mx-auto animate-pulse-subtle">
+                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Inspirado na sua LOGO:</span>
+                        <div className="flex gap-4">
+                            {suggestedColors.map(color => (
+                                <button key={color} onClick={() => setFormData({...formData, primary_hex: color, secondary_hex: color})} className="w-8 h-8 rounded-full border-2 border-white/20 hover:scale-125 transition-all shadow-lg shadow-black/40" style={{ backgroundColor: color }} />
+                            ))}
+                        </div>
                     </div>
                   )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
-                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR PRIMÁRIA</Label>
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
-                        style={{ backgroundColor: formData.primary_hex }}
-                      >
-                        <input 
-                          type="color" 
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
-                          value={formData.primary_hex}
-                          onChange={e => setFormData({...formData, primary_hex: e.target.value})}
-                        />
-                      </div>
-                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.primary_hex}</code>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
-                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR SECUNDÁRIA (NEON)</Label>
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
-                        style={{ backgroundColor: formData.secondary_hex }}
-                      >
-                        <input 
-                          type="color" 
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
-                          value={formData.secondary_hex}
-                          onChange={e => setFormData({...formData, secondary_hex: e.target.value})}
-                        />
-                      </div>
-                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.secondary_hex}</code>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-6">
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Efeito de Plano de Fundo</Label>
+                        <Select value={formData.background_type || "solid"} onValueChange={v => setFormData({...formData, background_type: v})}>
+                          <SelectTrigger className="h-14 bg-muted/20 border-primary/10 rounded-2xl font-black text-xs px-6 uppercase tracking-widest shadow-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-primary/10 rounded-2xl p-2">
+                             <SelectItem value="solid" className="rounded-xl py-3 font-black text-[10px] uppercase">Clássico (Bolas de Futebol)</SelectItem>
+                             <SelectItem value="bg1" className="rounded-xl py-3 font-black text-[10px] uppercase">Mesh Gradient</SelectItem>
+                             <SelectItem value="bg2" className="rounded-xl py-3 font-black text-[10px] uppercase">Topográfico</SelectItem>
+                             <SelectItem value="bg4" className="rounded-xl py-3 font-black text-[10px] uppercase">Etereo (Shadow)</SelectItem>
+                             <SelectItem value="bg5" className="rounded-xl py-3 font-black text-[10px] uppercase">Fumaça Dinâmica</SelectItem>
+                             <SelectItem value="bg7" className="rounded-xl py-3 font-black text-[10px] uppercase">Brilho Neon</SelectItem>
+                          </SelectContent>
+                        </Select>
                     </div>
-                  </div>
-
-                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
-                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR DO FUNDO BASE</Label>
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
-                        style={{ backgroundColor: formData.background_hex }}
-                      >
-                        <input 
-                          type="color" 
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
-                          value={formData.background_hex}
-                          onChange={e => setFormData({...formData, background_hex: e.target.value})}
-                        />
-                      </div>
-                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.background_hex}</code>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">ESTILO VISUAL DO FUNDO</Label>
-                    <Select value={formData.background_type || "solid"} onValueChange={v => setFormData({...formData, background_type: v})}>
-                      <SelectTrigger className="h-12 bg-card/60 backdrop-blur-md">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="solid">Esportivo (Bolas de Futebol)</SelectItem>
-                        <SelectItem value="bg1">Vibrante (Mesh Gradient)</SelectItem>
-                        <SelectItem value="bg2">Topográfico (Interactive Flow)</SelectItem>
-                        <SelectItem value="bg3">Auroras (Radial Gradient)</SelectItem>
-                        <SelectItem value="bg4">Etereo (Shadow Movement)</SelectItem>
-                        <SelectItem value="bg5">Fumaça Dinâmica (Smoke Effect)</SelectItem>
-                        <SelectItem value="bg6">Linhas de Luz (Floating Paths)</SelectItem>
-                        <SelectItem value="bg7">Brilho de Neon (Beams Flow)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PLANO DE FUNDO PERSONALIZADO (IMAGEM)</Label>
-                    <div className="flex gap-4">
-                      {formData.background_url && (
-                        <div className="h-12 w-12 rounded border border-border overflow-hidden bg-card">
-                          <img src={formData.background_url} className="w-full h-full object-cover" />
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Papel de Parede Personalizado</Label>
+                        <div className="flex gap-4">
+                             {formData.background_url && (
+                                <div className="h-14 w-14 rounded-2xl border border-primary/10 overflow-hidden shrink-0 shadow-lg">
+                                    <img src={formData.background_url} className="w-full h-full object-cover" />
+                                </div>
+                             )}
+                             <Label htmlFor="bg-up" className="flex-1 flex items-center justify-center h-14 rounded-2xl border-2 border-dashed border-primary/10 hover:border-primary/40 cursor-pointer transition-all text-[10px] font-black uppercase tracking-widest text-primary/60">
+                                <Upload className="w-4 h-4 mr-2" /> Alterar Fundo
+                             </Label>
+                             <input id="bg-up" type="file" className="hidden" accept="image/*" onChange={e => handleUpload(e, 'background_url', 'store/background')} />
                         </div>
-                      )}
-                      <Label htmlFor="bg-upload" className="flex items-center justify-center flex-1 h-12 rounded border border-dashed border-primary/30 hover:bg-primary/5 cursor-pointer transition-all">
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary mr-2" />}
-                        <span className="text-xs font-bold uppercase tracking-wider">{uploading ? "Dando upload..." : "Escolher Imagem"}</span>
-                      </Label>
-                      <input id="bg-upload" type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} disabled={uploading} />
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-8 pt-6 border-t border-border">
-                <h3 className="font-extrabold uppercase tracking-widest text-primary">Estilo das Fontes</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase opacity-60">FONTE PRINCIPAL (TÍTULOS H1-H6)</Label>
-                    <Select value={formData.primary_font || "'Bebas Neue', cursive"} onValueChange={v => setFormData({...formData, primary_font: v})}>
-                      <SelectTrigger className="h-12">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="'Bebas Neue', cursive">Bebas Neue (Impactante)</SelectItem>
-                        <SelectItem value="'Outfit', sans-serif">Outfit (Premium Moderna)</SelectItem>
-                        <SelectItem value="'Kanit', sans-serif">Kanit (Robusta)</SelectItem>
-                        <SelectItem value="'Oswald', sans-serif">Oswald (Esportiva)</SelectItem>
-                        <SelectItem value="'Montserrat', sans-serif">Montserrat (Elegante)</SelectItem>
-                        <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                        <SelectItem value="'Poppins', sans-serif">Poppins (Suave)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="p-4 rounded border border-dashed bg-muted/10">
-                      <p style={{ fontFamily: formData.primary_font || "'Bebas Neue', cursive" }} className="text-2xl uppercase tracking-widest text-primary">Exemplo Título</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-[10px] font-bold uppercase opacity-60">FONTE SECUNDÁRIA (PARÁGRAFOS)</Label>
-                    <Select value={formData.secondary_font || "'Inter', sans-serif"} onValueChange={v => setFormData({...formData, secondary_font: v})}>
-                      <SelectTrigger className="h-12">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                        <SelectItem value="'Outfit', sans-serif">Outfit (Elegante)</SelectItem>
-                        <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
-                        <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
-                        <SelectItem value="'Kanit', sans-serif">Kanit (Informal)</SelectItem>
-                        <SelectItem value="'Montserrat', sans-serif">Montserrat (Geométrica)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className="p-4 rounded border border-dashed bg-muted/10">
-                      <p style={{ fontFamily: formData.secondary_font || "'Inter', sans-serif" }} className="text-xs text-muted-foreground leading-relaxed">Exemplo de texto corrido. O cliente vai ler as descrições dos produtos com esta fonte escolhida.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+               </div>
             </TabsContent>
 
-            {/* Aba Seções */}
-            <TabsContent value="secoes" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="space-y-8">
-                <div className="flex items-center gap-3 border-b border-border pb-2">
-                  <UI_Badge className="bg-primary hover:bg-primary font-black uppercase text-[9px] px-3">Topo</UI_Badge>
-                  <h3 className="font-bold uppercase tracking-widest">Banners & Destaques (Hero)</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 1 (Topo)</Label>
-                    <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} />
+            {/* Aba Layout/Seções */}
+            <TabsContent value="secoes" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Layout className="w-5 h-5" />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 2 (Central)</Label>
-                    <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} />
+                  <div>
+                    <h3 className="font-black text-lg uppercase tracking-widest text-primary">Arquitetura da Home</h3>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60">Textos, banners e vitrines</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 3 (Base)</Label>
-                    <Input value={formData.hero_title_l3} onChange={e => setFormData({...formData, hero_title_l3: e.target.value})} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold opacity-60 uppercase">FRASE DA HOME (Abaixo da logo no início)</Label>
-                  <Input value={formData.hero_phrase} onChange={e => setFormData({...formData, hero_phrase: e.target.value})} />
-                </div>
-              </div>
+               </div>
 
-              <div className="space-y-8">
-                <div className="flex items-center gap-3 border-b border-border pb-2 text-primary">
-                  <UI_Badge variant="outline" className="border-primary text-primary font-black uppercase text-[9px] px-3">Vitrine</UI_Badge>
-                  <h3 className="font-bold uppercase tracking-widest">Vitrine de Produtos (Coleção)</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold opacity-60">NOSSA (Texto Branco)</Label>
-                    <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="Ex: NOSSA" />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-8 p-8 rounded-[2.5rem] bg-muted/10 border border-primary/10 shadow-xl">
+                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.2em] mb-4">Seção Hero (Topo)</h4>
+                    <div className="grid gap-4">
+                        <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} placeholder="Linha 1..." className="h-12 bg-background border-primary/10 font-bold" />
+                        <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} placeholder="Linha 2..." className="h-12 bg-background border-primary/10 font-black text-primary" />
+                        <Input value={formData.hero_title_l3} onChange={e => setFormData({...formData, hero_title_l3: e.target.value})} placeholder="Linha 3..." className="h-12 bg-background border-primary/10 font-bold" />
+                        <div className="pt-2">
+                             <Label className="text-[9px] font-black uppercase text-muted-foreground ml-2">Slogan de Entrada</Label>
+                             <Input value={formData.hero_phrase} onChange={e => setFormData({...formData, hero_phrase: e.target.value})} placeholder="Slogan..." className="h-12 bg-background border-primary/10 text-xs italic" />
+                        </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold opacity-60">COLEÇÃO (Texto de Destaque)</Label>
-                    <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="Ex: COLEÇÃO" />
+
+                  <div className="space-y-8 p-8 rounded-[2.5rem] bg-muted/10 border border-primary/10 shadow-xl">
+                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.2em] mb-4">Seção Vitrine</h4>
+                    <div className="grid gap-4">
+                        <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="Explicação (ex: NOSSA)" className="h-12 bg-background border-primary/10 font-bold" />
+                        <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="Destaque (ex: COLEÇÃO)" className="h-12 bg-background border-primary/10 font-black text-primary" />
+                        <div className="pt-2">
+                             <Label className="text-[9px] font-black uppercase text-muted-foreground ml-2">Frase de Chamada</Label>
+                             <Input value={formData.collection_subtitle} onChange={e => setFormData({...formData, collection_subtitle: e.target.value})} className="h-12 bg-background border-primary/10 text-xs" />
+                        </div>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold opacity-60 uppercase">Subtítulo da Vitrine</Label>
-                  <Input value={formData.collection_subtitle} onChange={e => setFormData({...formData, collection_subtitle: e.target.value})} placeholder="Ex: As melhores seleções em um só lugar" />
-                </div>
-              </div>
+               </div>
             </TabsContent>
 
             {/* Aba Avançado */}
-            <TabsContent value="outros" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-3">
-                     Checkout & Produto
-                  </h3>
-                  <div className="p-4 rounded-xl bg-muted/10 border space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">LEGENDA "ESCOLHA SEU TAMANHO"</Label>
-                      <Input 
-                        value={formData.product_size_label} 
-                        onChange={e => setFormData({...formData, product_size_label: e.target.value})}
-                        className="h-11"
-                      />
+            <TabsContent value="outros" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex items-center gap-3 border-b border-primary/5 pb-6">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Settings className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg uppercase tracking-widest text-primary">Configurações Avançadas</h3>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60">Scripts, SEO e institucionais</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">História da Loja (Sobre Nós)</Label>
+                    <Textarea value={formData.about_us} onChange={e => setFormData({...formData, about_us: e.target.value})} className="min-h-[240px] bg-muted/20 border-primary/10 rounded-[2.5rem] p-8 text-sm leading-relaxed shadow-xl" placeholder="Escreva a jornada da sua loja..." />
+                  </div>
+                  <div className="space-y-10">
+                    <div className="space-y-4 p-8 rounded-[2.5rem] bg-muted/10 border border-primary/10 shadow-lg">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Texto Rodapé (Copyright)</Label>
+                        <Input value={formData.footer_info} onChange={e => setFormData({...formData, footer_info: e.target.value})} className="h-12 bg-background border-primary/10 rounded-xl font-medium text-xs" />
+                    </div>
+                    <div className="space-y-4 p-8 rounded-[2.5rem] bg-muted/10 border border-primary/10 shadow-lg">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60">Legenda Tamanhos Produto</Label>
+                        <Input value={formData.product_size_label} onChange={e => setFormData({...formData, product_size_label: e.target.value})} className="h-12 bg-background border-primary/10 rounded-xl font-medium text-xs" />
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-6">
-                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-3">
-                     Rodapé (Footer)
-                  </h3>
-                  <div className="p-4 rounded-xl bg-muted/10 border space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">INFORMAÇÕES DE COPYRIGHT</Label>
-                      <Input 
-                        value={formData.footer_info} 
-                        onChange={e => setFormData({...formData, footer_info: e.target.value})}
-                        className="h-11"
-                        placeholder="Ex: © 2026 Loja. Todos os direitos reservados."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-6">
-                  <h3 className="font-bold uppercase tracking-widest text-primary">Sobre a Nossa História (Institucional)</h3>
-                  <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-transparent rounded-xl opacity-50 blur group-hover:opacity-100 transition-all duration-1000"></div>
-                    <Textarea 
-                      value={formData.about_us} 
-                      onChange={e => setFormData({...formData, about_us: e.target.value})}
-                      rows={10}
-                      className="relative h-48 bg-card border-border/60 focus:border-primary text-sm leading-relaxed p-6 rounded-xl"
-                      placeholder="Conte sobre sua loja aqui..."
-                    />
-                  </div>
-                </div>
-              </div>
+               </div>
             </TabsContent>
           </CardContent>
         </Card>
       </Tabs>
 
-      <div className="sticky bottom-0 z-50 bg-card pt-4 pb-6 border-t border-border mt-10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="hidden md:block">
-            {settings.updated_at && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                Última atualização: {new Date(settings.updated_at).toLocaleString()}
-              </p>
-            )}
+      {/* Floating Save Button Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-sm pointer-events-none">
+          <div className="container mx-auto max-w-7xl flex justify-end pointer-events-auto">
+              <Button 
+                onClick={handleSave} 
+                className="h-16 px-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(var(--primary),0.4)] animate-pulse-subtle flex items-center gap-3 active:scale-95 transition-all"
+              >
+                  <Save className="w-6 h-6" /> Aplicar Configurações
+              </Button>
           </div>
-          <Button 
-            onClick={handleSave} 
-            size="lg" 
-            className="w-full md:w-auto px-16 h-14 text-lg font-black uppercase tracking-[0.2em] bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] active:scale-95 transition-all"
-          >
-            CONFIRMAR ALTERAÇÕES
-          </Button>
-        </div>
       </div>
     </div>
   );

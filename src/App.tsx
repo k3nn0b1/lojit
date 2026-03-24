@@ -4,6 +4,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -292,17 +293,19 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TenantProvider>
-        <StoreSettingsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppContent />
-          </TooltipProvider>
-        </StoreSettingsProvider>
-      </TenantProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TenantProvider>
+          <StoreSettingsProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AppContent />
+            </TooltipProvider>
+          </StoreSettingsProvider>
+        </TenantProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

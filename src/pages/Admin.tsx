@@ -1,864 +1,154 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect } from "react";
+import { supabase, IS_SUPABASE_READY } from "@/lib/supabase";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-import { Pencil, Check, X, RefreshCw } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { formatBRL, parseSupabaseError, normalizePhone, formatPhoneMask, sortSizes, rankSize, normalizeCategory, generateUUID, normalizeProductStock } from "@/lib/utils";
-import CustomersTab from "@/components/admin/tabs/CustomersTab";
-import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
-import SizesTab from "@/components/admin/tabs/SizesTab";
-import ImagesTab from "@/components/admin/tabs/ImagesTab";
+  parseSupabaseError,
+  normalizeProductStock,
+  sortSizes,
+  sortPedidos
+} from "@/lib/utils";
+import { AdminProduct, Pedido, Color } from "@/lib/types";
+
+// Tab Components
+import OrdersTab from "@/components/admin/tabs/OrdersTab";
 import ProductsTab from "@/components/admin/tabs/ProductsTab";
 import StockTab from "@/components/admin/tabs/StockTab";
+import SizesTab from "@/components/admin/tabs/SizesTab";
+import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
 import ColorsTab from "@/components/admin/tabs/ColorsTab";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+import ImagesTab from "@/components/admin/tabs/ImagesTab";
+import CustomersTab from "@/components/admin/tabs/CustomersTab";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
-import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import { useTenant } from "@/hooks/use-tenant";
 
-
-// Modelo de produto
-interface AdminProduct {
-  id?: number;
-  name: string;
-  category: string;
-  price: number;
-  sizes: string[];
-  stock?: number;
-  stockBySize?: Record<string, number>;
-  imageUrl?: string;
-  publicId?: string;
-  imageUrl2?: string;
-  publicId2?: string;
-  imageUrl3?: string;
-  publicId3?: string;
-  description?: string;
-  colors?: { name: string, hex: string }[];
-}
-
-// Cloudinary envs e upload helpers permanecem iguais
-
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dlmkynuni";
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "";
-const DEFAULT_FOLDER = "store/products";
-const MAX_FILE_SIZE_MB = 8;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const IS_SUPABASE_READY = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
-
+// Modals
+import NewOrderModal from "@/components/admin/modals/NewOrderModal";
 
 const Admin = () => {
-  const { settings, loading: settingsLoading } = useStoreSettings();
-  const { tenantId } = useTenant();
-
-  useEffect(() => {
-    if (settings?.store_name) {
-      document.title = `${settings.store_name} - Painel`;
-    }
-  }, [settings?.store_name]);
-
-  if (settingsLoading && !settings?.store_name) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <span className="text-muted-foreground font-medium animate-pulse text-sm tracking-widest uppercase">Carregando Painel</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Auth: verificação de acesso é feita pelo AdminGuard em App.tsx
-  // Removido checkAuth local para evitar redirecionamentos duplicados.
-
-  const [storedProducts, setStoredProducts] = useState<any[]>([]);
+  const tenantId = window.location.hostname.split('.')[0] || 'default';
+  const [activeTab, setActiveTab] = useState("pedidos");
   
-  // auth...
-  // Distribuição de estoque por tamanho (para cadastro de produto)
-  const [distribution, setDistribution] = useState<Record<string, number>>({});
-
+  // Shared States
+  const [storedProducts, setStoredProducts] = useState<AdminProduct[]>([]);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [globalSizes, setGlobalSizes] = useState<string[]>([]);
-  const [globalColors, setGlobalColors] = useState<any[]>([]);
+  const [globalColors, setGlobalColors] = useState<Color[]>([]);
   
-  // Estados para abas e busca
-  const [productQuery, setProductQuery] = useState("");
-  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-  const [editFields, setEditFields] = useState<Record<number, any>>({});
-  const [stockQuery, setStockQuery] = useState(""); 
-  const [stockPage, setStockPage] = useState(1);
-  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>({}); // Adicionado para StockTab
+  // UI States
+  const [newPedidoOpen, setNewPedidoOpen] = useState(false);
+  const [refreshingOrders, setRefreshingOrders] = useState(false);
 
-  
-// Pedidos: estados
-const [pedidos, setPedidos] = useState<any[]>([]);
-const [pedidoStatusFilter, setPedidoStatusFilter] = useState<string>("todos");
-const [pedidoSearch, setPedidoSearch] = useState<string>("");
-const [pedidoPage, setPedidoPage] = useState(1);
-const [pageSize, setPageSize] = useState(15);
-const [confirmAction, setConfirmAction] = useState<{ id: string; action: "concluir" | "cancelar" } | null>(null);
-const [pedidoDetalhesId, setPedidoDetalhesId] = useState<string | number | null>(null);
-const [pedidoSeq, setPedidoSeq] = useState<Record<string, number>>({});
-const [devolucaoPedidoId, setDevolucaoPedidoId] = useState<string | null>(null);
-const [devolucaoParcial, setDevolucaoParcial] = useState(false);
-const [devolucaoQuantidades, setDevolucaoQuantidades] = useState<number[]>([]);
-const [confirmTotalOpen, setConfirmTotalOpen] = useState(false);
+  // Cloudinary Config (Centralized logic could be here or in utils)
+  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dff797v9r";
+  const MAX_FILE_SIZE_MB = 5;
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-// Defaultar devolução para parcial e zerar quantidades ao abrir modal
-useEffect(() => {
-  if (devolucaoPedidoId) {
-    setDevolucaoParcial(true);
-    const pedido = pedidos.find((p) => String(p.id) === String(devolucaoPedidoId));
-    const itens = pedido?.itens || [];
-    setDevolucaoQuantidades(itens.map(() => 0));
-  }
-}, [devolucaoPedidoId, pedidos]);
-
-// Tabs controlada para alternar após criar pedido
-const [activeTab, setActiveTab] = useState("pedidos");
-
-// Modal de novo pedido (admin)
-const [newPedidoOpen, setNewPedidoOpen] = useState(false);
-const [confirmDebitarOpen, setConfirmDebitarOpen] = useState(false);
-
-// Carrinho do admin
-type AdminCartItem = { id: number; name: string; size: string; color?: string; quantity: number; price: number };
-const [adminCart, setAdminCart] = useState<AdminCartItem[]>([]);
-
-// Seleção do produto/tamanho
-const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-const [selectedSize, setSelectedSize] = useState<string | null>(null);
-const [selectedColor, setSelectedColor] = useState<string | null>(null);
-const [quantity, setQuantity] = useState<string>('1');
-const [refreshingOrders, setRefreshingOrders] = useState(false);
-
-const fetchPedidos = async () => {
-  if (!IS_SUPABASE_READY) return;
-  setRefreshingOrders(true);
-  try {
-    const { data, error } = await supabase
-      .from("pedidos")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("data_criacao", { ascending: false });
-    if (!error && data) setPedidos(sortPedidos(data as any[]));
-  } finally {
-    setRefreshingOrders(false);
-  }
-};
-
-// Cliente (opcional)
-const [informarCliente, setInformarCliente] = useState(true);
-const [clienteNome, setClienteNome] = useState("");
-const [clienteTelefone, setClienteTelefone] = useState("");
-
-const handleNavigateStock = (id: number, name: string) => {
-  setStockQuery(name);
-  setStockPage(1);
-  setExpandedProductId(id);
-  setActiveTab("stock");
-};
-
-const addToAdminCart = () => {
-  const qty = Math.max(1, parseInt(quantity || '1') || 1);
-  if (!selectedProductId || !selectedSize || qty <= 0) return;
-  const prod = storedProducts.find(p => p.id === selectedProductId);
-  if (!prod) return;
-
-  // If product has colors, check if one is selected
-  if (prod.colors && prod.colors.length > 0 && !selectedColor) {
-    toast.error("Selecione uma cor");
-    return;
-  }
-  const estoque = Math.max(0, Number((prod.stockBySize || {})[selectedSize] || 0));
-  if (estoque === 0) {
-    toast.error("Tamanho sem estoque");
-    return;
-  }
-  const existingItem = adminCart.find(it => it.id === selectedProductId && it.size === selectedSize && it.color === selectedColor);
-  const combined = (existingItem?.quantity || 0) + qty;
-  if (combined > estoque) {
-    toast.error(`Quantidade total (${combined}) excede estoque disponível (${estoque})`);
-    return;
-  }
-  setAdminCart(prev => {
-    const idx = prev.findIndex(it => it.id === selectedProductId && it.size === selectedSize && it.color === selectedColor);
-    const next = [...prev];
-    if (idx >= 0) {
-      next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
-    } else {
-      next.push({ id: selectedProductId, name: prod.name, size: selectedSize, color: selectedColor || undefined, quantity: qty, price: Number(prod.price || 0) });
-    }
-    return next;
-  });
-  setQuantity('1');
-};
-
-const removeFromAdminCart = (i: number) => {
-  setAdminCart(prev => prev.filter((_, idx) => idx !== i));
-};
-
-const updateAdminCartQuantity = (i: number, newQty: number) => {
-  if (newQty < 1) return;
-  const item = adminCart[i];
-  const prod = storedProducts.find(p => p.id === item.id);
-  const estoque = Math.max(0, Number((prod?.stockBySize || {})[item.size] || 0));
-  if (newQty > estoque) {
-    if (estoque >= 1) {
-      toast.info(`Estoque disponível: ${estoque}.`);
-      setAdminCart(prev => prev.map((it, idx) => idx === i ? { ...it, quantity: estoque } : it));
-    } else {
-      toast.error("Sem estoque para este tamanho. Removi o item do carrinho.");
-      removeFromAdminCart(i);
-    }
-    return;
-  }
-  setAdminCart(prev => prev.map((it, idx) => idx === i ? { ...it, quantity: newQty } : it));
-};
-
-const adminCartTotal = adminCart.reduce((sum, it) => sum + it.price * it.quantity, 0);
-
-  // uuid...
-const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
-  if (adminCart.length === 0) {
-    toast.error("Adicione itens ao pedido");
-  return;
-  }
-  const nome = informarCliente && clienteNome.trim() ? clienteNome.trim() : "LOJA";
-  const telefone = informarCliente && clienteTelefone.trim() ? clienteTelefone.trim() : "(XX) XXXXXX-XXXX";
-
-  const itens = adminCart.map(it => ({
-    produto: it.name,
-    tamanho: it.size,
-    cor: it.color,
-    quantidade: it.quantity,
-    product_id: it.id,
-    preco_unitario: it.price,
-  }));
-
-  const hasSupabase = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
-  try {
-    // debitarEstoque é definido pelo modal de confirmação
-    if (hasSupabase) {
-      if (debitarEstoque) {
-        // Valida estoque com base no banco
-        const previousStates: Array<{ id: number; prev: Record<string, number>; prevTotal: number }> = [];
-        for (const it of adminCart) {
-          const { data: prodData, error: fetchErr } = await supabase.from('products').select('*').eq('id', it.id).single();
-          if (fetchErr) throw fetchErr;
-          if (!prodData) throw new Error('Produto não encontrado');
-          const stockBySize: Record<string, number> = prodData.stockBySize || {};
-          const current = Math.max(0, Number(stockBySize[it.size] || 0));
-          if (it.quantity > current) {
-            throw new Error(`Estoque insuficiente para ${it.name} (${it.size}). Disponível: ${current}`);
-          }
-          previousStates.push({ id: it.id, prev: { ...stockBySize }, prevTotal: Number(prodData.stock || 0) });
-        }
-        // Aplica baixa de estoque imediatamente
-        for (const it of adminCart) {
-          const { data: prodData } = await supabase.from('products').select('*').eq('id', it.id).single();
-          const stockBySize: Record<string, number> = (prodData?.stockBySize || {});
-          const current = Math.max(0, Number(stockBySize[it.size] || 0));
-          const next = Math.max(0, current - it.quantity);
-          const nextStockBySize = { ...stockBySize, [it.size]: next };
-          const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-          const { error: updErr } = await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', it.id);
-          if (updErr) {
-            // Reverter atualizações de estoque se houver falha
-            for (const prev of previousStates) {
-              await supabase.from('products').update({ stockBySize: prev.prev, stock: prev.prevTotal }).eq('id', prev.id);
-            }
-            throw updErr;
-          }
-        }
-
-        // Inserir pedido após baixa bem-sucedida
-        const uuid = typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function'
-          ? (crypto as any).randomUUID()
-          : generateUUID();
-        // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
-        try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone), tenant_id: tenantId });
-        } catch {}
-        
-
-        const { error } = await supabase
-          .from("pedidos")
-          .insert({
-            id: uuid,
-            cliente_nome: nome,
-            cliente_telefone: telefone,
-            itens,
-            valor_total: adminCartTotal,
-            status: "concluido",
-            tenant_id: tenantId,
-          });
-        if (error) throw error;
-
-        // Atualiza lista de pedidos imediatamente
-        const { data: pedidosData } = await supabase
-          .from("pedidos")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("data_criacao", { ascending: false });
-        if (pedidosData) setPedidos(sortPedidos(pedidosData as any[]));
-
-        // Atualiza UI local dos produtos
-        setStoredProducts((prev) => {
-          let next = [...prev];
-          for (const it of adminCart) {
-            next = next.map(p => {
-              if (p.id === it.id) {
-                const base = { ...(p.stockBySize || {}) } as Record<string, number>;
-                const cur = Math.max(0, Number(base[it.size] || 0));
-                const novo = Math.max(0, cur - it.quantity);
-                const nextStockBySize = { ...base, [it.size]: novo };
-                const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-                return { ...p, stockBySize: nextStockBySize, stock: nextTotal } as any;
-              }
-              return p;
-            });
-          }
-          return next;
-        });
-      } else {
-        // Inserir pedido como pendente (sem baixa de estoque)
-        const uuid = typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function'
-          ? (crypto as any).randomUUID()
-          : generateUUID();
-        // Inserir cliente apenas se telefone ainda não existir (ignorar conflito)
-        try {
-          await supabase.from("clientes").insert({ nome, telefone: normalizePhone(telefone), tenant_id: tenantId });
-        } catch {}
-        
-
-        const { error } = await supabase
-          .from("pedidos")
-          .insert({
-            id: uuid,
-            cliente_nome: nome,
-            cliente_telefone: telefone,
-            itens,
-            valor_total: adminCartTotal,
-            status: "pendente",
-            tenant_id: tenantId,
-          });
-        if (error) throw error;
-
-        // Atualiza lista de pedidos imediatamente
-        const { data: pedidosData } = await supabase
-          .from("pedidos")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("data_criacao", { ascending: false });
-        if (pedidosData) setPedidos(sortPedidos(pedidosData as any[]));
-      }
-    }
-    toast.success(debitarEstoque ? "Pedido concluído e baixa de estoque aplicada" : "Pedido criado como pendente (sem baixa de estoque)");
-    setAdminCart([]);
-    setNewPedidoOpen(false);
-    setActiveTab("pedidos");
-  } catch (e: any) {
-    toast.error("Falha ao criar pedido", { description: parseSupabaseError(e) });
-  }
-};
-
-
-// Função de ordenação: pendentes primeiro; depois concluídos/cancelados; dentro do grupo, mais recentes primeiro
-const sortPedidos = (list: any[]) => {
-  return [...list].sort((a, b) => {
-    const order = (s: string) => (s === 'pendente' ? 0 : 1);
-    const diff = order(a.status) - order(b.status);
-    if (diff !== 0) return diff;
-    return new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime();
-  });
-};
-
-// Carregamento inicial e realtime
-useEffect(() => {
-  void fetchPedidos();
-}, [tenantId]);
-
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-
-  const channel = supabase
-    .channel("pedidos-realtime")
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, (payload: any) => {
-      const newRow = payload.new;
-      if (!newRow) return;
-      setPedidos((prev) => sortPedidos([newRow, ...prev]));
-    })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos' }, (payload: any) => {
-      const newRow = payload.new;
-      if (!newRow) return;
-      setPedidos((prev) => {
-        const idx = prev.findIndex((p) => p.id === newRow.id);
-        if (idx >= 0) {
-          const next = [...prev];
-          next[idx] = newRow;
-          return sortPedidos(next);
-        }
-        return sortPedidos([newRow, ...prev]);
-      });
-    })
-    .subscribe();
-
-  return () => {
-    try { supabase.removeChannel(channel); } catch {}
+  const uploadToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "p_ml_default");
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    return data.secure_url;
   };
-}, [tenantId]);
 
-// Realtime de clientes removido daqui pois está no componente CustomersTab
+  const fetchPedidos = async () => {
+    if (!IS_SUPABASE_READY) return;
+    setRefreshingOrders(true);
+    try {
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("data_criacao", { ascending: false });
 
-// Realtime de produtos
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-  const channel = supabase
-    .channel('products-realtime-admin')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
-      const newRow = payload.new;
-      if (!newRow) return;
-      const norm = normalizeProductStock(newRow);
-      setStoredProducts(prev => [norm, ...prev.filter(p => p.id !== newRow.id)]);
-    })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload: any) => {
-      const newRow = payload.new;
-      if (!newRow) return;
-      const norm = normalizeProductStock(newRow);
-      setStoredProducts(prev => prev.map(p => p.id === newRow.id ? norm : p));
-    })
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload: any) => {
-      const oldRow = payload.old;
-      if (!oldRow) return;
-      setStoredProducts(prev => prev.filter(p => p.id !== oldRow.id));
-    })
-    .subscribe();
-  return () => { try { supabase.removeChannel(channel); } catch {} };
-}, []);
-
-// Realtime de categorias
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-    // Initial fetch
-    const fetchCats = async () => {
-      const { data } = await supabase
-        .from('categories')
-        .select('name')
-        .eq('tenant_id', tenantId)
-        .order('name', { ascending: true });
-      if (data) setCategories((data as any[]).map(c => c.name));
-    };
-    void fetchCats();
-
-    const channel = supabase
-      .channel('categories-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, fetchCats)
-      .subscribe();
-  return () => { try { supabase.removeChannel(channel); } catch {} };
-}, [tenantId]);
-
-// Realtime de tamanhos
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-    // Initial fetch
-    const fetchSizes = async () => {
-      const { data } = await supabase
-        .from('sizes')
-        .select('name')
-        .eq('tenant_id', tenantId)
-        .order('name', { ascending: true });
-      if (data) setGlobalSizes((data as any[]).map(s => s.name));
-    };
-    void fetchSizes();
-
-    const channel = supabase
-      .channel('sizes-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sizes' }, fetchSizes)
-      .subscribe();
-  return () => { try { supabase.removeChannel(channel); } catch {} };
-}, [tenantId]);
-
-// Realtime de cores
-useEffect(() => {
-  if (!IS_SUPABASE_READY) return;
-    // Initial fetch
-    const fetchColors = async () => {
-      const { data } = await supabase
-        .from('colors')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('name', { ascending: true });
-      if (data) setGlobalColors(data as any[]);
-    };
-    void fetchColors();
-
-    const channel = supabase
-      .channel('colors-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'colors' }, fetchColors)
-      .subscribe();
-  return () => { try { supabase.removeChannel(channel); } catch {} };
-}, [tenantId]);
-
-// Filtro
-const filteredPedidos = pedidos.filter((p) => {
-
-
-  const matchStatus = pedidoStatusFilter === 'todos' || p.status === pedidoStatusFilter;
-  const term = pedidoSearch.toLowerCase().trim();
-  const matchSearch = term === ''
-    || (p.cliente_nome?.toLowerCase().includes(term))
-    || (String(p.id).toLowerCase().includes(term));
-  return matchStatus && matchSearch;
-});
-
-// Ordenar com prioridade: pendentes primeiro, depois por mais recentes
-const orderedPedidos = sortPedidos(filteredPedidos);
-const totalPages = Math.max(1, Math.ceil(orderedPedidos.length / pageSize));
-
-useEffect(() => { setPedidoPage(prev => Math.min(prev, totalPages)); }, [totalPages]);
-
-const startIndex = (pedidoPage - 1) * pageSize;
-const pageSlice = orderedPedidos.slice(startIndex, startIndex + pageSize);
-// Já estão ordenados com pendentes primeiro; apenas usamos o slice
-const visiblePedidos = pageSlice;
-
-
-// Sequencial estável por ordem de criação (mais antigo = 1)
-useEffect(() => {
-  const ordered = [...pedidos].sort((a, b) => new Date(a.data_criacao).getTime() - new Date(b.data_criacao).getTime());
-  const map: Record<string, number> = {};
-  ordered.forEach((p, i) => { map[String(p.id)] = i + 1; });
-  setPedidoSeq(map);
-}, [pedidos]);
-
-// Baixa de estoque por tamanho ao concluir
-const applyBaixaDeEstoque = async (pedido: any) => {
-  for (const item of pedido.itens || []) {
-    const productId = item.product_id;
-    const tamanho = item.tamanho;
-    const qty = Number(item.quantidade || 0);
-    if (!productId || !tamanho || qty <= 0) continue;
-    const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).eq('tenant_id', tenantId).single();
-    if (!prodData) continue;
-    const stockBySize = prodData.stockBySize || {};
-    const current = Number(stockBySize[tamanho] || 0);
-    const next = Math.max(0, current - qty);
-    const nextStockBySize = { ...stockBySize, [tamanho]: next };
-    await supabase.from('products').update({ stockBySize: nextStockBySize }).eq('id', productId).eq('tenant_id', tenantId);
-  }
-};
-
-// Devolução de estoque (total ou parcial).
-// quantidades: array do mesmo tamanho de pedido.itens com a quantidade a devolver por item.
-const applyDevolucaoEstoqueParcial = async (pedido: any, quantidades: number[]) => {
-  try {
-    // Atualiza estoque somando as quantidades devolvidas
-    for (let i = 0; i < (pedido.itens || []).length; i++) {
-      const it = pedido.itens[i];
-      const already = Number(it.devolvido || 0);
-      const maxReturn = Math.max(0, Number(it.quantidade || 0) - already);
-      const qty = Math.max(0, Math.min(maxReturn, Number(quantidades[i] || 0)));
-      if (qty <= 0) continue;
-      const productId = it.product_id;
-      const tamanho = it.tamanho;
-      const { data: prodData } = await supabase.from('products').select('*').eq('id', productId).eq('tenant_id', tenantId).single();
-      if (!prodData) continue;
-      const stockBySize = prodData.stockBySize || {};
-      const current = Number(stockBySize[tamanho] || 0);
-      const next = Math.max(0, current + qty);
-      const nextStockBySize = { ...stockBySize, [tamanho]: next };
-      const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-      await supabase.from('products').update({ stockBySize: nextStockBySize, stock: nextTotal }).eq('id', productId).eq('tenant_id', tenantId);
+      if (error) throw error;
+      if (data) setPedidos(sortPedidos(data as Pedido[]));
+    } catch (e: any) {
+      toast.error("Erro ao carregar pedidos", { description: parseSupabaseError(e) });
+    } finally {
+      setRefreshingOrders(false);
     }
+  };
 
-    // Atualiza itens do pedido com flag de devolvido
-    const newItens = (pedido.itens || []).map((it: any, idx: number) => {
-      const already = Number(it.devolvido || 0);
-      const maxReturn = Math.max(0, Number(it.quantidade || 0) - already);
-      const qty = Math.max(0, Math.min(maxReturn, Number(quantidades[idx] || 0)));
-      if (qty <= 0) return it;
-      return { ...it, devolvido: already + qty };
-    });
+  const fetchData = async () => {
+    if (!IS_SUPABASE_READY) return;
+    try {
+      // Products
+      const { data: prodData } = await supabase
+        .from("products")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("id", { ascending: false });
+      if (prodData) setStoredProducts(prodData.map(normalizeProductStock));
 
-    const totalDevolvido = newItens.reduce((sum: number, it: any, i: number) => sum + Math.max(0, Number(it.devolvido || 0) - Number((pedido.itens?.[i]?.devolvido || 0))), 0);
+      // Categories
+      const { data: catData } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+      if (catData) setCategories(catData.map((c: any) => c.name));
 
-    // Se devolveu todos itens (somando devolvido == somando quantidade), marcar status 'devolvido'
-    const isTotalReturn = newItens.every((it: any) => Number(it.devolvido || 0) >= Number(it.quantidade || 0));
-
-    const { error } = await supabase.from('pedidos').update({ itens: newItens, status: isTotalReturn ? 'devolvido' : 'parcialmente_devolvido' }).eq('id', pedido.id).eq('tenant_id', tenantId);
-    if (error) throw error;
-
-    // Atualiza UI local
-    setStoredProducts((prev) => {
-      let next = [...prev];
-      for (let i = 0; i < (pedido.itens || []).length; i++) {
-        const it = pedido.itens[i];
-        const already = Number(it.devolvido || 0);
-        const maxReturn = Math.max(0, Number(it.quantidade || 0) - already);
-        const qty = Math.max(0, Math.min(maxReturn, Number(quantidades[i] || 0)));
-        if (qty <= 0) continue;
-        next = next.map(p => {
-          if (p.id === it.product_id) {
-            const base = { ...(p.stockBySize || {}) } as Record<string, number>;
-            const cur = Math.max(0, Number(base[it.tamanho] || 0));
-            const novo = Math.max(0, cur + qty);
-            const nextStockBySize = { ...base, [it.tamanho]: novo };
-            const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-            return { ...p, stockBySize: nextStockBySize, stock: nextTotal } as any;
-          }
-          return p;
-        });
+      // Sizes
+      const { data: sizeData } = await supabase
+        .from("sizes")
+        .select("name")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+      if (sizeData && sizeData.length > 0) {
+        setGlobalSizes(sizeData.map((s: any) => s.name));
       }
-      return next;
-    });
 
-    setPedidos(prev => {
-      const idx = prev.findIndex((pp) => pp.id === pedido.id);
-      if (idx < 0) return prev;
-      const next = [...prev];
-      next[idx] = { ...next[idx], itens: newItens, status: isTotalReturn ? 'devolvido' : 'parcialmente_devolvido' };
-      return sortPedidos(next);
-    });
+      // Colors
+      const { data: colorData } = await supabase
+        .from("colors")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+      if (colorData) setGlobalColors(colorData as Color[]);
 
-    toast.success('Devolução aplicada e estoque atualizado');
-  } catch (e: any) {
-    toast.error('Falha ao aplicar devolução', { description: parseSupabaseError(e) });
-  }
-};
-
-// Confirmar ação de concluir/cancelar
-const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") => {
-  const target = pedidos.find((p) => p.id === id);
-  if (!target) return;
-  try {
-    if (action === 'concluir') {
-      await applyBaixaDeEstoque(target);
+      // Orders
+      await fetchPedidos();
+    } catch (e: any) {
+      toast.error("Falha ao carregar dados", { description: parseSupabaseError(e) });
     }
-    const { error } = await supabase.from('pedidos').update({ status: action === 'concluir' ? 'concluido' : 'cancelado' }).eq('id', id).eq('tenant_id', tenantId);
-    if (error) throw error;
-    // Atualização otimista de UI
-    setPedidos((prev) => {
-      const next = prev.map((p) => p.id === id ? { ...p, status: action === 'concluir' ? 'concluido' : 'cancelado' } : p);
-      return sortPedidos(next);
-    });
-    toast.success(action === 'concluir' ? 'Pedido concluído' : 'Pedido cancelado');
-  } catch (e: any) {
-    toast.error('Falha ao atualizar pedido', { description: parseSupabaseError(e) });
-  }
-};
+  };
 
   useEffect(() => {
-    const init = async () => {
-      if (IS_SUPABASE_READY) {
-        try {
-          const { data: catData, error: catErr } = await supabase
-            .from("categories")
-            .select("name")
-            .eq("tenant_id", tenantId)
-            .order("name", { ascending: true });
-          if (!catErr && catData) setCategories(catData.map((c: any) => c.name));
-
-          // Carregar produtos primeiro (para possível fallback dos tamanhos)
-          const { data: prodData, error: prodErr } = await supabase
-            .from("products")
-            .select("*")
-            .eq("tenant_id", tenantId)
-            .order("id", { ascending: false });
-          if (!prodErr && prodData) {
-            setStoredProducts(prodData.map(normalizeProductStock));
-          }
-
-          // Carregar lista global de tamanhos
-          const { data: sizeData, error: sizeErr } = await supabase
-            .from("sizes")
-            .select("name")
-            .eq("tenant_id", tenantId)
-            .order("name", { ascending: true });
-
-          if (!sizeErr && Array.isArray(sizeData) && sizeData.length > 0) {
-            setGlobalSizes(sizeData.map((s: any) => s.name));
-          } else if (!prodErr && Array.isArray(prodData)) {
-            // Derivar tamanhos únicos dos produtos existentes, normalizados e ordenados
-            const derived = sortSizes(
-              Array.from(
-                new Set(
-                  (prodData || []).flatMap((p: any) =>
-                    ((p?.sizes || []) as string[])
-                      .map((x) => (x || "").toString().trim().toUpperCase())
-                      .filter(Boolean)
-                  )
-                )
-              )
-            );
-            if (derived.length > 0) {
-              setGlobalSizes(derived);
-              // Persistir na tabela sizes para futura edição
-              if (IS_SUPABASE_READY) {
-                try {
-                  const rows = derived.map((name) => ({ name }));
-                  await supabase.from("sizes").upsert(rows, { onConflict: "name" });
-                } catch (err) {
-                  console.error("Erro ao persistir tamanhos derivados:", err);
-                }
-              }
-            }
-          }
-
-          // Carregar lista global de cores
-          const { data: colorData, error: colorErr } = await supabase
-            .from("colors")
-            .select("*")
-            .eq("tenant_id", tenantId)
-            .order("name", { ascending: true });
-
-          if (!colorErr && Array.isArray(colorData)) {
-            setGlobalColors(colorData);
-          }
-        } catch (e: any) {
-          toast.error("Falha ao carregar dados do Supabase", { description: parseSupabaseError(e) });
-        }
-      } else {
-        toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-      }
-    };
-    void init();
+    void fetchData();
   }, [tenantId]);
 
-  // Ajuste: não auto-selecionar tamanhos conforme categoria
+  // Realtime Subscriptions
   useEffect(() => {
-    // Mantemos intencionalmente sem auto-ajuste para permitir o usuário escolher manualmente os tamanhos
-  }, []);
+    if (!IS_SUPABASE_READY || !tenantId) return;
 
-  // Categorias e Tamanhos gerenciados nos componentes especializados
+    const productsChannel = supabase
+      .channel('products-realtime-admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `tenant_id=eq.${tenantId}` }, () => {
+        void fetchData(); // Simplificado para recarregar tudo em caso de mudança real
+      })
+      .subscribe();
 
+    const pedidosChannel = supabase
+      .channel("pedidos-realtime-admin")
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos', filter: `tenant_id=eq.${tenantId}` }, () => {
+        void fetchPedidos();
+      })
+      .subscribe();
 
-  const handleStockBySizeChange = async (id: number, size: string, newStock: number) => {
-    const target = storedProducts.find((p) => p.id === id);
-    const base = target?.stockBySize || {};
-    const nextStockBySize = { ...base, [size]: newStock };
-    const total = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-    if (IS_SUPABASE_READY) {
-      try {
-        const { error } = await supabase.from("products").update({ stockBySize: nextStockBySize, stock: total }).eq("id", id);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stockBySize: nextStockBySize, stock: total } : p)));
-        toast.success(`Estoque atualizado para tamanho ${size}`);
-      } catch (e: any) {
-        toast.error("Falha ao atualizar estoque no Supabase", { description: parseSupabaseError(e) });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
-
-  const handleAddSizeToModel = async (id: number, newSize: string) => {
-    if (!newSize) return;
-    const target = storedProducts.find((p) => p.id === id);
-    const sizes = Array.isArray(target?.sizes) ? target!.sizes : [];
-    if (sizes.includes(newSize)) {
-      toast.success(`Tamanho ${newSize} já existe`);
-      return;
-    }
-    const nextSizes = [...sizes, newSize];
-    const nextStockBySize = { ...(target?.stockBySize || {}) } as Record<string, number>;
-    nextStockBySize[newSize] = 0;
-    const total = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-
-    if (IS_SUPABASE_READY) {
-      try {
-        const { error } = await supabase
-          .from("products")
-          .update({ sizes: nextSizes, stockBySize: nextStockBySize, stock: total })
-          .eq("id", id);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, sizes: nextSizes, stockBySize: nextStockBySize, stock: total } : p)));
-        toast.success(`Tamanho ${newSize} adicionado`);
-        return;
-      } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-    // Sem fallback local: se Supabase não estiver pronto, apenas exibe erro.
-    
-  };
-
-  const handleRemoveSizeFromModel = async (id: number, size: string) => {
-    const target = storedProducts.find((p) => p.id === id);
-    const sizes = Array.isArray(target?.sizes) ? target!.sizes : [];
-    if (!sizes.includes(size)) {
-      toast.error(`Tamanho ${size} não existe no produto`);
-      return;
-    }
-    const nextSizes = sizes.filter((s) => s !== size);
-    const baseStockBySize = { ...(target?.stockBySize || {}) } as Record<string, number>;
-    delete baseStockBySize[size];
-    const total = Object.values(baseStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-    if (IS_SUPABASE_READY) {
-      try {
-        const { error } = await supabase
-          .from("products")
-          .update({ sizes: nextSizes, stockBySize: baseStockBySize, stock: total })
-          .eq("id", id);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, sizes: nextSizes, stockBySize: baseStockBySize, stock: total } : p)));
-        toast.success(`Tamanho ${size} removido`);
-        return;
-      } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
-
-  const handleUpdateProductFields = async (id: number, manualFields?: any) => {
-    const fields = manualFields || editFields[id];
-    if (!fields) return;
-
-    const payload: any = {};
-    if (typeof fields.name !== "undefined") payload.name = fields.name;
-    if (typeof fields.category !== "undefined") payload.category = fields.category;
-    if (typeof fields.price !== "undefined") payload.price = fields.price;
-    if (typeof fields.stock === "number" && Number.isFinite(fields.stock)) payload.stock = fields.stock;
-    if (typeof fields.description !== "undefined") payload.description = fields.description;
-    if (typeof fields.colors !== "undefined") payload.colors = fields.colors;
-
-    if (IS_SUPABASE_READY) {
-      try {
-        const { error } = await supabase.from("products").update(payload).eq("id", id);
-        if (error) throw error;
-        setStoredProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...payload } : p)));
-        toast.success("Produto atualizado");
-        setStockQuery(""); 
-        return;
-      } catch (e: any) {
-        toast.error("Falha ao atualizar no Supabase", { description: parseSupabaseError(e) });
-      }
-    } else {
-      toast.error("Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
-    }
-  };
-
-
+    return () => {
+      void supabase.removeChannel(productsChannel);
+      void supabase.removeChannel(pedidosChannel);
+    };
+  }, [tenantId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -867,215 +157,44 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
   };
 
   return (
-    <div className="flex-1 flex flex-col relative w-full">
+    <div className="flex-1 flex flex-col relative w-full min-h-screen bg-background">
       <Header
         showCart={false}
         rightAction={(
           <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={handleLogout}>Sair</Button>
         )}
       />
-      <div className="flex-1 container mx-auto px-4 py-8 mb-12">
+      
+      <main className="flex-1 container mx-auto px-4 py-8 mb-12">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">Painel Administrativo</h1>
         </div>
 
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-start md:justify-center p-1 bg-muted border border-border shadow-md">
-              <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2 px-4 transition-all">Pedidos</TabsTrigger>
-              <TabsTrigger value="products" className="flex-1 md:flex-none py-2 px-4 transition-all">Produtos</TabsTrigger>
-              <TabsTrigger value="stock" className="flex-1 md:flex-none py-2 px-4 transition-all">Estoque</TabsTrigger>
-              <TabsTrigger value="sizes" className="flex-1 md:flex-none py-2 px-4 transition-all">Tamanhos</TabsTrigger>
-              <TabsTrigger value="images" className="flex-1 md:flex-none py-2 px-4 transition-all">Imagens</TabsTrigger>
-              <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2 px-4 transition-all">Clientes</TabsTrigger>
-              <TabsTrigger value="categories" className="flex-1 md:flex-none py-2 px-4 transition-all">Categorias</TabsTrigger>
-              <TabsTrigger value="colors" className="flex-1 md:flex-none py-2 px-4 transition-all">Cores</TabsTrigger>
-              <TabsTrigger value="config" className="flex-1 md:flex-none py-2 px-4 transition-all">Configurações</TabsTrigger>
-            </TabsList>
+            <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2 px-4">Pedidos</TabsTrigger>
+            <TabsTrigger value="products" className="flex-1 md:flex-none py-2 px-4">Produtos</TabsTrigger>
+            <TabsTrigger value="stock" className="flex-1 md:flex-none py-2 px-4">Estoque</TabsTrigger>
+            <TabsTrigger value="sizes" className="flex-1 md:flex-none py-2 px-4">Tamanhos</TabsTrigger>
+            <TabsTrigger value="images" className="flex-1 md:flex-none py-2 px-4">Imagens</TabsTrigger>
+            <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2 px-4">Clientes</TabsTrigger>
+            <TabsTrigger value="categories" className="flex-1 md:flex-none py-2 px-4">Categorias</TabsTrigger>
+            <TabsTrigger value="colors" className="flex-1 md:flex-none py-2 px-4">Cores</TabsTrigger>
+            <TabsTrigger value="config" className="flex-1 md:flex-none py-2 px-4">Configurações</TabsTrigger>
+          </TabsList>
 
-
-          {/* Pedidos */}
           <TabsContent value="pedidos" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Pedidos</CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={fetchPedidos} 
-                  disabled={refreshingOrders}
-                  className="h-9 gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${refreshingOrders ? 'animate-spin text-primary' : ''}`} />
-                  {refreshingOrders ? 'Atualizando...' : 'Atualizar'}
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col md:flex-row gap-3 md:items-end">
-                  <div className="flex-1">
-                    <Label>Buscar (nome do cliente ou ID)</Label>
-                    <Input placeholder="Ex: João ou 8fbd..." value={pedidoSearch} onChange={(e) => setPedidoSearch(e.target.value)} />
-                  </div>
-                  <div className="w-full md:w-[220px]">
-                    <Label className="mb-2 block text-xs font-bold uppercase tracking-widest text-primary/80">Status</Label>
-                    <Select
-                      value={pedidoStatusFilter || "todos"}
-                      onValueChange={(val) => setPedidoStatusFilter(val === "todos" ? "" : val)}
-                    >
-                      <SelectTrigger className="w-full bg-background border-border hover:border-primary/50 transition-smooth">
-                        <SelectValue placeholder="Todos" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos</SelectItem>
-                        <SelectItem value="pendente">Pendente</SelectItem>
-                        <SelectItem value="concluido">Concluído</SelectItem>
-                        <SelectItem value="devolvido">Devolvido</SelectItem>
-                        <SelectItem value="parcialmente_devolvido">Parcialmente Devolvido</SelectItem>
-                        <SelectItem value="cancelado">Cancelado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {orderedPedidos.length === 0 ? (
-                  <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
-                ) : (
-                  <div className="overflow-x-auto rounded-md border">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className="bg-muted">
-                          <th className="px-3 py-2 text-left">Data</th>
-                          <th className="px-3 py-2 text-left">ID</th>
-                          <th className="px-3 py-2 text-left">Cliente</th>
-                          <th className="px-3 py-2 text-left">Telefone</th>
-                          <th className="px-3 py-2 text-left">Total</th>
-                          <th className="px-3 py-2 text-left">Status</th>
-                          <th className="px-3 py-2 text-left">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {visiblePedidos.map((p) => (
-                          <tr key={p.id} onClick={() => setPedidoDetalhesId(p.id)} className="hover:bg-muted transition-colors cursor-pointer">
-                            <td className="px-3 py-2 align-middle whitespace-nowrap">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span>{new Date(p.data_criacao).toLocaleDateString()}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>{new Date(p.data_criacao).toLocaleTimeString()}</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </td>
-                            <td className="px-3 py-2 align-middle whitespace-nowrap font-mono text-xs w-10 text-center" title="Sequencial">{pedidoSeq[String(p.id)] ?? '—'}</td>
-                            <td className="px-3 py-2 align-middle whitespace-nowrap max-w-[220px] truncate" title={p.cliente_nome}>{p.cliente_nome}</td>
-                            <td className="px-3 py-2 align-middle whitespace-nowrap">{p.cliente_telefone}</td>
-                            <td className="px-3 py-2 align-middle">{formatBRL(Number(p.valor_total || 0))}</td>
-                            <td className="px-3 py-2 align-middle">
-                              {p.status === 'pendente' && <Badge className="bg-amber-500 text-black">Pendente</Badge>}
-{p.status === 'concluido' && <span className="text-green-500 font-medium">Concluído</span>}
-{p.status === 'parcialmente_devolvido' && <span className="text-amber-300 font-medium">Parcialmente Devolvido</span>}
-{p.status === 'devolvido' && <span className="text-amber-400 font-medium">Devolvido</span>}
-{p.status === 'cancelado' && <span className="text-foreground font-medium">Cancelado</span>}
-                            </td>
-                            <td className="px-3 py-2 align-middle">
-                              <div className="flex items-center gap-2">
-                                {p.status === 'pendente' ? (
-                                  <>
-                                    <button
-                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-green-500 bg-card disabled:opacity-50"
-                                      onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
-                                    >
-                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground">Confirmar</span>
-                                      <span className="absolute inset-0 z-0 scale-x-0 bg-green-500 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
-                                    </button>
-                                    <button
-                                      className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-red-600 bg-card disabled:opacity-50"
-                                      onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
-                                    >
-                                      <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground">Cancelar</span>
-                                      <span className="absolute inset-0 z-0 scale-x-0 bg-red-600 transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    className="group relative overflow-hidden px-3 py-1.5 text-sm font-semibold rounded-md text-[#262626] bg-card disabled:opacity-50"
-                                    onClick={(e) => { e.stopPropagation(); setPedidoDetalhesId(p.id); }}
-                                  >
-                                    <span className="relative z-10 transition-colors duration-300 group-hover:text-foreground text-neutral-200">Detalhar</span>
-                                    <span className="absolute inset-0 z-0 scale-x-0 bg-muted transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="flex items-center justify-between p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Mostrando {pageSize} por página</span>
-                        <Select
-                          value={String(pageSize)}
-                          onValueChange={(val) => setPageSize(Number(val))}
-                        >
-                          <SelectTrigger className="h-7 w-[65px] text-xs bg-background">
-                            <SelectValue placeholder={String(pageSize)} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[15, 30, 50].map((size) => (
-                              <SelectItem key={size} value={String(size)}>
-                                {size}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" disabled={pedidoPage <= 1} onClick={() => setPedidoPage((p) => Math.max(1, p - 1))}>Anterior</Button>
-                        {(() => {
-                          const windowSize = 5;
-                          const pages: (number | 'ellipsis')[] = [];
-                          const start = Math.max(1, pedidoPage - Math.floor(windowSize / 2));
-                          const end = Math.min(totalPages, start + windowSize - 1);
-                          const adjustedStart = Math.max(1, end - windowSize + 1);
-                          if (adjustedStart > 1) {
-                            pages.push(1);
-                            if (adjustedStart > 2) pages.push('ellipsis');
-                          }
-                          for (let n = adjustedStart; n <= end; n++) pages.push(n);
-                          if (end < totalPages) {
-                            if (end < totalPages - 1) pages.push('ellipsis');
-                            pages.push(totalPages);
-                          }
-                          return pages.map((item, idx) => (
-                            item === 'ellipsis' ? (
-                              <span key={`el-${idx}`} className="px-1 text-xs text-muted-foreground">…</span>
-                            ) : (
-                               <Button 
-                                 key={item} 
-                                 variant={item === pedidoPage ? "default" : "outline"} 
-                                 onClick={() => setPedidoPage(item as number)} 
-                                 className={`h-8 px-2 text-xs font-bold transition-all ${
-                                   item === pedidoPage 
-                                     ? "bg-primary text-primary-foreground shadow-primary/30" 
-                                     : "hover:bg-primary/10 hover:text-foreground"
-                                 }`}
-                               >
-                                {item}
-                              </Button>
-                            )
-                          ));
-                        })()}
-                        <Button variant="outline" disabled={pedidoPage >= totalPages} onClick={() => setPedidoPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <OrdersTab 
+              tenantId={tenantId}
+              pedidos={pedidos}
+              setPedidos={setPedidos}
+              storedProducts={storedProducts}
+              setStoredProducts={setStoredProducts}
+              refreshingOrders={refreshingOrders}
+              fetchPedidos={fetchPedidos}
+            />
           </TabsContent>
 
-          {/* Produtos */}
           <TabsContent value="products" className="mt-6">
             <ProductsTab 
               tenantId={tenantId}
@@ -1083,581 +202,75 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               setStoredProducts={setStoredProducts}
               categories={categories}
               globalSizes={globalSizes}
-              distribution={distribution}
-              setDistribution={setDistribution}
+              globalColors={globalColors}
               uploadToCloudinary={uploadToCloudinary}
               IS_SUPABASE_READY={IS_SUPABASE_READY}
-              MAX_FILE_SIZE_MB={MAX_FILE_SIZE_MB}
-              ALLOWED_TYPES={ALLOWED_TYPES}
-              handleStockBySizeChange={handleStockBySizeChange}
-              navigateStock={handleNavigateStock}
-              globalColors={globalColors}
             />
           </TabsContent>
 
-          {/* Estoque */}
           <TabsContent value="stock" className="mt-6">
             <StockTab 
               tenantId={tenantId}
               storedProducts={storedProducts}
+              setStoredProducts={setStoredProducts}
               globalSizes={globalSizes}
               globalColors={globalColors}
-              expandedProductId={expandedProductId}
-              setExpandedProductId={setExpandedProductId}
-              handleStockBySizeChange={handleStockBySizeChange}
-              editFields={editFields}
-              setEditFields={setEditFields}
-              handleUpdateProductFields={handleUpdateProductFields}
-              handleAddSizeToModel={handleAddSizeToModel}
-              handleRemoveSizeFromModel={handleRemoveSizeFromModel}
-              stockQuery={stockQuery}
-              setStockQuery={setStockQuery}
-              currentPage={stockPage}
-              setCurrentPage={setStockPage}
             />
           </TabsContent>
 
-          {/* Tamanhos */}
           <TabsContent value="sizes" className="mt-6">
             <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
-          {/* Categorias */}
           <TabsContent value="categories" className="mt-6">
             <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
-          {/* Cores */}
           <TabsContent value="colors" className="mt-6">
             <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
-          {/* Imagens */}
           <TabsContent value="images" className="mt-6">
             <ImagesTab 
               tenantId={tenantId}
               storedProducts={storedProducts} 
               setStoredProducts={setStoredProducts}
               uploadToCloudinary={uploadToCloudinary}
-              CLOUD_NAME={CLOUD_NAME}
               IS_SUPABASE_READY={IS_SUPABASE_READY}
-              MAX_FILE_SIZE_MB={MAX_FILE_SIZE_MB}
-              ALLOWED_TYPES={ALLOWED_TYPES}
             />
           </TabsContent>
 
-          {/* Clientes */}
           <TabsContent value="clientes" className="mt-6">
-            <CustomersTab 
-              tenantId={tenantId}
-              IS_SUPABASE_READY={IS_SUPABASE_READY} 
-            />
+            <CustomersTab tenantId={tenantId} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
-          {/* Configurações */}
           <TabsContent value="config" className="mt-6">
             <SettingsTab tenantId={tenantId} />
           </TabsContent>
         </Tabs>
+      </main>
 
-      </div>
-
-
-
-      <Dialog open={!!confirmAction} onOpenChange={(open) => setConfirmAction(open ? confirmAction : null)}>
-        <DialogContent className="bg-card text-primary/90 border border-primary">
-          <DialogHeader>
-            <DialogTitle className="text-primary">Confirmar {confirmAction?.action === 'concluir' ? 'conclusão' : 'cancelamento'} do pedido</DialogTitle>
-            <DialogDescription className="text-primary/90">
-              Revise os itens e o impacto no estoque antes de confirmar.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            {(pedidos.find(p => p.id === confirmAction?.id)?.itens || []).map((it: any, idx: number) => {
-              const prod = storedProducts.find(sp => sp.id === it.product_id);
-              const estoqueAtual = Math.max(0, Number((prod?.stockBySize || {})[it.tamanho] || 0));
-              const apos = confirmAction?.action === 'concluir' ? Math.max(0, estoqueAtual - Number(it.quantidade || 0)) : estoqueAtual;
-              return (
-                <div key={idx} className="flex items-center gap-3 text-sm">
-                  <span>• {it.produto}</span>
-                  <Badge variant="outline">{it.tamanho}</Badge>
-                  <span>x{it.quantidade}</span>
-                  <span className="text-xs text-muted-foreground">Estoque atual: {estoqueAtual}</span>
-                  <span className="text-xs text-muted-foreground">Após ação: {apos}</span>
-                </div>
-              );
-            })}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancelar</Button>
-            <Button 
-              className={confirmAction?.action === 'concluir' ? "bg-green-600 hover:bg-green-700 text-foreground" : "bg-red-600 hover:bg-red-700 text-foreground"} 
-              onClick={() => { if (confirmAction) handleConfirmAction(confirmAction.id, confirmAction.action); setConfirmAction(null); }}
-            >
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={pedidoDetalhesId != null} onOpenChange={(open) => setPedidoDetalhesId(open ? pedidoDetalhesId : null)}>
-        <DialogContent className="bg-card text-primary/90 border border-primary">
-          <DialogHeader>
-            <DialogTitle className="text-foreground text-xl sm:text-2xl">Detalhes do pedido</DialogTitle>
-            <DialogDescription className="text-foreground">ID: {pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}</DialogDescription>
-          </DialogHeader>
-          {(() => {
-            const pedido = pedidos.find(p => p.id === pedidoDetalhesId);
-            const itens = pedido?.itens || [];
-            const groups: Record<string, number> = {};
-            for (const it of itens) {
-              const t = it.tamanho;
-              const q = Number(it.quantidade || 0);
-              if (!t || q <= 0) continue;
-              groups[t] = (groups[t] || 0) + q;
-            }
-            const sizes = Object.keys(groups).sort((a,b) => rankSize(a) - rankSize(b));
-            return (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
-                    <p className="text-sm"><span className="text-foreground">Cliente:</span> <span className="text-primary">{pedido?.cliente_nome || '—'}</span></p>
-                    <p className="text-sm"><span className="text-foreground">Telefone:</span> <span className="text-primary">{pedido?.cliente_telefone || '—'}</span></p>
-                    <p className="text-sm"><span className="text-foreground">Data/Hora:</span> <span className="text-primary">{pedido?.data_criacao ? new Date(pedido.data_criacao).toLocaleString() : '—'}</span></p>
-                  </div>
-                  <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
-                    <p className="text-sm"><span className="text-foreground">Status:</span> <span className={pedido?.status === 'pendente' ? 'text-amber-500' : pedido?.status === 'cancelado' ? 'text-foreground' : pedido?.status === 'devolvido' ? 'text-amber-400' : pedido?.status === 'parcialmente_devolvido' ? 'text-amber-300' : 'text-primary'}>{pedido?.status === 'parcialmente_devolvido' ? 'Parcialmente Devolvido' : (pedido?.status || '—')}</span></p>
-                    <p className="text-sm"><span className="text-foreground">Total:</span> <span className="text-primary">{formatBRL(Number(pedido?.valor_total || 0))}</span></p>
-                  </div>
-                </div>
-                <div>
-                   <p className="text-foreground text-sm mb-2">Itens detalhados</p>
-                   <div className="space-y-2">
-                     {itens.map((it: any, i: number) => (
-                       <div key={i} className="rounded-md border border-primary bg-muted/40 p-2 grid grid-cols-[auto_2rem_auto_auto] items-center gap-2">
-                         <span className="text-foreground">{it.produto}</span>
-                        <Badge variant="outline" className="w-8 justify-center text-xs">{it.tamanho}</Badge>
-                        <span className="text-primary">x{it.quantidade}</span>
-                        {Number(it.devolvido || 0) > 0 && (
-                          <span className="text-amber-400 text-xs">Devolvido: {it.devolvido}</span>
-                        )}
-                       </div>
-                     ))}
-                     {itens.length === 0 && <p className="text-sm text-muted-foreground">Sem itens.</p>}
-                   </div>
-                   {pedido?.status === 'concluido' && (
-                     <div className="mt-3">
-                       <Button variant="destructive" onClick={() => {
-                         const itensPedido = pedido?.itens || [];
-                         if (itensPedido.length <= 1) {
-                           const qs = itensPedido.map((it: any) => Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0)));
-                           applyDevolucaoEstoqueParcial(pedido, qs);
-                         } else {
-                           setDevolucaoPedidoId(String(pedido?.id));
-                         }
-                       }}>Devolver pedido</Button>
-                     </div>
-                   )}
-                 </div>
-              </div>
-            );
-          })()}
-
-        </DialogContent>
-      </Dialog>
-
-      {devolucaoPedidoId && (
-        <Dialog open={true} onOpenChange={(o) => { if (!o) { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); } }}>
-          <DialogContent className="bg-card text-primary/90 border border-primary">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">Devolução do pedido #{pedidoSeq[String(devolucaoPedidoId)] ?? '—'}</DialogTitle>
-              <DialogDescription className="text-muted-foreground">Escolha devolução total ou parcial.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Button variant={devolucaoParcial ? "outline" : "default"} onClick={() => setConfirmTotalOpen(true)}>Devolução total</Button>
-                <Button variant={devolucaoParcial ? "default" : "outline"} onClick={() => {
-                  setDevolucaoParcial(true);
-                  const pedido = pedidos.find(p => String(p.id) === String(devolucaoPedidoId));
-                  const itens = pedido?.itens || [];
-                  setDevolucaoQuantidades(itens.map(() => 0));
-                }}>Devolução parcial</Button>
-              </div>
-              {devolucaoParcial && (
-                <div className="space-y-3">
-                  {(pedidos.find(p => String(p.id) === String(devolucaoPedidoId))?.itens || []).map((it: any, idx: number) => {
-                    const max = Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0));
-                    return (
-                      <div key={idx} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="text-sm text-muted-foreground">{it.produto} - Tam {it.tamanho}</div>
-                          <div className="text-xs">Máx: {max}</div>
-                        </div>
-                        <Input type="number" min={0} max={max} value={devolucaoQuantidades[idx] ?? 0} className="w-24"
-                          onChange={(e) => {
-                            const v = Math.max(0, Math.min(max, Number(e.target.value || 0)));
-                            setDevolucaoQuantidades(prev => {
-                              const next = [...prev];
-                              next[idx] = v;
-                              return next;
-                            });
-                          }} />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); }}>Cancelar</Button>
-              <Button className="bg-amber-600 hover:bg-amber-700 text-foreground" onClick={() => {
-                const pedido = pedidos.find(p => String(p.id) === String(devolucaoPedidoId));
-                if (!pedido) { setDevolucaoPedidoId(null); return; }
-                if (!devolucaoParcial) {
-                  const qs = (pedido.itens || []).map((it: any) => Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0)));
-                  applyDevolucaoEstoqueParcial(pedido, qs);
-                } else {
-                  applyDevolucaoEstoqueParcial(pedido, devolucaoQuantidades);
-                }
-                setDevolucaoPedidoId(null);
-                setDevolucaoParcial(false);
-                setDevolucaoQuantidades([]);
-              }}>Aplicar devolução</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {devolucaoPedidoId && (
-        <AlertDialog open={confirmTotalOpen} onOpenChange={setConfirmTotalOpen}>
-          <AlertDialogContent className="bg-card text-primary/90 border border-primary">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-foreground">Confirmar devolução total</AlertDialogTitle>
-              <AlertDialogDescription className="text-muted-foreground">Tem certeza que deseja devolver todos os itens da compra?</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setConfirmTotalOpen(false)}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction className="bg-amber-600 hover:bg-amber-700 text-foreground" onClick={() => {
-                const pedido = pedidos.find(p => String(p.id) === String(devolucaoPedidoId));
-                if (pedido) {
-                  const qs = (pedido.itens || []).map((it: any) => Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0)));
-                  applyDevolucaoEstoqueParcial(pedido, qs);
-                }
-                setConfirmTotalOpen(false);
-                setDevolucaoPedidoId(null);
-                setDevolucaoParcial(false);
-                setDevolucaoQuantidades([]);
-              }}>Devolver todos</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
-      {/* Botão flutuante NOVO PEDIDO */}
+      {/* Floating Action Button for New Order */}
       {activeTab !== 'config' && (
         <div className="fixed bottom-6 right-6 z-50">
-          <button
-            type="button"
-            className="group relative overflow-hidden rounded-md px-6 py-3 font-black text-black bg-primary shadow-xl hover:bg-primary/90 transition-all active:scale-95 border border-primary/20"
+          <Button
+            size="lg"
+            className="rounded-full shadow-2xl h-14 px-6 gap-2 font-black uppercase tracking-widest animate-in slide-in-from-bottom-4 duration-500"
             onClick={() => setNewPedidoOpen(true)}
-            title="Criar novo pedido"
           >
-            <span className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-white/10 transition-transform"></span>
-            <span className="relative tracking-widest uppercase">Novo Pedido</span>
-          </button>
+            Novo Pedido
+          </Button>
         </div>
       )}
 
-      {/* Modal de novo pedido */}
-      <Dialog open={newPedidoOpen} onOpenChange={(open) => {
-        setNewPedidoOpen(open);
-        if (!open) {
-          setSelectedProductId(null);
-          setSelectedSize(null);
-          setSelectedColor(null);
-          setQuantity('1');
-        }
-      }}>
-        <DialogContent className="bg-card text-primary/90 border border-primary max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle className="text-foreground text-2xl font-bold">Novo pedido</DialogTitle>
-            <DialogDescription className="text-muted-foreground">Pesquise o produto, selecione tamanho e quantidade, e conclua o pedido.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pt-0 scrollbar-hide">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Lado Esquerdo: Seleção de Produto e Atributos */}
-              <div className="lg:col-span-7 space-y-6">
-                <div>
-                  <Label className="text-foreground font-semibold mb-2 block">1. Pesquisar produto</Label>
-                  <Input
-                    value={productQuery}
-                    onChange={(e) => setProductQuery(e.target.value)}
-                    placeholder="Digite o nome do produto..."
-                    className="mb-2 bg-muted/20 border-primary/20 focus:border-primary"
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 max-h-60 overflow-y-auto rounded-lg border border-primary/10 p-2 bg-muted/5 scrollbar-hide">
-                    {storedProducts
-                      .filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase()))
-                      .slice(0, 20)
-                      .map(p => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => { 
-                            setSelectedProductId(p.id!); 
-                            setSelectedSize(null); 
-                            setSelectedColor(null); 
-                          }}
-                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all text-left group animate-in fade-in slide-in-from-left-2 duration-300 fill-mode-both ${selectedProductId === p.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10 scale-[1.02]' : 'border-border/40 hover:border-primary/40 hover:bg-muted/30 hover:scale-[1.01]'}`}
-                        >
-                          <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded-md border border-white/5" />
-                          <div className="min-w-0">
-                            <div className="text-foreground text-sm font-bold truncate group-hover:text-primary transition-colors">{p.name}</div>
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{p.category}</div>
-                          </div>
-                        </button>
-                      ))}
-                    {storedProducts.filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase())).length === 0 && (
-                      <div className="col-span-full py-8 text-center text-sm text-muted-foreground italic">Nenhum produto encontrado.</div>
-                    )}
-                  </div>
-                </div>
-
-                {selectedProductId && (
-                  <div key={selectedProductId} className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-muted/10 border border-primary/10">
-                      {/* Seleção de Tamanho */}
-                      <div>
-                        <Label className="text-foreground font-semibold mb-3 block">2. Tamanho</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {(storedProducts.find(p => p.id === selectedProductId)?.sizes || ["U"])
-                            .sort((a,b) => rankSize(a) - rankSize(b))
-                            .map(s => {
-                              const prod = storedProducts.find(p => p.id === selectedProductId);
-                              const stock = Math.max(0, Number((prod?.stockBySize || {})[s] || 0));
-                              const isDisabled = stock === 0;
-                              return (
-                                <button
-                                  key={s}
-                                  type="button"
-                                  disabled={isDisabled}
-                                  onClick={() => setSelectedSize(s)}
-                                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all relative ${
-                                    selectedSize === s 
-                                      ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20 scale-105' 
-                                      : isDisabled 
-                                        ? 'opacity-30 cursor-not-allowed bg-transparent border-transparent'
-                                        : 'border-border bg-muted/20 text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                                  }`}
-                                >
-                                  {s}
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </div>
-
-                      {/* Seleção de Cor (Se houver) */}
-                      {(() => {
-                        const prod = storedProducts.find(p => p.id === selectedProductId);
-                        if (!prod?.colors || prod.colors.length === 0) return null;
-                        return (
-                          <div>
-                            <Label className="text-foreground font-semibold mb-3 block">3. Cor</Label>
-                            <div className="flex flex-wrap gap-2">
-                              {prod.colors.map(c => (
-                                <button
-                                  key={c.name}
-                                  type="button"
-                                  onClick={() => setSelectedColor(c.name)}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all ${
-                                    selectedColor === c.name
-                                      ? 'bg-primary/20 border-primary text-primary shadow-lg'
-                                      : 'border-border bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                                  }`}
-                                >
-                                  <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
-                                  {c.name}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="flex items-end gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                      <div className="flex-1">
-                        <Label className="text-foreground font-semibold mb-2 block">Quantidade</Label>
-                        <Input 
-                          type="number" 
-                          min={1} 
-                          value={quantity} 
-                          onChange={(e) => setQuantity(e.target.value.replace(/[^0-9]/g, ""))} 
-                          className="h-12 bg-muted/20 border-primary/10 text-lg font-bold text-center"
-                        />
-                      </div>
-                      <Button 
-                        onClick={addToAdminCart} 
-                        size="lg"
-                        className="h-12 px-8 font-black uppercase tracking-widest"
-                        disabled={!selectedSize || (parseInt(quantity || "") || 0) <= 0}
-                      >
-                        Adicionar à Lista
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Lado Direito: Carrinho e Cliente */}
-              <div className="lg:col-span-5 flex flex-col h-full bg-muted/5 rounded-2xl border border-primary/10 p-5 gap-6">
-                <div className="flex-1 overflow-hidden flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-lg text-foreground">Itens do Pedido</h3>
-                    <Badge variant="outline" className="border-primary/40 text-primary">{adminCart.length} itens</Badge>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                    {adminCart.map((it, i) => (
-                      <div key={`${it.id}-${it.size}-${it.color}-${i}`} className="group relative rounded-xl border border-primary/10 p-3 bg-muted/20 hover:border-primary/30 transition-all animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-bold text-foreground truncate">{it.name}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="h-5 text-[10px] px-1.5 font-black">{it.size}</Badge>
-                              {it.color && (
-                                <span className="text-[10px] text-muted-foreground flex items-center gap-1.5 font-medium">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                  {it.color}
-                                </span>
-                              )}
-                              <span className="text-[10px] text-primary/80 font-bold ml-auto">{formatBRL(it.price)}/un</span>
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => removeFromAdminCart(i)}
-                            className="text-muted-foreground hover:text-destructive p-1 rounded-md hover:bg-destructive/10 transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between pt-2 border-t border-primary/5">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-muted-foreground font-medium">Qtd:</span>
-                            <div className="flex items-center gap-1">
-                              <button 
-                                onClick={() => updateAdminCartQuantity(i, it.quantity - 1)}
-                                className="w-6 h-6 rounded bg-muted/30 flex items-center justify-center text-foreground hover:bg-muted/50"
-                              >-</button>
-                              <span className="w-8 text-center text-sm font-bold text-primary">{it.quantity}</span>
-                              <button 
-                                onClick={() => updateAdminCartQuantity(i, it.quantity + 1)}
-                                className="w-6 h-6 rounded bg-muted/30 flex items-center justify-center text-foreground hover:bg-muted/50"
-                              >+</button>
-                            </div>
-                          </div>
-                          <div className="text-sm font-black text-foreground">
-                            {formatBRL(it.price * it.quantity)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {adminCart.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                        <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mb-3 text-muted-foreground/40 italic">?</div>
-                        <p className="text-xs italic">Nenhum item adicionado à lista.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-primary/20">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-medium">Subtotal</span>
-                      <span className="text-xl font-black text-primary">{formatBRL(adminCartTotal)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-primary/10 p-4 bg-primary/5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox" 
-                      id="informar-cliente"
-                      className="w-4 h-4 rounded border-primary/50 text-primary focus:ring-primary bg-background"
-                      checked={informarCliente} 
-                      onChange={(e) => setInformarCliente(e.target.checked)} 
-                    />
-                    <Label htmlFor="informar-cliente" className="text-foreground font-semibold cursor-pointer">Identificar Cliente</Label>
-                  </div>
-                  
-                  {informarCliente ? (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] text-muted-foreground uppercase font-black">Nome Completo</Label>
-                        <Input 
-                          value={clienteNome} 
-                          onChange={(e) => setClienteNome(e.target.value)} 
-                          placeholder="Ex: João Silva"
-                          className="h-10 text-sm bg-background border-primary/10"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[10px] text-muted-foreground uppercase font-black">WhatsApp / Telefone</Label>
-                        <Input 
-                          value={clienteTelefone} 
-                          onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} 
-                          placeholder="(XX) XXXXX-XXXX"
-                          className="h-10 text-sm bg-background border-primary/10"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                      Nenhum cliente identificado. O pedido será registrado com os dados padrão da loja.
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 h-12 border-primary/20 hover:bg-muted/20 font-bold"
-                    onClick={() => setNewPedidoOpen(false)}
-                  >
-                    Descartar
-                  </Button>
-                  <Button 
-                    variant="default"
-                    className="flex-[2] h-12 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest shadow-lg shadow-green-900/20"
-                    onClick={() => setConfirmDebitarOpen(true)}
-                    disabled={adminCart.length === 0}
-                  >
-                    Concluir Pedido
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirmação de baixa de estoque */}
-      <Dialog open={confirmDebitarOpen} onOpenChange={setConfirmDebitarOpen}>
-        <DialogContent className="bg-card text-primary/90 border border-primary max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Deseja dar baixa no estoque ao concluir?</DialogTitle>
-            <DialogDescription className="text-muted-foreground">Se não, o pedido ficará como pendente.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <div className="flex w-full justify-end gap-2">
-              <Button variant="secondary" onClick={() => { setConfirmDebitarOpen(false); void handleCreateAdminOrder(false); }}>Concluir sem baixa</Button>
-              <Button onClick={() => { setConfirmDebitarOpen(false); void handleCreateAdminOrder(true); }}>Dar baixa</Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NewOrderModal 
+        open={newPedidoOpen}
+        onOpenChange={setNewPedidoOpen}
+        tenantId={tenantId}
+        storedProducts={storedProducts}
+        setStoredProducts={setStoredProducts}
+        setPedidos={setPedidos}
+      />
 
       <div className={activeTab === 'config' ? 'hidden md:block' : ''}>
         <Footer />
@@ -1667,4 +280,3 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
 };
 
 export default Admin;
-

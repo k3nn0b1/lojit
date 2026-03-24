@@ -5,14 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Pencil, Check, X, MessageCircle, AlertCircle, Trash2 } from "lucide-react";
+import { Pencil, Check, X, MessageCircle, UserPlus, Users, Search, Trash2 } from "lucide-react";
 import { normalizePhone, formatPhoneMask, parseSupabaseError } from "@/lib/utils";
 import {
   AlertDialog,
@@ -25,9 +18,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface CustomersTabProps {
-  tenantId?: string | null;
+  tenantId: string;
   IS_SUPABASE_READY: boolean;
 }
 
@@ -41,332 +42,243 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY }: CustomersTabProps) => {
   const [editingClienteTelefone, setEditingClienteTelefone] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!IS_SUPABASE_READY || !tenantId) return;
+    
+    const fetchClientes = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("created_at", { ascending: false });
+      if (!error && data) setClientes(data);
+      setLoading(false);
+    };
+    
+    void fetchClientes();
+
+    const channel = supabase
+      .channel("clientes-realtime")
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setClientes(prev => [payload.new, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setClientes(prev => prev.map(c => c.id === payload.new.id ? payload.new : c));
+          } else if (payload.eventType === 'DELETE') {
+            setClientes(prev => prev.filter(c => c.id !== payload.old.id));
+          }
+      })
+      .subscribe();
+
+    return () => { void supabase.removeChannel(channel); };
+  }, [IS_SUPABASE_READY, tenantId]);
 
   const clientesFiltered = clientes.filter((c) => {
     const term = clientesQuery.toLowerCase().trim();
     return term === "" || c.nome?.toLowerCase().includes(term) || String(c.telefone || "").toLowerCase().includes(term);
   });
 
-  const totalPages = Math.ceil(clientesFiltered.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(clientesFiltered.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const visibleClientes = clientesFiltered.slice(startIndex, startIndex + pageSize);
 
-  const handleQueryChange = (val: string) => {
-    setClientesQuery(val);
-    setCurrentPage(1);
-  };
-
-  useEffect(() => {
-    if (!IS_SUPABASE_READY || !tenantId) return;
-    const fetchClientes = async () => {
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("created_at", { ascending: false });
-      if (!error && data) setClientes(data as any[]);
-    };
-    void fetchClientes();
-
-    const channel = supabase
-      .channel("clientes-realtime-tab")
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'clientes' }, async () => {
-        const { data } = await supabase.from('clientes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false });
-        if (data) setClientes(data as any[]);
-      })
-      .subscribe();
-
-    return () => {
-      try { supabase.removeChannel(channel); } catch {}
-    };
-  }, [IS_SUPABASE_READY, tenantId]);
-
   const handleAddCliente = async () => {
+    const nome = clienteNome.trim();
+    const telRaw = normalizePhone(clienteTelefone.trim());
+    
+    if (!nome || telRaw.length < 10) {
+      toast.error("Preencha nome e telefone válidos");
+      return;
+    }
+
     try {
-      const nome = clienteNome.trim();
-      const telRaw = clienteTelefone.trim();
-      if (nome === "" || telRaw === "") {
-        toast.error("Informe nome e telefone");
-        return;
-      }
-      const tel = normalizePhone(telRaw);
-      if (tel.length < 10) {
-        toast.error("Telefone inválido");
-        return;
-      }
-      if (!IS_SUPABASE_READY || !tenantId) {
-        toast.error("Configuração incompleta");
-        return;
-      }
       const { error } = await supabase
         .from("clientes")
-        .insert({ nome, telefone: tel, tenant_id: tenantId });
+        .insert({ nome, telefone: telRaw, tenant_id: tenantId });
       if (error) throw error;
 
-      toast.success("Cliente salvo!");
+      toast.success("Cliente cadastrado com sucesso!");
       setClienteNome("");
       setClienteTelefone("");
     } catch (e: any) {
-      toast.error("Falha ao salvar cliente", { description: parseSupabaseError(e) });
+      toast.error("Erro ao cadastrar", { description: parseSupabaseError(e) });
     }
   };
 
-  const handleSaveCliente = async () => {
+  const handleSaveEdit = async (id: number) => {
+    const nome = editingClienteNome.trim();
+    const telRaw = normalizePhone(editingClienteTelefone.trim());
+
+    if (!nome || telRaw.length < 10) {
+      toast.error("Dados inválidos");
+      return;
+    }
+
     try {
-      const id = editingClienteId;
-      if (id == null) return;
-      const nome = editingClienteNome.trim();
-      const telRaw = editingClienteTelefone.trim();
-      if (nome === "" || telRaw === "") {
-        toast.error("Informe nome e contato");
-        return;
-      }
-      const tel = normalizePhone(telRaw);
-      if (tel.length < 10) {
-        toast.error("Contato inválido");
-        return;
-      }
-      if (!IS_SUPABASE_READY || !tenantId) {
-        toast.error("Configuração incompleta");
-        return;
-      }
       const { error } = await supabase
         .from("clientes")
-        .update({ nome, telefone: tel })
+        .update({ nome, telefone: telRaw })
         .eq("id", id)
         .eq("tenant_id", tenantId);
       if (error) throw error;
 
-      toast.success("Cliente atualizado");
+      toast.success("Dados atualizados");
       setEditingClienteId(null);
-      setEditingClienteNome("");
-      setEditingClienteTelefone("");
     } catch (e: any) {
-      toast.error("Falha ao atualizar cliente", { description: parseSupabaseError(e) });
+      toast.error("Erro ao atualizar");
     }
   };
 
   const handleRemoveCliente = async (id: number) => {
     try {
-      if (!IS_SUPABASE_READY || !tenantId) return;
       const { error } = await supabase.from("clientes").delete().eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
       toast.success("Cliente removido");
     } catch (e: any) {
-      toast.error("Falha ao remover cliente", { description: parseSupabaseError(e) });
+      toast.error("Erro ao remover");
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Clientes</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-3 md:items-end">
-          <div className="flex-1">
-            <Label>Nome</Label>
-            <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do cliente" />
+    <div className="space-y-6">
+      <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
+        <CardHeader className="bg-primary/5 py-6 border-b border-primary/10 px-8">
+          <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-3">
+            <Users className="w-6 h-6" /> Gestão de Clientes
+          </CardTitle>
+          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Base de dados e contatos da loja</p>
+        </CardHeader>
+        <CardContent className="p-8 space-y-10">
+          {/* Form: Novo Cliente */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-muted/10 p-6 rounded-[2rem] border border-primary/10 shadow-inner">
+            <div className="md:col-span-5 space-y-1.5">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Nome Completo</Label>
+               <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Ex: João Silva" className="h-12 bg-background border-primary/10" />
+            </div>
+            <div className="md:col-span-4 space-y-1.5">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">WhatsApp / Celular</Label>
+               <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(00) 00000-0000" className="h-12 bg-background border-primary/10" />
+            </div>
+            <div className="md:col-span-3 flex items-end">
+               <Button onClick={handleAddCliente} className="w-full h-12 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20">
+                 <UserPlus className="w-4 h-4 mr-2" /> Cadastrar
+               </Button>
+            </div>
           </div>
-          <div className="flex-1">
-            <Label>Contato</Label>
-            <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
-          </div>
-          <Button onClick={handleAddCliente}>Adicionar</Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input value={clientesQuery} onChange={(e) => handleQueryChange(e.target.value)} placeholder="Buscar cliente por nome ou telefone" />
-          <Button variant="outline" onClick={() => handleQueryChange("")}>Limpar</Button>
-        </div>
-        <div className="rounded-md border">
-          {clientesFiltered.length === 0 ? (
-            <p className="p-4 text-muted-foreground">Nenhum cliente encontrado</p>
-          ) : (
-            <>
-              <div className="divide-y">
-                {visibleClientes.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between px-3 py-2">
-                    <div className="flex-1">
-                      {editingClienteId === c.id ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <Label>Nome</Label>
-                            <Input value={editingClienteNome} onChange={(e) => setEditingClienteNome(e.target.value)} />
-                          </div>
-                          <div>
-                            <Label>Contato</Label>
-                            <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="font-medium">{c.nome}</div>
-                          <div className="text-sm text-muted-foreground">{c.telefone}</div>
-                        </div>
-                      )}
+
+          {/* Listagem e Busca */}
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="relative w-full max-w-xs">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                        value={clientesQuery}
+                        onChange={(e) => { setClientesQuery(e.target.value); setCurrentPage(1); }}
+                        placeholder="Pesquisar cliente..."
+                        className="h-10 bg-muted/20 border-primary/10 rounded-full pl-11 text-xs"
+                    />
+                </div>
+                <Badge variant="outline" className="h-10 px-6 rounded-full border-primary/10 text-[10px] font-black uppercase text-muted-foreground">Total: {clientes.length} Clientes</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {visibleClientes.map((c) => (
+                <div key={c.id} className="group relative rounded-[2rem] border border-primary/10 bg-muted/10 p-6 hover:border-primary/40 transition-all hover:bg-muted/20 hover:shadow-2xl shadow-primary/5">
+                  {editingClienteId === c.id ? (
+                    <div className="space-y-4">
+                         <div className="space-y-2">
+                             <Input value={editingClienteNome} onChange={(e) => setEditingClienteNome(e.target.value)} className="h-10 text-xs font-black uppercase" />
+                             <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} className="h-10 text-xs font-mono" />
+                         </div>
+                         <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleSaveEdit(c.id)} className="flex-1 h-9 rounded-xl hover:bg-green-500/10 hover:text-green-500">
+                                <Check className="w-4 h-4 mr-2" /> Salvar
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setEditingClienteId(null)} className="flex-1 h-9 rounded-xl hover:bg-destructive/10 hover:text-destructive">
+                                <X className="w-4 h-4 mr-2" /> Cancelar
+                            </Button>
+                         </div>
                     </div>
-                    {editingClienteId === c.id ? (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingClienteId(null); setEditingClienteNome(""); setEditingClienteTelefone(""); }} className="h-8 w-8 p-0 text-muted-foreground"><X className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={handleSaveCliente} className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"><Check className="h-4 w-4" /></Button>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/5 group-hover:bg-primary group-hover:text-black transition-all">
+                            <Users className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-black text-sm uppercase truncate tracking-tight">{c.nome}</h4>
+                            <p className="text-[10px] font-mono text-muted-foreground tracking-widest">{formatPhoneMask(c.telefone)}</p>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
+                      
+                      <div className="flex gap-2 pt-4 border-t border-primary/5">
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="sm" 
-                          className="h-9 w-9 p-0 text-primary hover:bg-primary/10"
-                          title="WhatsApp"
-                          onClick={() => {
-                            const link = `https://wa.me/55${c.telefone}`;
-                            window.open(link, '_blank');
-                          }}
+                          className="flex-1 h-9 rounded-xl border-primary/10 hover:bg-primary/10 hover:text-primary font-black uppercase text-[9px] tracking-widest"
+                          onClick={() => window.open(`https://wa.me/55${normalizePhone(c.telefone)}`, '_blank')}
                         >
-                          <MessageCircle className="h-[18px] w-[18px]" />
+                          <MessageCircle className="w-3.5 h-3.5 mr-2" /> WhatsApp
                         </Button>
                         
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-9 w-9 p-0 text-muted-foreground hover:bg-muted"
-                          onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome || ""); setEditingClienteTelefone(c.telefone || ""); }}
-                          title="Editar"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        <div className="flex gap-1">
                             <Button 
                               variant="ghost" 
-                              size="sm" 
-                              className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                              title="Excluir"
+                              size="icon" 
+                              className="h-9 w-9 rounded-xl hover:bg-primary/5 hover:text-primary"
+                              onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome); setEditingClienteTelefone(c.telefone); }}
                             >
-                              <X className="h-4 w-4" />
+                              <Pencil className="w-3.5 h-3.5" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-card text-primary/90 border border-primary">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle className="text-foreground">Excluir Cliente</AlertDialogTitle>
-                              <AlertDialogDescription className="text-muted-foreground">
-                                Deseja remover "{c.nome}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-muted text-foreground">Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleRemoveCliente(c.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-card border-primary/20 rounded-[2rem] p-8">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-xl font-black uppercase text-destructive">Remover Cliente?</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-sm font-medium">
+                                    Esta ação removerá "{c.nome}" e seu histórico de contatos permanentemente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="mt-6 gap-3">
+                                  <AlertDialogCancel className="rounded-xl border-primary/10">Voltar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleRemoveCliente(c.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl font-black uppercase text-[10px]">Confirmar Exclusão</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination UI */}
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-muted/20 border-t">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
-                  <span>Mostrando {pageSize} por página</span>
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={(val) => {
-                      setPageSize(Number(val));
-                      setCurrentPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[70px] bg-background">
-                      <SelectValue placeholder={String(pageSize)} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[15, 30, 50, 100].map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    </>
+                  )}
                 </div>
+              ))}
+            </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage <= 1}
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    className="h-8 text-xs font-bold uppercase tracking-wider"
-                  >
-                    Anterior
-                  </Button>
+            {visibleClientes.length === 0 && (
+                <div className="py-20 text-center opacity-40 italic text-sm font-medium">Nenhum cliente cadastrado com este filtro.</div>
+            )}
 
-                  <div className="flex items-center gap-1">
-                    {(() => {
-                      const windowSize = 5;
-                      const pages: (number | "ellipsis")[] = [];
-                      const start = Math.max(1, currentPage - Math.floor(windowSize / 2));
-                      const end = Math.min(totalPages, start + windowSize - 1);
-                      const adjustedStart = Math.max(1, end - windowSize + 1);
-
-                      if (adjustedStart > 1) {
-                        pages.push(1);
-                        if (adjustedStart > 2) pages.push("ellipsis");
-                      }
-
-                      for (let n = adjustedStart; n <= end; n++) {
-                        pages.push(n);
-                      }
-
-                      if (end < totalPages) {
-                        if (end < totalPages - 1) pages.push("ellipsis");
-                        pages.push(totalPages);
-                      }
-
-                      return pages.map((item, idx) =>
-                        item === "ellipsis" ? (
-                          <span key={`el-${idx}`} className="px-1 text-muted-foreground">
-                            ...
-                          </span>
-                        ) : (
-                          <Button
-                            key={item}
-                            variant={currentPage === item ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(item as number)}
-                            className={`h-8 w-8 p-0 text-xs font-bold transition-all ${
-                              currentPage === item
-                                ? "bg-primary text-primary-foreground shadow-primary/30"
-                                : "hover:bg-primary/10 hover:text-foreground"
-                            }`}
-                          >
-                            {item}
-                          </Button>
-                        )
-                      );
-                    })()}
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={currentPage >= totalPages}
-                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                    className="h-8 text-xs font-bold uppercase tracking-wider"
-                  >
-                    Próxima
-                  </Button>
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 pt-10">
+                    <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="rounded-xl px-5 h-10 border-primary/10 font-black uppercase text-[10px]">Anterior</Button>
+                    <div className="px-5 h-10 flex items-center justify-center bg-primary/10 rounded-xl text-primary font-black text-xs">
+                        {currentPage} / {totalPages}
+                    </div>
+                    <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="rounded-xl px-5 h-10 border-primary/10 font-black uppercase text-[10px]">Próxima</Button>
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

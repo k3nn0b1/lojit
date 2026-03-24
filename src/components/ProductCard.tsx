@@ -10,7 +10,7 @@ import { Cloudinary } from "@cloudinary/url-gen";
 import { fill } from "@cloudinary/url-gen/actions/resize";
 import { format } from "@cloudinary/url-gen/actions/delivery";
 import { quality } from "@cloudinary/url-gen/actions/delivery";
-import { formatBRL } from "@/lib/utils";
+import { formatBRL, sizeOrder, rankSize } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -43,12 +43,12 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, size: string, color?: string) => void;
 }
+import { CLOUD_NAME } from "@/lib/constants";
 
-const cld = new Cloudinary({ cloud: { cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dlmkynuni" } });
+const cld = new Cloudinary({ cloud: { cloudName: CLOUD_NAME } });
 
 const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const { settings } = useStoreSettings();
-  const sizeOrder = ["PP", "P", "M", "G", "GG", "XG"];
   const normalize = (s: string) => s.trim().toUpperCase();
 
   const sortedSizes = useMemo(() => {
