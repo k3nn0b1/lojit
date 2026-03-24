@@ -59,7 +59,7 @@ const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
       case 'bg7':
         return <AnimatedBackground7 primaryColor={colors.primary} secondaryColor={colors.secondary} backgroundColor={colors.background} />;
       default:
-        return isSolid ? <FootballBackground mode="hero" /> : null;
+        return null;
     }
   };
 

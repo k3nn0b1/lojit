@@ -55,10 +55,10 @@ const Hero = () => {
           <div className="space-y-4">
             <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] uppercase flex flex-col items-center justify-center">
               <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                {settings?.hero_title_l1 || "CAMISAS"}
+                {settings?.hero_title_l1 || "BEM-VINDO"}
               </span>
               <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
-                {settings?.hero_title_l2 || "DE TIME"}
+                {settings?.hero_title_l2 || "À NOSSA LOJA"}
               </span>
               {settings?.hero_title_l3 && (
                 <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
@@ -68,7 +68,7 @@ const Hero = () => {
             </h2>
             
             <p className="text-base md:text-xl text-muted-foreground/80 max-w-2xl mx-auto font-medium leading-relaxed">
-              {heroPhrase || "A maior variedade de regatas e camisas de time com qualidade premium."}
+              {heroPhrase || "Confira nossa coleção exclusiva de produtos com qualidade premium e atendimento personalizado."}
             </p>
           </div>
 

@@ -19,75 +19,39 @@ import { useTenant } from "@/hooks/use-tenant";
 const mockProducts: Product[] = [
   {
     id: 1,
-    name: "Brasil - Seleção Brasileira Home 2024",
-    category: "Seleções",
+    name: "Produto Premium 01",
+    category: "Novidades",
     price: 149.9,
-    image: "https://i.postimg.cc/4dSLpb95/selecao-home.jpg",
+    image: "/placeholder.png",
     sizes: ["P", "M", "G", "GG"],
     stock: 5,
   },
   {
     id: 2,
-    name: "Real Madrid Home 2024",
-    category: "Clubes Europeus",
+    name: "Produto Premium 02",
+    category: "Mais Vendidos",
     price: 179.9,
-    image: "https://i.postimg.cc/W3HW06kf/real-home.jpg",
+    image: "/placeholder.png",
     sizes: ["P", "M", "G", "GG"],
     stock: 0,
   },
   {
     id: 3,
-    name: "Flamengo Home 2024",
-    category: "Clubes Brasileiros",
+    name: "Produto Exclusivo 03",
+    category: "Novidades",
     price: 139.9,
-    image: "https://i.postimg.cc/j5FgyQ7W/flamengo-home.jpg",
+    image: "/placeholder.png",
     sizes: ["P", "M", "G"],
     stock: 12,
   },
   {
     id: 4,
-    name: "Argentina Away 2024",
-    category: "Seleções",
+    name: "Produto Exclusivo 04",
+    category: "Mais Vendidos",
     price: 149.9,
-    image: "https://i.postimg.cc/9MMg4Nry/argentina-away.jpg",
+    image: "/placeholder.png",
     sizes: ["P", "M", "G", "GG"],
     stock: 8,
-  },
-  {
-    id: 5,
-    name: "Manchester United Retrô 1999",
-    category: "Retrô",
-    price: 199.9,
-    image: "https://i.postimg.cc/MTFP1bQR/man-retro.jpg",
-    sizes: ["P", "M", "G", "GG"],
-    stock: 2,
-  },
-  {
-    id: 6,
-    name: "Barcelona Home 2024",
-    category: "Clubes Europeus",
-    price: 179.9,
-    image: "https://i.postimg.cc/HxhZb4y8/barca-home.jpg",
-    sizes: ["GG"],
-    stock: 1,
-  },
-  {
-    id: 7,
-    name: "Palmeiras Home 2024",
-    category: "Clubes Brasileiros",
-    price: 139.9,
-    image: "https://i.postimg.cc/vBNq5LVV/palmeiras-home.jpg",
-    sizes: ["P", "G", "GG"],
-    stock: 0,
-  },
-  {
-    id: 8,
-    name: "PSG Away 2024",
-    category: "Clubes Europeus",
-    price: 179.9,
-    image: "https://i.postimg.cc/Qty4ckTg/psg-away.jpg",
-    sizes: ["P", "M", "G"],
-    stock: 6,
   },
 ];
 
@@ -332,7 +296,7 @@ const Index = () => {
             <span className="text-primary glow-text drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)] tracking-tighter">{settings?.collection_title_l2 || "COLEÇÃO"}</span>
           </h2>
           <p className="text-zinc-500 font-medium tracking-[0.3em] uppercase text-[10px] md:text-sm max-w-sm mx-auto mt-6">
-            {settings?.collection_subtitle || "As melhores camisas de futebol do mundo"}
+            {settings?.collection_subtitle || "Confira nossa seleção de produtos exclusivos"}
           </p>
         </header>
         <ProductGrid products={products} onAddToCart={handleAddToCart} />

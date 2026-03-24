@@ -307,7 +307,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-card border-primary/10 rounded-2xl p-2">
-                             <SelectItem value="solid" className="rounded-xl py-3 font-black text-[10px] uppercase">Clássico (Bolas de Futebol)</SelectItem>
+                             <SelectItem value="solid" className="rounded-xl py-3 font-black text-[10px] uppercase">Clássico</SelectItem>
                              <SelectItem value="bg1" className="rounded-xl py-3 font-black text-[10px] uppercase">Mesh Gradient</SelectItem>
                              <SelectItem value="bg2" className="rounded-xl py-3 font-black text-[10px] uppercase">Topográfico</SelectItem>
                              <SelectItem value="bg4" className="rounded-xl py-3 font-black text-[10px] uppercase">Etereo (Shadow)</SelectItem>
