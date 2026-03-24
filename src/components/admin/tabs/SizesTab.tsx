@@ -119,21 +119,24 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                 </div>
               ) : (
                 <>
-                  <span>{s}</span>
+                  <span className="truncate flex-1 font-semibold">{s}</span>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setEditingSize(s);
                         setSizeEditValue(s);
                       }}
                       title="Editar"
+                      className="h-8 w-8 p-0"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
-                      className="text-destructive hover:bg-destructive/10 hover:text-foreground"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => {
                         if (confirm(`Deseja remover o tamanho "${s}"?`)) {
                           const next = globalSizes.filter((x) => x !== s);
@@ -141,7 +144,7 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                         }
                       }}
                     >
-                      Remover
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </>

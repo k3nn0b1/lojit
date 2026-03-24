@@ -12,7 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Pencil, Check, X, MessageCircle, AlertCircle, Trash2 } from "lucide-react";
 import { normalizePhone, formatPhoneMask, parseSupabaseError } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CustomersTabProps {
   tenantId?: string | null;
@@ -134,6 +146,17 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY }: CustomersTabProps) => {
     }
   };
 
+  const handleRemoveCliente = async (id: number) => {
+    try {
+      if (!IS_SUPABASE_READY || !tenantId) return;
+      const { error } = await supabase.from("clientes").delete().eq("id", id).eq("tenant_id", tenantId);
+      if (error) throw error;
+      toast.success("Cliente removido");
+    } catch (e: any) {
+      toast.error("Falha ao remover cliente", { description: parseSupabaseError(e) });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -184,13 +207,64 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY }: CustomersTabProps) => {
                     </div>
                     {editingClienteId === c.id ? (
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" onClick={() => { setEditingClienteId(null); setEditingClienteNome(""); setEditingClienteTelefone(""); }}>Cancelar</Button>
-                        <Button onClick={handleSaveCliente}>Salvar</Button>
-
-
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingClienteId(null); setEditingClienteNome(""); setEditingClienteTelefone(""); }} className="h-8 w-8 p-0 text-muted-foreground"><X className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={handleSaveCliente} className="h-8 w-8 p-0 text-green-500 hover:bg-green-500/10"><Check className="h-4 w-4" /></Button>
                       </div>
                     ) : (
-                      <Button variant="ghost" onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome || ""); setEditingClienteTelefone(c.telefone || ""); }}>Editar</Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-9 w-9 p-0 text-primary hover:bg-primary/10"
+                          title="WhatsApp"
+                          onClick={() => {
+                            const link = `https://wa.me/55${c.telefone}`;
+                            window.open(link, '_blank');
+                          }}
+                        >
+                          <MessageCircle className="h-[18px] w-[18px]" />
+                        </Button>
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-9 w-9 p-0 text-muted-foreground hover:bg-muted"
+                          onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome || ""); setEditingClienteTelefone(c.telefone || ""); }}
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              title="Excluir"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="bg-card text-primary/90 border border-primary">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="text-foreground">Excluir Cliente</AlertDialogTitle>
+                              <AlertDialogDescription className="text-muted-foreground">
+                                Deseja remover "{c.nome}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="bg-muted text-foreground">Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleRemoveCliente(c.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     )}
                   </div>
                 ))}

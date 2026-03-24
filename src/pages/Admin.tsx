@@ -1522,7 +1522,9 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
         </DialogContent>
       </Dialog>
 
-      <Footer />
+      <div className={activeTab === 'config' ? 'hidden md:block' : ''}>
+        <Footer />
+      </div>
     </div>
   );
 };
