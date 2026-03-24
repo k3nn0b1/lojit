@@ -601,7 +601,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
       </Tabs>
 
       <div className="sticky bottom-0 z-50 bg-background/80 backdrop-blur-md pt-4 pb-6 border-t border-border/40 mt-10">
-        <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="hidden md:block">
             {settings.updated_at && (
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
