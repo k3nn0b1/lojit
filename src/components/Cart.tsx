@@ -12,6 +12,7 @@ export interface CartItem {
   name: string;
   price: number;
   size: string;
+  color?: string;
   image: string;
   quantity: number;
 }
@@ -20,8 +21,8 @@ interface CartProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
-  onUpdateQuantity: (id: number, size: string, quantity: number) => void;
-  onRemoveItem: (id: number, size: string) => void;
+  onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
+  onRemoveItem: (id: number, size: string, color?: string) => void;
   onCheckout: (clienteNome: string, clienteTelefone: string) => void;
 }
 
@@ -59,7 +60,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
           ) : (
             items.map((item) => (
               <div
-                key={`${item.id}-${item.size}`}
+                key={`${item.id}-${item.size}-${item.color || ""}`}
                 className="flex gap-4 p-4 rounded-lg border border-border/50 bg-background/50"
               >
                 <img
@@ -69,14 +70,16 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 />
                 <div className="flex-1 space-y-2">
                   <h4 className="font-semibold line-clamp-1">{item.name}</h4>
-                  <p className="text-sm text-muted-foreground">Tamanho: {item.size}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.color ? `Cor: ${item.color} | ` : ""}Tamanho: {item.size}
+                  </p>
                   <p className="text-primary font-bold">{formatBRL(item.price)}</p>
                   
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.size, Math.max(1, item.quantity - 1))}
+                      onClick={() => onUpdateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
                       className="h-8 w-8 p-0"
                     >
                       -
@@ -85,7 +88,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1)}
+                      onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1, item.color)}
                       className="h-8 w-8 p-0"
                     >
                       +
@@ -96,7 +99,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => onRemoveItem(item.id, item.size)}
+                  onClick={() => onRemoveItem(item.id, item.size, item.color)}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="w-4 h-4" />

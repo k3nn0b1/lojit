@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Info, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
 export interface Product {
   id: number;
@@ -34,17 +35,19 @@ export interface Product {
   publicId2?: string;
   publicId3?: string;
   stockBySize?: Record<string, number>; // estoque por tamanho
+  colors?: { name: string, hex: string }[]; // cores disponíveis
   description?: string;
 }
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, size: string) => void;
+  onAddToCart: (product: Product, size: string, color?: string) => void;
 }
 
 const cld = new Cloudinary({ cloud: { cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dlmkynuni" } });
 
 const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+  const { settings } = useStoreSettings();
   const sizeOrder = ["PP", "P", "M", "G", "GG", "XG"];
   const normalize = (s: string) => s.trim().toUpperCase();
 
@@ -76,6 +79,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   }, [sortedSizes, product.stockBySize]);
 
   const [selectedSize, setSelectedSize] = useState(defaultSelectedSize);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -109,9 +113,9 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   }, [defaultSelectedSize]);
 
   const handleAddToCart = () => {
-    onAddToCart(product, selectedSize);
+    onAddToCart(product, selectedSize, selectedColor || undefined);
     toast.success("Adicionado ao carrinho!", {
-      description: `${product.name} - Tamanho ${selectedSize}`,
+      description: `${product.name} - ${selectedColor ? `Cor: ${selectedColor}, ` : ""}Tamanho ${selectedSize}`,
     });
     setIsDetailsOpen(false);
   };
@@ -319,11 +323,49 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                       <p className="text-sm text-muted-foreground/80 leading-relaxed whitespace-pre-wrap">{product.description}</p>
                     </div>
                   )}
+                  
+                  {product.colors && product.colors.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Escolha sua cor</h4>
+                      <div className="flex flex-wrap gap-3">
+                        {product.colors.map((c) => (
+                          <button
+                            key={c.name}
+                            onClick={() => setSelectedColor(c.name)}
+                            className={`group relative flex flex-col items-center gap-2 transition-all p-1 rounded-xl border-2 ${
+                              selectedColor === c.name 
+                                ? "border-primary bg-primary/10 shadow-lg scale-110" 
+                                : "border-background/50 bg-background/50 hover:border-primary/30"
+                            }`}
+                            title={c.name}
+                          >
+                            <div 
+                              className="w-10 h-10 rounded-full border border-white/20 shadow-inner overflow-hidden"
+                              style={{ backgroundColor: c.hex }}
+                            >
+                              <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent" />
+                            </div>
+                            <span className={`text-[9px] font-black uppercase tracking-tighter ${selectedColor === c.name ? "text-primary" : "text-muted-foreground"}`}>
+                              {c.name}
+                            </span>
+                            {selectedColor === c.name && (
+                              <motion.div 
+                                layoutId="color-ring"
+                                className="absolute inset-0 border-2 border-primary rounded-xl"
+                                initial={false}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                              />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {!isSoldOut && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Escolha seu tamanho</h4>
+                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">{settings?.product_size_label || "Escolha seu tamanho"}</h4>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {displaySizes.map((size) => {

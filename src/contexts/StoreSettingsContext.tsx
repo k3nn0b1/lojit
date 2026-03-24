@@ -31,6 +31,7 @@ export interface StoreSettings {
   collection_title_l1?: string;
   collection_title_l2?: string;
   collection_subtitle?: string;
+  product_size_label?: string;
   updated_at?: string;
 }
 
@@ -64,7 +65,8 @@ const defaultSettings: StoreSettings = {
   show_whatsapp: true,
   show_youtube: false,
   youtube_url: "",
-  font_family: "Inter"
+  font_family: "Inter",
+  product_size_label: "ESCOLHA SEU TAMANHO"
 };
 
 const getInitialSettings = (tenantId?: string | null): StoreSettings => {

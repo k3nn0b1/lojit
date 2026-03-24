@@ -377,6 +377,20 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </div>
           </div>
           <div className="grid gap-6 border-b border-border/50 pb-6">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Checkout e Produto</h4>
+            <div className="grid gap-4 md:grid-cols-1">
+              <div className="grid gap-2">
+                <Label htmlFor="size_label">Legenda "Escolha seu tamanho"</Label>
+                <Input 
+                    id="size_label" 
+                    value={formData.product_size_label} 
+                    onChange={e => setFormData({...formData, product_size_label: e.target.value})}
+                    placeholder="Ex: ESCOLHA SEU TAMANHO"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-6 border-b border-border/50 pb-6">
             <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Sobre Nós (Institucional)</h4>
             <div className="grid gap-2">
               <Textarea 

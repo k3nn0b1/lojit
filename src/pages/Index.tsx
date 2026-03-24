@@ -182,9 +182,9 @@ const Index = () => {
     return Number.POSITIVE_INFINITY;
   };
 
-  const handleAddToCart = (product: Product, size: string) => {
+  const handleAddToCart = (product: Product, size: string, color?: string) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id && item.size === size);
+      const existingItem = prev.find((item) => item.id === product.id && item.size === size && item.color === color);
       const currentQty = existingItem?.quantity ?? 0;
       const maxStock = getMaxStockFor(product, size);
 
@@ -197,7 +197,7 @@ const Index = () => {
 
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id && item.size === size
+          item.id === product.id && item.size === size && item.color === color
             ? { ...item, quantity: Math.min(item.quantity + 1, maxStock) }
             : item
         );
@@ -210,6 +210,7 @@ const Index = () => {
           name: product.name,
           price: product.price,
           size,
+          color,
           image: product.image,
           quantity: 1,
         },
@@ -217,9 +218,9 @@ const Index = () => {
     });
   };
 
-  const handleUpdateQuantity = (id: number, size: string, quantity: number) => {
+  const handleUpdateQuantity = (id: number, size: string, quantity: number, color?: string) => {
     if (quantity === 0) {
-      handleRemoveItem(id, size);
+      handleRemoveItem(id, size, color);
       return;
     }
 
@@ -233,12 +234,12 @@ const Index = () => {
     }
 
     setCartItems((prev) =>
-      prev.map((item) => (item.id === id && item.size === size ? { ...item, quantity: nextQty } : item))
+      prev.map((item) => (item.id === id && item.size === size && item.color === color ? { ...item, quantity: nextQty } : item))
     );
   };
 
-  const handleRemoveItem = (id: number, size: string) => {
-    setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size)));
+  const handleRemoveItem = (id: number, size: string, color?: string) => {
+    setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size && item.color === color)));
   };
 
   const handleCheckout = async (clienteNome: string, clienteTelefone: string) => {
@@ -248,6 +249,7 @@ const Index = () => {
     const itens = cartItems.map((item) => ({
       produto: item.name,
       tamanho: item.size,
+      cor: item.color || null,
       quantidade: item.quantity,
       product_id: item.id,
       preco_unitario: item.price,
@@ -289,7 +291,7 @@ const Index = () => {
     const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}\n\n${cartItems
       .map(
         (item) =>
-          `• ${item.name}\n  Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`
+          `• ${item.name}\n  ${item.color ? `Cor: ${item.color}\n  ` : ""}Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`
       )
       .join("\n\n")}\n\n💰 *TOTAL: ${formatBRL(total)}*\n\nPedido ID: ${pedidoId ?? "—"}`;
 

@@ -23,6 +23,7 @@ interface ProductsTabProps {
   setStoredProducts: React.Dispatch<React.SetStateAction<any[]>>;
   categories: string[];
   globalSizes: string[];
+  globalColors?: any[];
   distribution: Record<string, number>;
   setDistribution: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
@@ -39,6 +40,7 @@ const ProductsTab = ({
   setStoredProducts,
   categories,
   globalSizes,
+  globalColors = [],
   distribution,
   setDistribution,
   uploadToCloudinary,
@@ -48,7 +50,7 @@ const ProductsTab = ({
   handleStockBySizeChange,
   navigateStock,
 }: ProductsTabProps) => {
-  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+  const [product, setProduct] = useState({ name: "", category: "", price: 0, sizes: [] as string[], colors: [] as { name: string, hex: string }[], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
   const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null]);
   const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null]);
   const [uploading, setUploading] = useState(false);
@@ -100,6 +102,14 @@ const ProductsTab = ({
       ? product.sizes.filter((s) => s !== size)
       : [...product.sizes, size];
     handleChange("sizes", sortSizes(next));
+  };
+
+  const handleColorToggle = (colorObj: { name: string, hex: string }) => {
+    const exists = product.colors.find(c => c.name === colorObj.name);
+    const next = exists
+      ? product.colors.filter((c) => c.name !== colorObj.name)
+      : [...product.colors, colorObj];
+    handleChange("colors", next);
   };
 
   const handleSubmit = async () => {
@@ -156,6 +166,7 @@ const ProductsTab = ({
       publicId3,
       description: product.description,
       stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
+      colors: product.colors,
       tenant_id: tenantId,
     };
 
@@ -165,7 +176,7 @@ const ProductsTab = ({
         if (error) throw error;
         setStoredProducts((prev) => [...prev, data]);
         toast.success("Produto cadastrado");
-        setProduct({ name: "", category: "", price: 0, sizes: [], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+        setProduct({ name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
         setImageFiles([null, null, null]);
         setImagePreviews([null, null, null]);
         setDistribution({});
@@ -261,6 +272,26 @@ const ProductsTab = ({
                   {s}
                 </Badge>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>Cores Disponíveis</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {globalColors.map((c) => (
+                <Badge
+                  key={c.name}
+                  variant={product.colors.find(pc => pc.name === c.name) ? "default" : "outline"}
+                  className="cursor-pointer flex items-center gap-2"
+                  onClick={() => handleColorToggle({ name: c.name, hex: c.hex })}
+                >
+                  <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                  {c.name}
+                </Badge>
+              ))}
+              {globalColors.length === 0 && (
+                <p className="text-xs text-muted-foreground italic">Nenhuma cor global cadastrada na aba Cores.</p>
+              )}
             </div>
           </div>
 

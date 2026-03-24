@@ -26,6 +26,7 @@ import SizesTab from "@/components/admin/tabs/SizesTab";
 import ImagesTab from "@/components/admin/tabs/ImagesTab";
 import ProductsTab from "@/components/admin/tabs/ProductsTab";
 import StockTab from "@/components/admin/tabs/StockTab";
+import ColorsTab from "@/components/admin/tabs/ColorsTab";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
@@ -49,6 +50,7 @@ interface AdminProduct {
   imageUrl3?: string;
   publicId3?: string;
   description?: string;
+  colors?: { name: string, hex: string }[];
 }
 
 // Cloudinary envs e upload helpers permanecem iguais
@@ -93,6 +95,7 @@ const Admin = () => {
 
   const [categories, setCategories] = useState<string[]>([]);
   const [globalSizes, setGlobalSizes] = useState<string[]>([]);
+  const [globalColors, setGlobalColors] = useState<any[]>([]);
   
   // Estados para abas e busca
   const [productQuery, setProductQuery] = useState("");
@@ -465,6 +468,23 @@ useEffect(() => {
   return () => { try { supabase.removeChannel(channel); } catch {} };
 }, [tenantId]);
 
+// Realtime de cores
+useEffect(() => {
+  if (!IS_SUPABASE_READY) return;
+  const channel = supabase
+    .channel('colors-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'colors' }, async () => {
+      const { data } = await supabase
+        .from('colors')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('name', { ascending: true });
+      if (data) setGlobalColors(data as any[]);
+    })
+    .subscribe();
+  return () => { try { supabase.removeChannel(channel); } catch {} };
+}, [tenantId]);
+
 // Filtro
 const filteredPedidos = pedidos.filter((p) => {
 
@@ -669,6 +689,17 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               }
             }
           }
+
+          // Carregar lista global de cores
+          const { data: colorData, error: colorErr } = await supabase
+            .from("colors")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .order("name", { ascending: true });
+
+          if (!colorErr && Array.isArray(colorData)) {
+            setGlobalColors(colorData);
+          }
         } catch (e: any) {
           toast.error("Falha ao carregar dados do Supabase", { description: parseSupabaseError(e) });
         }
@@ -826,6 +857,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
               <TabsTrigger value="images" className="flex-1 md:flex-none py-2 px-4 transition-all">Imagens</TabsTrigger>
               <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2 px-4 transition-all">Clientes</TabsTrigger>
               <TabsTrigger value="categories" className="flex-1 md:flex-none py-2 px-4 transition-all">Categorias</TabsTrigger>
+              <TabsTrigger value="colors" className="flex-1 md:flex-none py-2 px-4 transition-all">Cores</TabsTrigger>
               <TabsTrigger value="config" className="flex-1 md:flex-none py-2 px-4 transition-all">Configurações</TabsTrigger>
             </TabsList>
 
@@ -1049,6 +1081,11 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
           {/* Categorias */}
           <TabsContent value="categories" className="mt-6">
             <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+          </TabsContent>
+
+          {/* Cores */}
+          <TabsContent value="colors" className="mt-6">
+            <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
           </TabsContent>
 
           {/* Imagens */}

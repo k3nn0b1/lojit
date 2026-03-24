@@ -11,7 +11,7 @@ import {
 
 interface ProductGridProps {
   products: Product[];
-  onAddToCart: (product: Product, size: string) => void;
+  onAddToCart: (product: Product, size: string, color?: string) => void;
 }
 
 const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
