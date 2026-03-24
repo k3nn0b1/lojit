@@ -153,9 +153,16 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
 
   return (
     <>
-      <Card 
-        className="group overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-smooth hover:glow-soft flex flex-col h-full rounded-2xl md:rounded-[2rem]"
+    <div className="h-full">
+      <motion.div
+        whileHover={{ scale: 1.02, y: -5 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        className="h-full"
       >
+        <Card 
+          className="group overflow-hidden border-border/50 bg-card/10 backdrop-blur-md hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
+        >
         <div 
           className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
         >
@@ -230,6 +237,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           </Button>
         </CardFooter>
       </Card>
+    </motion.div>
+  </div>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-card border-primary/20 sm:rounded-lg h-[92vh] md:h-auto md:max-h-[90vh] flex flex-col">

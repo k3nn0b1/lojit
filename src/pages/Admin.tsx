@@ -1409,7 +1409,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                             setSelectedSize(null); 
                             setSelectedColor(null); 
                           }}
-                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all text-left group ${selectedProductId === p.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10' : 'border-border/40 hover:border-primary/40 hover:bg-muted/30'}`}
+                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all text-left group animate-in fade-in slide-in-from-left-2 duration-300 fill-mode-both ${selectedProductId === p.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10 scale-[1.02]' : 'border-border/40 hover:border-primary/40 hover:bg-muted/30 hover:scale-[1.01]'}`}
                         >
                           <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded-md border border-white/5" />
                           <div className="min-w-0">
@@ -1425,7 +1425,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                 </div>
 
                 {selectedProductId && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div key={selectedProductId} className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-muted/10 border border-primary/10">
                       {/* Seleção de Tamanho */}
                       <div>
@@ -1521,7 +1521,7 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
                   
                   <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                     {adminCart.map((it, i) => (
-                      <div key={`${it.id}-${it.size}-${it.color}-${i}`} className="group relative rounded-xl border border-primary/10 p-3 bg-muted/20 hover:border-primary/30 transition-all">
+                      <div key={`${it.id}-${it.size}-${it.color}-${i}`} className="group relative rounded-xl border border-primary/10 p-3 bg-muted/20 hover:border-primary/30 transition-all animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-bold text-foreground truncate">{it.name}</div>
