@@ -115,129 +115,163 @@ const StockTab = ({
                       </TableCell>
                     </TableRow>
                     {isExpanded && (
-                      <TableRow className="bg-muted/20">
-                        <TableCell colSpan={5} className="p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Ajuste de Estoque por Tamanho */}
-                            <div className="space-y-3">
-                              <h4 className="font-semibold text-sm">Quantidades por Tamanho</h4>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {sorted.map((s) => (
-                                  <div key={s} className="flex flex-col gap-1 border p-2 rounded bg-background">
-                                    <Label className="text-[10px] uppercase font-bold opacity-70 flex justify-between">
-                                      {s}
-                                      <button 
-                                        className="text-destructive hover:text-foreground" 
-                                        onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id, s); }}
-                                        title="Remover tamanho"
-                                      >
-                                        ×
-                                      </button>
-                                    </Label>
-                                    <Input
-                                      type="number"
-                                      min={0}
-                                      className="h-8 text-sm"
-                                      value={Number((p.stockBySize || {})[s] || 0)}
-                                      onChange={(e) => handleStockBySizeChange(p.id, s, parseInt(e.target.value) || 0)}
-                                    />
+                      <TableRow className="bg-muted/30 border-b-2 border-primary/10">
+                        <TableCell colSpan={5} className="p-0">
+                          <div className="p-6 md:p-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                              
+                              {/* Lado Esquerdo: Gestão de Estoque Fina */}
+                              <div className="lg:col-span-5 space-y-6">
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="font-black text-xs uppercase tracking-[0.2em] text-primary">Estoque por Tamanho</h4>
+                                    <Badge variant="outline" className="text-[10px] border-primary/20 text-primary/70">{sorted.length} Slots</Badge>
                                   </div>
-                                ))}
-                                {/* Adicionar novo tamanho a este modelo */}
-                                <div className="flex flex-col gap-1 border p-1 rounded bg-muted/40">
-                                  <Label className="text-[10px] uppercase font-bold opacity-70">Add Tam</Label>
-                                  <Select
-                                    onValueChange={(val) => {
-                                      if (val) handleAddSizeToModel(p.id, val);
-                                    }}
-                                  >
-                                    <SelectTrigger className="h-8 text-xs bg-background">
-                                      <SelectValue placeholder="+" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {globalSizes.filter(gs => !sizesLoaded.includes(gs)).map(gs => (
-                                        <SelectItem key={gs} value={gs}>{gs}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  
+                                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {sorted.map((s) => (
+                                      <div key={s} className="group relative flex flex-col gap-2 p-3 rounded-2xl bg-background/50 border border-border/40 hover:border-primary/40 transition-all hover:bg-background/80 shadow-sm">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[11px] font-black text-foreground uppercase">{s}</span>
+                                          <button 
+                                            className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" 
+                                            onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id, s); }}
+                                            title="Remover tamanho"
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </button>
+                                        </div>
+                                        <div className="relative">
+                                          <Input
+                                            type="number"
+                                            min={0}
+                                            className="h-10 text-base font-bold bg-transparent border-none focus-visible:ring-0 p-0"
+                                            value={Number((p.stockBySize || {})[s] || 0)}
+                                            onChange={(e) => handleStockBySizeChange(p.id, s, parseInt(e.target.value) || 0)}
+                                          />
+                                          <div className="absolute bottom-[-2px] left-0 w-full h-[1px] bg-border group-hover:bg-primary/30" />
+                                        </div>
+                                      </div>
+                                    ))}
+                                    
+                                    {/* Slot de Adicionar */}
+                                    <div className="flex flex-col gap-2 p-3 rounded-2xl bg-primary/5 border border-dashed border-primary/30 hover:bg-primary/10 transition-all">
+                                      <span className="text-[10px] font-black text-primary/70 uppercase">Novo Tamanho</span>
+                                      <Select
+                                        onValueChange={(val) => {
+                                          if (val) handleAddSizeToModel(p.id, val);
+                                        }}
+                                      >
+                                        <SelectTrigger className="h-10 border-none bg-transparent focus:ring-0 shadow-none text-sm font-bold p-0">
+                                          <SelectValue placeholder="+" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {globalSizes.filter(gs => !sizesLoaded.includes(gs)).map(gs => (
+                                            <SelectItem key={gs} value={gs}>{gs}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-70">Disponibilidade Total</span>
+                                    <div className="text-xl font-black text-foreground">{p.stock || 0} unidades</div>
+                                  </div>
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black ${ (p.stock || 0) > 5 ? 'bg-green-500/10 text-green-500' : 'bg-destructive/10 text-destructive'}`}>
+                                    {p.stock || 0}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Editar Campos Básicos */}
-                            <div className="space-y-3 border-l md:pl-6 border-muted">
-                              <h4 className="font-semibold text-sm flex items-center gap-2">
-                                <Pencil className="h-3 w-3" /> Editar Produto
-                              </h4>
-                              <div className="grid gap-3">
-                                <div className="grid gap-1">
-                                  <Label className="text-xs">Nome</Label>
-                                  <Input
-                                    className="h-8 text-sm"
-                                    value={fieldData?.name ?? p.name}
-                                    onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), name: e.target.value } }))}
-                                  />
-                                </div>
-                                <div className="grid gap-1">
-                                  <Label className="text-xs">Descrição / Detalhes</Label>
-                                  <Textarea
-                                    className="text-sm min-h-[60px] resize-y"
-                                    value={fieldData?.description ?? p.description ?? ""}
-                                    onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), description: e.target.value } }))}
-                                    placeholder="Detalhes do produto"
-                                  />
-                                </div>
-                                <div className="grid gap-1">
-                                  <Label className="text-xs">Cores Disponíveis</Label>
-                                  <div className="flex flex-wrap gap-2 mt-1">
-                                    {globalColors.map((c) => {
-                                      const currentColors = (editFields[p.id]?.colors || p.colors || []) as any[];
-                                      const isSelected = currentColors.some(pc => pc.name === c.name);
-                                      return (
-                                        <Badge
-                                          key={c.name}
-                                          variant={isSelected ? "default" : "outline"}
-                                          className="cursor-pointer flex items-center gap-1.5 py-1"
-                                          onClick={() => {
-                                            const nextColors = isSelected
-                                              ? currentColors.filter(pc => pc.name !== c.name)
-                                              : [...currentColors, { name: c.name, hex: c.hex }];
-                                            setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), colors: nextColors } }));
-                                          }}
-                                        >
-                                          <div className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
-                                          {c.name}
-                                        </Badge>
-                                      );
-                                    })}
-                                    {globalColors.length === 0 && (
-                                      <p className="text-[10px] text-muted-foreground italic">Nenhuma cor global cadastrada.</p>
-                                    )}
+                              {/* Lado Direito: Formulário de Edição Profissional */}
+                              <div className="lg:col-span-7 bg-card/40 rounded-[2rem] border border-border/40 p-6 md:p-8 space-y-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2" />
+                                
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]">
+                                    <Pencil className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-black text-lg text-foreground leading-none">Dados do Produto</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">Ajuste os campos básicos deste item</p>
                                   </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div className="grid gap-1">
-                                    <Label className="text-xs">Preço</Label>
+
+                                <div className="grid gap-6">
+                                  <div className="grid gap-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70 ml-1">Nome de Exibição</Label>
                                     <Input
-                                      type="number"
-                                      className="h-8 text-sm"
-                                      value={fieldData?.price ?? p.price}
-                                      onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), price: parseFloat(e.target.value) || 0 } }))}
+                                      className="h-12 bg-background/50 border-border/60 focus-visible:border-primary/50 text-sm font-bold"
+                                      value={fieldData?.name ?? p.name}
+                                      onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), name: e.target.value } }))}
                                     />
                                   </div>
-                                  <div className="grid gap-1">
-                                    <Label className="text-xs">Estoque Total</Label>
-                                    <Input
-                                      type="number"
-                                      className="h-8 text-sm bg-muted"
-                                      disabled
-                                      value={p.stock || 0}
+
+                                  <div className="grid gap-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70 ml-1">Descrição / Detalhes Curvos</Label>
+                                    <Textarea
+                                      className="text-sm min-h-[100px] bg-background/50 border-border/60 focus-visible:border-primary/50 resize-none"
+                                      value={fieldData?.description ?? p.description ?? ""}
+                                      onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), description: e.target.value } }))}
+                                      placeholder="Ex: Tecido 100% algodão, pronta entrega..."
                                     />
                                   </div>
+
+                                  <div className="grid gap-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70 ml-1">Paleta de Cores</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {globalColors.map((c) => {
+                                        const currentColors = (editFields[p.id]?.colors || p.colors || []) as any[];
+                                        const isSelected = currentColors.some(pc => pc.name === c.name);
+                                        return (
+                                          <button
+                                            key={c.name}
+                                            onClick={() => {
+                                              const nextColors = isSelected
+                                                ? currentColors.filter(pc => pc.name !== c.name)
+                                                : [...currentColors, { name: c.name, hex: c.hex }];
+                                              setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), colors: nextColors } }));
+                                            }}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                              isSelected 
+                                                ? 'bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10' 
+                                                : 'bg-background/40 border-border/40 text-muted-foreground hover:bg-background/60'
+                                            }`}
+                                          >
+                                            <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: c.hex }} />
+                                            {c.name}
+                                          </button>
+                                        );
+                                      })}
+                                      {globalColors.length === 0 && (
+                                        <p className="text-[10px] text-muted-foreground italic">Cadastre cores nas configurações primeiro.</p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70 ml-1">Preço (R$)</Label>
+                                      <Input
+                                        type="number"
+                                        className="h-12 bg-background/50 border-border/60 text-lg font-black text-primary"
+                                        value={fieldData?.price ?? p.price}
+                                        onChange={(e) => setEditFields(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || { ...p }), price: parseFloat(e.target.value) || 0 } }))}
+                                      />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <Button 
+                                        onClick={() => handleUpdateProductFields(p.id)}
+                                        className="h-full mt-auto bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+                                      >
+                                        Salvar Dados
+                                      </Button>
+                                    </div>
+                                  </div>
                                 </div>
-                                <Button size="sm" onClick={() => handleUpdateProductFields(p.id)}>
-                                  Salvar Alterações
-                                </Button>
                               </div>
                             </div>
                           </div>
