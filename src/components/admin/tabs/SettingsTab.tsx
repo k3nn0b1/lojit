@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge as UI_Badge } from "@/components/ui/badge";
 
 
 interface SettingsTabProps {
@@ -178,349 +180,247 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da Loja</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="store_name">Nome da Loja (usado no título)</Label>
-                <Input 
+      <Tabs defaultValue="geral" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-8 h-auto p-1.5 bg-muted/30">
+          <TabsTrigger value="geral" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Geral</TabsTrigger>
+          <TabsTrigger value="contato" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Contatos</TabsTrigger>
+          <TabsTrigger value="identidade" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Identidade Visual</TabsTrigger>
+          <TabsTrigger value="secoes" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Seções</TabsTrigger>
+          <TabsTrigger value="outros" className="text-xs uppercase font-bold py-3 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Avançado</TabsTrigger>
+        </TabsList>
+
+        <Card className="border-border/40 shadow-xl overflow-hidden">
+          <CardContent className="p-0">
+            {/* Aba Geral */}
+            <TabsContent value="geral" className="p-6 md:p-10 m-0 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <Label htmlFor="store_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    NOME DA LOJA <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">Exibido no Título</span>
+                  </Label>
+                  <Input 
                     id="store_name" 
                     value={formData.store_name} 
                     onChange={e => setFormData({...formData, store_name: e.target.value})}
                     placeholder="Ex: Minha Loja"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="instagram">Instagram (Link ou @)</Label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-                  <Input 
-                      id="instagram" 
-                      value={formData.instagram_url} 
-                      onChange={e => setFormData({...formData, instagram_url: e.target.value})}
-                      placeholder="Ex: @minhaloja"
-                      className="flex-1"
+                    className="h-12 border-border/50 focus:border-primary transition-all"
                   />
-                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
-                    <Switch 
-                      id="show_instagram" 
-                      checked={formData.show_instagram} 
-                      onCheckedChange={checked => setFormData({...formData, show_instagram: checked})}
-                    />
-                    <Label htmlFor="show_instagram" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
-                  </div>
                 </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="whatsapp">WhatsApp (Número com DDD)</Label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-                  <Input 
-                      id="whatsapp" 
-                      value={formData.whatsapp} 
-                      onChange={e => setFormData({...formData, whatsapp: e.target.value})}
-                      placeholder="Ex: 5575981284738"
-                      className="flex-1"
-                  />
-                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
-                    <Switch 
-                      id="show_whatsapp" 
-                      checked={formData.show_whatsapp} 
-                      onCheckedChange={checked => setFormData({...formData, show_whatsapp: checked})}
-                    />
-                    <Label htmlFor="show_whatsapp" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="youtube">YouTube (Link do Canal)</Label>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
-                  <Input 
-                      id="youtube" 
-                      value={formData.youtube_url} 
-                      onChange={e => setFormData({...formData, youtube_url: e.target.value})}
-                      placeholder="Ex: https://youtube.com/@seucanal"
-                      className="flex-1"
-                  />
-                  <div className="flex items-center justify-between sm:justify-center gap-2 bg-muted/50 px-3 py-2 rounded-md border border-border whitespace-nowrap min-w-fit">
-                    <Switch 
-                      id="show_youtube" 
-                      checked={formData.show_youtube} 
-                      onCheckedChange={checked => setFormData({...formData, show_youtube: checked})}
-                    />
-                    <Label htmlFor="show_youtube" className="text-[10px] font-bold cursor-pointer uppercase">Rodapé</Label>
-                  </div>
-                </div>
-              </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>Logo da Loja</Label>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                {formData.logo_url && (
-                    <div className="h-20 w-auto min-w-[80px] rounded-md border border-border overflow-hidden bg-white/5 p-2 flex items-center justify-center">
-                        <img src={formData.logo_url} alt="Logo Preview" className="h-full w-full object-contain" />
-                    </div>
-                )}
-                <div className="flex-1">
-                    <Label 
-                        htmlFor="logo-upload" 
-                        className="flex items-center justify-center gap-2 h-12 px-4 rounded-md border border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 cursor-pointer transition-smooth"
-                    >
-                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
-                        <span className="font-medium">{uploading ? "Enviando..." : "Carregar nova logo"}</span>
-                    </Label>
-                    <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploading} />
-                </div>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="address">Endereço Completo</Label>
-            <Input 
-                id="address" 
-                value={formData.address} 
-                onChange={e => setFormData({...formData, address: e.target.value})}
-                placeholder="Rua, Número, Bairro, Cidade - UF"
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="opening_hours">Horário de Funcionamento</Label>
-            <Textarea 
-                id="opening_hours" 
-                value={formData.opening_hours} 
-                onChange={e => setFormData({...formData, opening_hours: e.target.value})}
-                placeholder="Ex: Segunda a Sexta: 9h às 18h&#10;Sábado: 9h às 14h"
-                rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Personalização do Site</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 border-b border-border/50 pb-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Hero (Destaque Principal)</h4>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="grid gap-2">
-                <Label htmlFor="hero_l1">Título Linha 1</Label>
-                <Input 
-                    id="hero_l1" 
-                    value={formData.hero_title_l1} 
-                    onChange={e => setFormData({...formData, hero_title_l1: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="hero_l2">Título Linha 2 (Destaque)</Label>
-                <Input 
-                    id="hero_l2" 
-                    value={formData.hero_title_l2} 
-                    onChange={e => setFormData({...formData, hero_title_l2: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="hero_l3">Título Linha 3 (Destaque)</Label>
-                <Input 
-                    id="hero_l3" 
-                    value={formData.hero_title_l3} 
-                    onChange={e => setFormData({...formData, hero_title_l3: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="hero_phrase">Frase do Hero (Abaixo da logo na home)</Label>
-              <Input 
-                  id="hero_phrase" 
-                  value={formData.hero_phrase} 
-                  onChange={e => setFormData({...formData, hero_phrase: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-6 border-b border-border/50 pb-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Vitrine (Nossa Coleção)</h4>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="coll_l1">Título (Branco)</Label>
-                <Input 
-                    id="coll_l1" 
-                    value={formData.collection_title_l1} 
-                    onChange={e => setFormData({...formData, collection_title_l1: e.target.value})}
-                    placeholder="Ex: NOSSA"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="coll_l2">Título (Destaque de Cor)</Label>
-                <Input 
-                    id="coll_l2" 
-                    value={formData.collection_title_l2} 
-                    onChange={e => setFormData({...formData, collection_title_l2: e.target.value})}
-                    placeholder="Ex: COLEÇÃO"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="coll_sub">Subtítulo da Seção</Label>
-              <Input 
-                  id="coll_sub" 
-                  value={formData.collection_subtitle} 
-                  onChange={e => setFormData({...formData, collection_subtitle: e.target.value})}
-                  placeholder="Ex: As melhores seleções em um só lugar"
-              />
-            </div>
-          </div>
-          <div className="grid gap-6 border-b border-border/50 pb-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Checkout e Produto</h4>
-            <div className="grid gap-4 md:grid-cols-1">
-              <div className="grid gap-2">
-                <Label htmlFor="size_label">Legenda "Escolha seu tamanho"</Label>
-                <Input 
-                    id="size_label" 
-                    value={formData.product_size_label} 
-                    onChange={e => setFormData({...formData, product_size_label: e.target.value})}
-                    placeholder="Ex: ESCOLHA SEU TAMANHO"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="grid gap-6 border-b border-border/50 pb-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Sobre Nós (Institucional)</h4>
-            <div className="grid gap-2">
-              <Textarea 
-                  id="about_us" 
-                  value={formData.about_us} 
-                  onChange={e => setFormData({...formData, about_us: e.target.value})}
-                  rows={5}
-                  className="resize-none"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-6 border-b border-border/50 pb-6">
-            <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Seção: Rodapé e Fontes</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="footer_info">Informações do Footer (Copyright)</Label>
-                <Input 
-                    id="footer_info" 
-                    value={formData.footer_info} 
-                    onChange={e => setFormData({...formData, footer_info: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="primary_font">Fonte Principal (Títulos H1-H6)</Label>
-                <Select 
-                  value={formData.primary_font || "'Bebas Neue', cursive"} 
-                  onValueChange={value => setFormData({...formData, primary_font: value})}
-                >
-                  <SelectTrigger id="primary_font" className="bg-card border-border">
-                    <SelectValue placeholder="Selecione a fonte principal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="'Bebas Neue', cursive">Bebas Neue (Impactante)</SelectItem>
-                    <SelectItem value="'Outfit', sans-serif">Outfit (Moderna/Premium)</SelectItem>
-                    <SelectItem value="'Kanit', sans-serif">Kanit (Robusta)</SelectItem>
-                    <SelectItem value="'Oswald', sans-serif">Oswald (Esportiva)</SelectItem>
-                    <SelectItem value="'Montserrat', sans-serif">Montserrat (Elegante)</SelectItem>
-                    <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                    <SelectItem value="'Poppins', sans-serif">Poppins (Suave)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="secondary_font">Fonte Secundária (Textos e Botões)</Label>
-                <Select 
-                  value={formData.secondary_font || "'Inter', sans-serif"} 
-                  onValueChange={value => setFormData({...formData, secondary_font: value})}
-                >
-                  <SelectTrigger id="secondary_font" className="bg-card border-border">
-                    <SelectValue placeholder="Selecione a fonte secundária" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                    <SelectItem value="'Outfit', sans-serif">Outfit (Moderna)</SelectItem>
-                    <SelectItem value="'Poppins', sans-serif">Poppins (Arredondada)</SelectItem>
-                    <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
-                    <SelectItem value="'Kanit', sans-serif">Kanit (Informal)</SelectItem>
-                    <SelectItem value="'Montserrat', sans-serif">Montserrat (Geometrica)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 space-y-8">
-            <div className="grid gap-6">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Cores do Sistema (HEX)</h4>
-                {suggestedColors.length > 0 && (
-                  <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/20">
-                    <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
-                    <div className="flex gap-1.5">
-                      {suggestedColors.map(color => (
-                        <button
-                          key={color}
-                          onClick={() => {
-                            setFormData({ ...formData, primary_hex: color, secondary_hex: color });
-                            toast.info(`Cor predominante ${color} aplicada!`);
-                          }}
-                          className="w-5 h-5 rounded-full border border-white/20 hover:scale-110 transition-smooth shadow-sm"
-                          style={{ backgroundColor: color }}
-                          title={`Aplicar ${color}`}
-                        />
-                      ))}
+                
+                <div className="space-y-4">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">LOGOTIPO DA LOJA</Label>
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    {formData.logo_url && (
+                      <div className="relative group p-2 rounded-xl bg-card/40 border border-border/50 flex-shrink-0 backdrop-blur-sm">
+                        <img src={formData.logo_url} alt="Logo" className="h-16 w-auto object-contain transition-transform group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center backdrop-blur-[2px]">
+                          <button onClick={() => setFormData({...formData, logo_url: ""})} className="p-1.5 bg-destructive rounded-full text-destructive-foreground hover:scale-110 transition-transform">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="w-full">
+                      <Label htmlFor="logo-upload" className="flex flex-col items-center justify-center w-full h-24 rounded-xl border border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all">
+                        {uploading ? <Loader2 className="w-6 h-6 animate-spin text-primary" /> : <Upload className="w-6 h-6 text-primary mb-1" />}
+                        <span className="text-xs font-bold uppercase tracking-widest text-primary/70">{uploading ? "Salvando..." : "Substituir Logo"}</span>
+                      </Label>
+                      <input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={uploading} />
                     </div>
                   </div>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                      <Label htmlFor="primary_color" className="text-xs uppercase text-muted-foreground">Cor Primária (Temas e Botões)</Label>
-                      <div className="flex items-center gap-3">
-                          <Input 
-                              type="color"
-                              id="primary_color" 
-                              value={formData.primary_hex} 
-                              className="w-14 h-10 p-1 bg-card border-border"
-                              onChange={e => setFormData({...formData, primary_hex: e.target.value})}
-                          />
-                          <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.primary_hex}</code>
-                      </div>
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="secondary_color" className="text-xs uppercase text-muted-foreground">Cor Secundária (Efeito Neon)</Label>
-                      <div className="flex items-center gap-3">
-                          <Input 
-                              type="color"
-                              id="secondary_color" 
-                              value={formData.secondary_hex} 
-                              className="w-14 h-10 p-1 bg-card border-border"
-                              onChange={e => setFormData({...formData, secondary_hex: e.target.value})}
-                          />
-                          <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.secondary_hex}</code>
-                      </div>
-                  </div>
-              </div>
-            </div>
+                </div>
 
-            <div className="grid gap-6">
-              <h4 className="text-sm font-bold uppercase tracking-widest text-primary">Background do Site</h4>
+                <div className="col-span-1 md:col-span-2 space-y-2">
+                  <Label htmlFor="address" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">ENDEREÇO COMPLETO</Label>
+                  <Input 
+                    id="address" 
+                    value={formData.address} 
+                    onChange={e => setFormData({...formData, address: e.target.value})}
+                    placeholder="Rua, Número, Bairro, Cidade - UF"
+                    className="h-12"
+                  />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 space-y-2">
+                  <Label htmlFor="opening_hours" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">HORÁRIO DE FUNCIONAMENTO</Label>
+                  <Textarea 
+                    id="opening_hours" 
+                    value={formData.opening_hours} 
+                    onChange={e => setFormData({...formData, opening_hours: e.target.value})}
+                    placeholder="Ex: Segunda a Sexta: 9h às 18h&#10;Sábado: 9h às 14h"
+                    rows={4}
+                    className="resize-none border-border/50 focus:border-primary"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Aba Contato */}
+            <TabsContent value="contato" className="p-6 md:p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="grid grid-cols-1 gap-10 max-w-2xl">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-primary">
+                    <WhatsappIcon className="w-6 h-6" />
+                    <h3 className="font-bold uppercase tracking-widest">WhatsApp Comercial</h3>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Label className="text-[10px] uppercase font-bold opacity-60">Número WhastApp</Label>
+                      <Input 
+                        value={formData.whatsapp} 
+                        onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                        placeholder="Ex: 5575981284738"
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center">
+                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
+                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
+                        <Switch checked={formData.show_whatsapp} onCheckedChange={c => setFormData({...formData, show_whatsapp: c})} />
+                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-primary">
+                    <Instagram className="w-6 h-6" />
+                    <h3 className="font-bold uppercase tracking-widest">Acesso Rápido Instagram</h3>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Label className="text-[10px] uppercase font-bold opacity-60">Conta Instagram</Label>
+                      <Input 
+                        value={formData.instagram_url} 
+                        onChange={e => setFormData({...formData, instagram_url: e.target.value})}
+                        placeholder="Ex: @minhaloja"
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center">
+                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
+                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
+                        <Switch checked={formData.show_instagram} onCheckedChange={c => setFormData({...formData, show_instagram: c})} />
+                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-primary">
+                    <YoutubeIcon className="w-6 h-6" />
+                    <h3 className="font-bold uppercase tracking-widest">Link Youtube</h3>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Label className="text-[10px] uppercase font-bold opacity-60">Canal Youtube</Label>
+                      <Input 
+                        value={formData.youtube_url} 
+                        onChange={e => setFormData({...formData, youtube_url: e.target.value})}
+                        placeholder="Ex: youtube.com/@loja"
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2 flex flex-col justify-center">
+                      <Label className="text-[10px] uppercase font-bold opacity-60 text-center">Exibir</Label>
+                      <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-lg border">
+                        <Switch checked={formData.show_youtube} onCheckedChange={c => setFormData({...formData, show_youtube: c})} />
+                        <span className="text-[9px] font-black uppercase tracking-tighter">Rodapé</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Aba Identidade Visual */}
+            <TabsContent value="identidade" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="space-y-6">
-                <div className="grid gap-2">
-                    <Label className="text-xs uppercase text-muted-foreground">Tipo de Estilo de Fundo</Label>
-                    <Select 
-                      value={formData.background_type || "solid"} 
-                      onValueChange={value => setFormData({...formData, background_type: value})}
-                    >
-                      <SelectTrigger className="bg-card border-border">
-                        <SelectValue placeholder="Selecione o estilo" />
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    Cores do Sistema <span className="text-[10px] text-muted-foreground font-medium">Paleta Principal</span>
+                  </h3>
+                  {suggestedColors.length > 0 && (
+                    <div className="flex items-center gap-4 bg-muted/20 px-4 py-2 rounded-xl border border-primary/10">
+                      <span className="text-[10px] uppercase font-bold text-primary/70">Sugestão da Logo:</span>
+                      <div className="flex gap-2">
+                        {suggestedColors.map(color => (
+                          <button
+                            key={color}
+                            onClick={() => setFormData({ ...formData, primary_hex: color, secondary_hex: color })}
+                            className="w-7 h-7 rounded-full border border-white/20 hover:scale-110 transition-all shadow-md active:scale-95"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
+                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR PRIMÁRIA</Label>
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
+                        style={{ backgroundColor: formData.primary_hex }}
+                      >
+                        <input 
+                          type="color" 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                          value={formData.primary_hex}
+                          onChange={e => setFormData({...formData, primary_hex: e.target.value})}
+                        />
+                      </div>
+                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.primary_hex}</code>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
+                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR SECUNDÁRIA (NEON)</Label>
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
+                        style={{ backgroundColor: formData.secondary_hex }}
+                      >
+                        <input 
+                          type="color" 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                          value={formData.secondary_hex}
+                          onChange={e => setFormData({...formData, secondary_hex: e.target.value})}
+                        />
+                      </div>
+                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.secondary_hex}</code>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-xl border bg-muted/10">
+                    <Label className="text-[10px] uppercase font-extrabold tracking-widest text-muted-foreground">COR DO FUNDO BASE</Label>
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-16 h-12 rounded-lg border-2 border-white/20 shadow-inner relative overflow-hidden flex-shrink-0"
+                        style={{ backgroundColor: formData.background_hex }}
+                      >
+                        <input 
+                          type="color" 
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                          value={formData.background_hex}
+                          onChange={e => setFormData({...formData, background_hex: e.target.value})}
+                        />
+                      </div>
+                      <code className="text-sm font-mono tracking-widest text-primary font-bold">{formData.background_hex}</code>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">ESTILO VISUAL DO FUNDO</Label>
+                    <Select value={formData.background_type || "solid"} onValueChange={v => setFormData({...formData, background_type: v})}>
+                      <SelectTrigger className="h-12 bg-card/60 backdrop-blur-md">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="solid">Esportivo (Bolas de Futebol)</SelectItem>
@@ -530,33 +430,195 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                         <SelectItem value="bg4">Etereo (Shadow Movement)</SelectItem>
                       </SelectContent>
                     </Select>
-                </div>
-
-                <div className="grid gap-2">
-                    <Label htmlFor="background_color" className="text-xs uppercase text-muted-foreground">Cor de Fundo Base / Sólida</Label>
-                    <div className="flex items-center gap-3">
-                        <Input 
-                            type="color"
-                            id="background_color" 
-                            value={formData.background_hex} 
-                            className="w-14 h-10 p-1 bg-card border-border"
-                            onChange={e => setFormData({...formData, background_hex: e.target.value})}
-                        />
-                        <code className="text-sm font-mono bg-muted px-2 py-1 rounded">{formData.background_hex}</code>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PLANO DE FUNDO PERSONALIZADO (IMAGEM)</Label>
+                    <div className="flex gap-4">
+                      {formData.background_url && (
+                        <div className="h-12 w-12 rounded border border-border overflow-hidden bg-card">
+                          <img src={formData.background_url} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <Label htmlFor="bg-upload" className="flex items-center justify-center flex-1 h-12 rounded border border-dashed border-primary/30 hover:bg-primary/5 cursor-pointer transition-all">
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary mr-2" />}
+                        <span className="text-xs font-bold uppercase tracking-wider">{uploading ? "Dando upload..." : "Escolher Imagem"}</span>
+                      </Label>
+                      <input id="bg-upload" type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} disabled={uploading} />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-8 pt-6 border-t border-border">
+                <h3 className="font-extrabold uppercase tracking-widest text-primary">Estilo das Fontes</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-bold uppercase opacity-60">FONTE PRINCIPAL (TÍTULOS H1-H6)</Label>
+                    <Select value={formData.primary_font || "'Bebas Neue', cursive"} onValueChange={v => setFormData({...formData, primary_font: v})}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="'Bebas Neue', cursive">Bebas Neue (Impactante)</SelectItem>
+                        <SelectItem value="'Outfit', sans-serif">Outfit (Premium Moderna)</SelectItem>
+                        <SelectItem value="'Kanit', sans-serif">Kanit (Robusta)</SelectItem>
+                        <SelectItem value="'Oswald', sans-serif">Oswald (Esportiva)</SelectItem>
+                        <SelectItem value="'Montserrat', sans-serif">Montserrat (Elegante)</SelectItem>
+                        <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
+                        <SelectItem value="'Poppins', sans-serif">Poppins (Suave)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="p-4 rounded border border-dashed bg-muted/10">
+                      <p style={{ fontFamily: formData.primary_font || "'Bebas Neue', cursive" }} className="text-2xl uppercase tracking-widest text-primary">Exemplo Título</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-bold uppercase opacity-60">FONTE SECUNDÁRIA (PARÁGRAFOS)</Label>
+                    <Select value={formData.secondary_font || "'Inter', sans-serif"} onValueChange={v => setFormData({...formData, secondary_font: v})}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
+                        <SelectItem value="'Outfit', sans-serif">Outfit (Elegante)</SelectItem>
+                        <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
+                        <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
+                        <SelectItem value="'Kanit', sans-serif">Kanit (Informal)</SelectItem>
+                        <SelectItem value="'Montserrat', sans-serif">Montserrat (Geométrica)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <div className="p-4 rounded border border-dashed bg-muted/10">
+                      <p style={{ fontFamily: formData.secondary_font || "'Inter', sans-serif" }} className="text-xs text-muted-foreground leading-relaxed">Exemplo de texto corrido. O cliente vai ler as descrições dos produtos com esta fonte escolhida.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Aba Seções */}
+            <TabsContent value="secoes" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="space-y-8">
+                <div className="flex items-center gap-3 border-b border-border pb-2">
+                  <UI_Badge className="bg-primary hover:bg-primary font-black uppercase text-[9px] px-3">Topo</UI_Badge>
+                  <h3 className="font-bold uppercase tracking-widest">Banners & Destaques (Hero)</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 1 (Topo)</Label>
+                    <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 2 (Central)</Label>
+                    <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold opacity-60">TÍTULO LINHA 3 (Base)</Label>
+                    <Input value={formData.hero_title_l3} onChange={e => setFormData({...formData, hero_title_l3: e.target.value})} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold opacity-60 uppercase">FRASE DA HOME (Abaixo da logo no início)</Label>
+                  <Input value={formData.hero_phrase} onChange={e => setFormData({...formData, hero_phrase: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="flex items-center gap-3 border-b border-border pb-2 text-primary">
+                  <UI_Badge variant="outline" className="border-primary text-primary font-black uppercase text-[9px] px-3">Vitrine</UI_Badge>
+                  <h3 className="font-bold uppercase tracking-widest">Vitrine de Produtos (Coleção)</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold opacity-60">NOSSA (Texto Branco)</Label>
+                    <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="Ex: NOSSA" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold opacity-60">COLEÇÃO (Texto de Destaque)</Label>
+                    <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="Ex: COLEÇÃO" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold opacity-60 uppercase">Subtítulo da Vitrine</Label>
+                  <Input value={formData.collection_subtitle} onChange={e => setFormData({...formData, collection_subtitle: e.target.value})} placeholder="Ex: As melhores seleções em um só lugar" />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Aba Avançado */}
+            <TabsContent value="outros" className="p-6 md:p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="space-y-6">
+                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-3">
+                     Checkout & Produto
+                  </h3>
+                  <div className="p-4 rounded-xl bg-muted/10 border space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">LEGENDA "ESCOLHA SEU TAMANHO"</Label>
+                      <Input 
+                        value={formData.product_size_label} 
+                        onChange={e => setFormData({...formData, product_size_label: e.target.value})}
+                        className="h-11"
+                      />
+                    </div>
+                  </div>
                 </div>
 
+                <div className="space-y-6">
+                  <h3 className="font-bold uppercase tracking-widest text-primary flex items-center gap-3">
+                     Rodapé (Footer)
+                  </h3>
+                  <div className="p-4 rounded-xl bg-muted/10 border space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">INFORMAÇÕES DE COPYRIGHT</Label>
+                      <Input 
+                        value={formData.footer_info} 
+                        onChange={e => setFormData({...formData, footer_info: e.target.value})}
+                        className="h-11"
+                        placeholder="Ex: © 2026 Loja. Todos os direitos reservados."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 space-y-6">
+                  <h3 className="font-bold uppercase tracking-widest text-primary">Sobre a Nossa História (Institucional)</h3>
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-transparent rounded-xl opacity-50 blur group-hover:opacity-100 transition-all duration-1000"></div>
+                    <Textarea 
+                      value={formData.about_us} 
+                      onChange={e => setFormData({...formData, about_us: e.target.value})}
+                      rows={10}
+                      className="relative h-48 bg-card border-border/60 focus:border-primary text-sm leading-relaxed p-6 rounded-xl"
+                      placeholder="Conte sobre sua loja aqui..."
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </TabsContent>
+          </CardContent>
+        </Card>
+      </Tabs>
+
+      <div className="sticky bottom-0 z-50 bg-background/80 backdrop-blur-md pt-4 pb-6 border-t border-border/40 mt-10">
+        <div className="flex items-center justify-between">
+          <div className="hidden md:block">
+            {settings.updated_at && (
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                Última atualização: {new Date(settings.updated_at).toLocaleString()}
+              </p>
+            )}
           </div>
-
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end pt-4">
-        <Button onClick={handleSave} size="lg" className="w-full md:w-auto px-12 h-12 text-lg font-bold">
-          Salvar Alterações
-        </Button>
+          <Button 
+            onClick={handleSave} 
+            size="lg" 
+            className="w-full md:w-auto px-16 h-14 text-lg font-black uppercase tracking-[0.2em] bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] active:scale-95 transition-all"
+          >
+            CONFIRMAR ALTERAÇÕES
+          </Button>
+        </div>
       </div>
     </div>
   );
