@@ -17,14 +17,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminProduct, Color } from "@/lib/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 interface ProductsTabProps {
   tenantId: string;
   storedProducts: AdminProduct[];
   setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
   categories: string[];
+  setCategories: React.Dispatch<React.SetStateAction<string[]>>;
   globalSizes: string[];
+  setGlobalSizes: React.Dispatch<React.SetStateAction<string[]>>;
   globalColors: Color[];
+  setGlobalColors: React.Dispatch<React.SetStateAction<Color[]>>;
   uploadToCloudinary: (file: File) => Promise<string>;
   IS_SUPABASE_READY: boolean;
 }
@@ -34,8 +38,11 @@ const ProductsTab = ({
   storedProducts,
   setStoredProducts,
   categories,
+  setCategories,
   globalSizes,
+  setGlobalSizes,
   globalColors,
+  setGlobalColors,
   uploadToCloudinary,
   IS_SUPABASE_READY,
 }: ProductsTabProps) => {
@@ -59,6 +66,12 @@ const ProductsTab = ({
   const [productQuery, setProductQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(9);
+
+  // Quick Addition States
+  const [quickAddType, setQuickAddType] = useState<"category" | "size" | "color" | null>(null);
+  const [quickInput, setQuickInput] = useState("");
+  const [quickHex, setQuickHex] = useState("#000000");
+  const [quickSaving, setQuickSaving] = useState(false);
 
   const filteredProducts = storedProducts.filter((p) =>
     `${p.name} ${p.category || ""} ${String(p.id ?? "")}`
@@ -111,6 +124,39 @@ const ProductsTab = ({
     handleChange("colors", next);
   };
 
+  const handleQuickAdd = async () => {
+    if (!quickInput.trim()) return;
+    setQuickSaving(true);
+    try {
+      if (quickAddType === 'category') {
+        const { error } = await supabase.from('categories').insert([{ name: quickInput, tenant_id: tenantId }]);
+        if (error) throw error;
+        setCategories(prev => [...prev, quickInput].sort());
+        handleChange("category", quickInput);
+        toast.success("Categoria adicionada!");
+      } else if (quickAddType === 'size') {
+        const { error } = await supabase.from('sizes').insert([{ name: quickInput, tenant_id: tenantId }]);
+        if (error) throw error;
+        const nextSizes = [...globalSizes, quickInput];
+        setGlobalSizes(nextSizes);
+        handleSizeToggle(quickInput);
+        toast.success("Tamanho adicionado!");
+      } else if (quickAddType === 'color') {
+        const { data, error } = await supabase.from('colors').insert([{ name: quickInput, hex: quickHex, tenant_id: tenantId }]).select('*').single();
+        if (error) throw error;
+        setGlobalColors(prev => [...prev, data]);
+        handleColorToggle(data);
+        toast.success("Cor adicionada!");
+      }
+      setQuickAddType(null);
+      setQuickInput("");
+    } catch (e: any) {
+      toast.error("Erro ao adicionar item rápido", { description: parseSupabaseError(e) });
+    } finally {
+      setQuickSaving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!product.name || !product.category || product.price <= 0) {
       toast.error("Preencha os campos obrigatórios");
@@ -137,20 +183,27 @@ const ProductsTab = ({
       return;
     }
 
-    const allocatedTotal = (product.sizes || []).reduce((acc, s) => acc + (Number(distribution[s] || 0)), 0);
-    const totalStock = allocatedTotal > 0 ? allocatedTotal : Number(product.stock || 0);
+    // Garante que o stockBySize contenha apenas os tamanhos selecionados e com números válidos
+    const finalStockBySize: Record<string, number> = {};
+    let calculatedTotal = 0;
+    
+    (product.sizes || []).forEach(s => {
+      const qty = Number(distribution[s] || 0);
+      finalStockBySize[s] = qty;
+      calculatedTotal += qty;
+    });
 
     const baseProductForSupabase = {
       name: product.name,
       category: product.category,
       price: product.price,
       sizes: product.sizes,
-      stock: totalStock,
+      stock: calculatedTotal, // Agora sempre baseado no que foi preenchido por tamanho
       image: urls[0] || product.imageUrl,
       image2: urls[1] || product.imageUrl2,
       image3: urls[2] || product.imageUrl3,
       description: product.description,
-      stockBySize: Object.fromEntries((product.sizes || []).map((s) => [s, Number(distribution[s] || 0)])),
+      stockBySize: finalStockBySize,
       colors: product.colors,
       tenant_id: tenantId,
     };
@@ -207,16 +260,21 @@ const ProductsTab = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Categoria</Label>
-                  <Select value={product.category} onValueChange={(val) => handleChange("category", val)}>
-                    <SelectTrigger className="h-11 bg-muted/20 border-primary/10">
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={product.category} onValueChange={(val) => handleChange("category", val)}>
+                      <SelectTrigger className="h-11 bg-muted/20 border-primary/10 flex-1">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="icon" className="h-11 w-11 border-primary/10 bg-muted/10 shrink-0" onClick={() => setQuickAddType("category")}>
+                      <PlusCircle className="w-5 h-5" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Preço (R$)</Label>
@@ -254,6 +312,13 @@ const ProductsTab = ({
                     {s}
                   </button>
                 ))}
+                <button
+                   type="button"
+                   onClick={() => setQuickAddType("size")}
+                   className="h-9 px-4 rounded-xl border border-dashed border-primary/30 text-[10px] font-black text-primary/60 hover:border-primary hover:text-primary transition-all flex items-center gap-1"
+                >
+                   <PlusCircle className="w-3 h-3" /> NOVO
+                </button>
               </div>
             </div>
 
@@ -275,6 +340,13 @@ const ProductsTab = ({
                     {c.name}
                   </button>
                 ))}
+                <button
+                   type="button"
+                   onClick={() => setQuickAddType("color")}
+                   className="h-9 px-4 rounded-xl border border-dashed border-primary/30 text-[10px] font-black text-primary/60 hover:border-primary hover:text-primary transition-all flex items-center gap-1"
+                >
+                   <PlusCircle className="w-3 h-3" /> NOVA
+                </button>
               </div>
             </div>
           </div>
@@ -432,6 +504,57 @@ const ProductsTab = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Cadastro Rápido */}
+      <Dialog open={quickAddType !== null} onOpenChange={(open) => !open && setQuickAddType(null)}>
+        <DialogContent className="bg-card text-foreground border-primary/20 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-widest text-primary">
+              Cadastrar {quickAddType === 'category' ? 'Categoria' : quickAddType === 'size' ? 'Tamanho' : 'Cor'}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium italic">
+                Adicione um novo item global para usar em seus produtos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-1.5">
+               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                  Nome do(a) {quickAddType === 'category' ? 'Categoria' : quickAddType === 'size' ? 'Tamanho' : 'Cor'}
+               </Label>
+               <Input 
+                  value={quickInput} 
+                  onChange={(e) => setQuickInput(e.target.value)} 
+                  placeholder="Ex: Camisetas, XL, Azul..." 
+                  className="h-11 bg-muted/20 border-primary/10"
+               />
+            </div>
+            {quickAddType === 'color' && (
+              <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Selecione a Cor</Label>
+                  <div className="flex items-center gap-4">
+                      <Input 
+                        type="color" 
+                        value={quickHex} 
+                        onChange={(e) => setQuickHex(e.target.value)} 
+                        className="w-12 h-12 p-1 bg-background border-primary/10"
+                      />
+                      <span className="text-xs font-mono opacity-50">{quickHex.toUpperCase()}</span>
+                  </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+             <Button variant="ghost" onClick={() => setQuickAddType(null)} className="font-bold">Cancelar</Button>
+             <Button 
+                onClick={handleQuickAdd} 
+                disabled={quickSaving || !quickInput.trim()}
+                className="bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest"
+             >
+                {quickSaving ? 'Salvando...' : 'Cadastrar'}
+             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

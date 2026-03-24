@@ -229,8 +229,11 @@ const Admin = () => {
               storedProducts={storedProducts}
               setStoredProducts={setStoredProducts}
               categories={categories}
+              setCategories={setCategories}
               globalSizes={globalSizes}
+              setGlobalSizes={setGlobalSizes}
               globalColors={globalColors}
+              setGlobalColors={setGlobalColors}
               uploadToCloudinary={uploadToCloudinary}
               IS_SUPABASE_READY={IS_SUPABASE_READY}
             />
