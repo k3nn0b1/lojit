@@ -11,7 +11,8 @@
     --background: 0 0% 5%;
     --foreground: 0 0% 98%;
 
-    --font-family: 'Inter', sans-serif;
+    --primary-font: 'Bebas Neue', cursive;
+    --secondary-font: 'Inter', sans-serif;
 
     --card: 0 0% 8%;
     --card-foreground: 0 0% 98%;
@@ -86,7 +87,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-family);
+    font-family: var(--secondary-font);
     background-image: var(--background-image);
     background-size: cover;
     background-position: center;
@@ -94,7 +95,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Bebas Neue', cursive;
+    font-family: var(--primary-font);
     letter-spacing: 0.05em;
   }
 }

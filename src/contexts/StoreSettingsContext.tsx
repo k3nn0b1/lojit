@@ -27,7 +27,8 @@ export interface StoreSettings {
   background_type?: 'solid' | 'bg1' | 'bg2' | 'bg3' | 'bg4';
   background_config?: any;
   opening_hours?: string;
-  font_family?: string;
+  primary_font?: string;
+  secondary_font?: string;
   collection_title_l1?: string;
   collection_title_l2?: string;
   collection_subtitle?: string;
@@ -65,7 +66,8 @@ const defaultSettings: StoreSettings = {
   show_whatsapp: true,
   show_youtube: false,
   youtube_url: "",
-  font_family: "Inter",
+  primary_font: "'Bebas Neue', cursive",
+  secondary_font: "'Inter', sans-serif",
   product_size_label: "ESCOLHA SEU TAMANHO"
 };
 
@@ -112,7 +114,8 @@ export const StoreSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     root.style.setProperty("--primary", primaryHSL);
     root.style.setProperty("--secondary", secondaryHSL);
     root.style.setProperty("--background", backgroundHSL);
-    root.style.setProperty("--font-family", s.font_family || "Inter");
+    root.style.setProperty("--primary-font", s.primary_font || "'Bebas Neue', cursive");
+    root.style.setProperty("--secondary-font", s.secondary_font || "'Inter', sans-serif");
     root.style.setProperty("--ring", primaryHSL);
     root.style.setProperty("--accent", primaryHSL);
     

@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Bebas Neue', 'cursive'],
+        sans: ['var(--secondary-font)', 'sans-serif'],
+        display: ['var(--primary-font)', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",

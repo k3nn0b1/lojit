@@ -415,20 +415,41 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="font_family">Fonte do Site</Label>
+                <Label htmlFor="primary_font">Fonte Principal (Títulos H1-H6)</Label>
                 <Select 
-                  value={formData.font_family || "'Inter', sans-serif"} 
-                  onValueChange={value => setFormData({...formData, font_family: value})}
+                  value={formData.primary_font || "'Bebas Neue', cursive"} 
+                  onValueChange={value => setFormData({...formData, primary_font: value})}
                 >
-                  <SelectTrigger id="font_family" className="bg-card border-border">
-                    <SelectValue placeholder="Selecione a fonte" />
+                  <SelectTrigger id="primary_font" className="bg-card border-border">
+                    <SelectValue placeholder="Selecione a fonte principal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="'Bebas Neue', cursive">Bebas Neue (Impactante)</SelectItem>
+                    <SelectItem value="'Outfit', sans-serif">Outfit (Moderna/Premium)</SelectItem>
+                    <SelectItem value="'Kanit', sans-serif">Kanit (Robusta)</SelectItem>
+                    <SelectItem value="'Oswald', sans-serif">Oswald (Esportiva)</SelectItem>
+                    <SelectItem value="'Montserrat', sans-serif">Montserrat (Elegante)</SelectItem>
+                    <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
+                    <SelectItem value="'Poppins', sans-serif">Poppins (Suave)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="secondary_font">Fonte Secundária (Textos e Botões)</Label>
+                <Select 
+                  value={formData.secondary_font || "'Inter', sans-serif"} 
+                  onValueChange={value => setFormData({...formData, secondary_font: value})}
+                >
+                  <SelectTrigger id="secondary_font" className="bg-card border-border">
+                    <SelectValue placeholder="Selecione a fonte secundária" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="'Inter', sans-serif">Inter (Padrão)</SelectItem>
-                    <SelectItem value="'Poppins', sans-serif">Poppins (Moderna)</SelectItem>
+                    <SelectItem value="'Outfit', sans-serif">Outfit (Moderna)</SelectItem>
+                    <SelectItem value="'Poppins', sans-serif">Poppins (Arredondada)</SelectItem>
                     <SelectItem value="'Roboto', sans-serif">Roboto (Clássica)</SelectItem>
-                    <SelectItem value="'Pacifico', cursive">Pacifico (Manuscrita)</SelectItem>
-                    <SelectItem value="'Iosevka Charon', monospace">Iosevka Charon (Programador)</SelectItem>
+                    <SelectItem value="'Kanit', sans-serif">Kanit (Informal)</SelectItem>
+                    <SelectItem value="'Montserrat', sans-serif">Montserrat (Geometrica)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
