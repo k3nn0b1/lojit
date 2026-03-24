@@ -7,6 +7,7 @@ import AnimatedBackground3 from '@/assets/backgrounds/background3';
 import AnimatedBackground4 from '@/assets/backgrounds/background4';
 import AnimatedBackground5 from '@/assets/backgrounds/background5';
 import AnimatedBackground6 from '@/assets/backgrounds/background6';
+import AnimatedBackground7 from '@/assets/backgrounds/background7';
 import FootballBackground from './FootballBackground';
 
 interface BackgroundManagerProps {
@@ -55,6 +56,8 @@ const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
         return <AnimatedBackground5 primaryColor={colors.primary} secondaryColor={colors.background} />;
       case 'bg6':
         return <AnimatedBackground6 color={colors.primary} backgroundColor={colors.background} />;
+      case 'bg7':
+        return <AnimatedBackground7 primaryColor={colors.primary} secondaryColor={colors.secondary} backgroundColor={colors.background} />;
       default:
         return isSolid ? <FootballBackground mode="hero" /> : null;
     }
