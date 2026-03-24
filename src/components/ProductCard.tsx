@@ -236,15 +236,14 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Image Section */}
-              <div className="relative aspect-square md:aspect-auto bg-muted group overflow-hidden touch-none">
+              {/* Image Section */}              <div className="relative aspect-[4/5] md:aspect-auto bg-white/5 group overflow-hidden touch-none flex items-center justify-center">
                 <AnimatePresence initial={false}>
                   <motion.div
                     key={currentPhotoIndex}
                     initial={{ opacity: 0, x: 100 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={1}
@@ -256,19 +255,19 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                         nextPhoto();
                       }
                     }}
-                    className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing"
+                    className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
                   >
                     {productPhotos[currentPhotoIndex].publicId ? (
                       <AdvancedImage
                         cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
                         alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                        className="w-full h-full object-cover pointer-events-none"
+                        className="w-full h-full object-contain pointer-events-none"
                       />
                     ) : (
                       <img
                         src={productPhotos[currentPhotoIndex].url}
                         alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                        className="w-full h-full object-cover pointer-events-none"
+                        className="w-full h-full object-contain pointer-events-none"
                       />
                     )}
                   </motion.div>
