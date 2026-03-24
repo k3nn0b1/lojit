@@ -14,6 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CategoriesTabProps {
   tenantId?: string | null;
@@ -29,6 +39,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [saving, setSaving] = useState(false);
+  const [categoryToRemove, setCategoryToRemove] = useState<string | null>(null);
 
   const totalPages = Math.ceil(categories.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -95,8 +106,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
 
   const handleRemoveCategory = async (name: string) => {
     if (!IS_SUPABASE_READY || !tenantId) return;
-    if (!confirm(`Deseja remover a categoria "${name}"?`)) return;
-
+    
     setSaving(true);
     try {
       const { error } = await supabase
@@ -110,6 +120,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
       setCategories(prev => prev.filter(c => c !== name));
 
       toast.success("Categoria removida");
+      setCategoryToRemove(null);
     } catch (e: any) {
       toast.error("Erro ao remover", { description: parseSupabaseError(e) });
     } finally {
@@ -195,7 +206,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-foreground"
-                      onClick={() => handleRemoveCategory(c)}
+                      onClick={() => setCategoryToRemove(c)}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -205,6 +216,34 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
             </div>
           ))}
         </div>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <AlertDialog open={!!categoryToRemove} onOpenChange={(open) => !open && setCategoryToRemove(null)}>
+          <AlertDialogContent className="bg-card border-primary/20">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold">Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Deseja realmente remover a categoria <span className="text-primary font-bold">"{categoryToRemove}"</span>? 
+                Esta ação não pode ser desfeita e pode afetar produtos vinculados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-3">
+              <AlertDialogCancel disabled={saving} className="flex-1 bg-muted/20 border-white/5 hover:bg-muted/30">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                disabled={saving}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (categoryToRemove) handleRemoveCategory(categoryToRemove);
+                }}
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
+              >
+                {saving ? "Removendo..." : "Sim, Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {categories.length > 0 && (
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-6 bg-muted/20 p-4 rounded-lg border">

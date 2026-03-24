@@ -14,6 +14,16 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SizesTabProps {
   tenantId?: string | null;
@@ -27,6 +37,7 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
   const [editingSize, setEditingSize] = useState<string | null>(null);
   const [sizeEditValue, setSizeEditValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [sizeToRemove, setSizeToRemove] = useState<string | null>(null);
 
   const handleAddSize = async () => {
     const raw = newGlobalSize.trim().toUpperCase();
@@ -90,7 +101,6 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
 
   const handleRemoveSize = async (name: string) => {
     if (!IS_SUPABASE_READY || !tenantId) return;
-    if (!confirm(`Deseja remover o tamanho "${name}"?`)) return;
 
     setSaving(true);
     try {
@@ -105,6 +115,7 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
       setGlobalSizes(prev => prev.filter(s => s !== name));
 
       toast.success("Tamanho removido");
+      setSizeToRemove(null);
     } catch (e: any) {
       toast.error("Erro ao remover", { description: parseSupabaseError(e) });
     } finally {
@@ -152,7 +163,7 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                   variant="ghost"
                   size="sm"
                   className="h-9 w-9 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => handleRemoveSize(s)}
+                  onClick={() => setSizeToRemove(s)}
                   disabled={saving}
                 >
                   <X className="h-4 w-4" />
@@ -188,6 +199,34 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <AlertDialog open={!!sizeToRemove} onOpenChange={(open) => !open && setSizeToRemove(null)}>
+          <AlertDialogContent className="bg-card border-primary/20">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold">Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Deseja realmente remover o tamanho <span className="text-primary font-bold">"{sizeToRemove}"</span>? 
+                Esta ação afetará todos os produtos vinculados a este tamanho global.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-3">
+              <AlertDialogCancel disabled={saving} className="flex-1 bg-muted/20 border-white/5 hover:bg-muted/30">
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                disabled={saving}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (sizeToRemove) handleRemoveSize(sizeToRemove);
+                }}
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
+              >
+                {saving ? "Removendo..." : "Sim, Excluir"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
