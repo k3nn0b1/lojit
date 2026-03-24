@@ -29,7 +29,7 @@ interface ProductsTabProps {
   setGlobalSizes: React.Dispatch<React.SetStateAction<string[]>>;
   globalColors: Color[];
   setGlobalColors: React.Dispatch<React.SetStateAction<Color[]>>;
-  uploadToCloudinary: (file: File) => Promise<string>;
+  uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
   IS_SUPABASE_READY: boolean;
 }
 
@@ -56,6 +56,9 @@ const ProductsTab = ({
     imageUrl: "", 
     imageUrl2: "", 
     imageUrl3: "", 
+    publicId: "",
+    publicId2: "",
+    publicId3: "",
     description: "" 
   });
   
@@ -164,18 +167,20 @@ const ProductsTab = ({
     }
 
     setUploading(true);
-    let urls: string[] = ["", "", ""];
+    let uploadedImages: { url: string; publicId: string }[] = [{ url: "", publicId: "" }, { url: "", publicId: "" }, { url: "", publicId: "" }];
 
     try {
       const uploadPromises = imageFiles.map(async (file, idx) => {
           if (!file) return null;
-          const url = await uploadToCloudinary(file);
-          return { url, idx };
+          const result = await uploadToCloudinary(file);
+          return { secure_url: result.secure_url, public_id: result.public_id, idx };
       });
 
       const results = await Promise.all(uploadPromises);
       results.forEach(res => {
-          if (res) urls[res.idx] = res.url;
+          if (res) {
+            uploadedImages[res.idx] = { url: res.secure_url, publicId: res.public_id };
+          }
       });
     } catch (err: any) {
       toast.error("Falha no upload das imagens");
@@ -199,9 +204,12 @@ const ProductsTab = ({
       price: product.price,
       sizes: product.sizes,
       stock: calculatedTotal, // Agora sempre baseado no que foi preenchido por tamanho
-      image: urls[0] || product.imageUrl,
-      image2: urls[1] || product.imageUrl2,
-      image3: urls[2] || product.imageUrl3,
+      image: uploadedImages[0].url || product.imageUrl,
+      publicId: uploadedImages[0].publicId || product.publicId || "",
+      image2: uploadedImages[1].url || product.imageUrl2,
+      publicId2: uploadedImages[1].publicId || product.publicId2 || "",
+      image3: uploadedImages[2].url || product.imageUrl3,
+      publicId3: uploadedImages[2].publicId || product.publicId3 || "",
       description: product.description,
       stockBySize: finalStockBySize,
       colors: product.colors,
@@ -216,7 +224,21 @@ const ProductsTab = ({
         toast.success("Produto cadastrado com sucesso!");
         
         // Reset form
-        setProduct({ name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, imageUrl: "", imageUrl2: "", imageUrl3: "", description: "" });
+        setProduct({ 
+          name: "", 
+          category: "", 
+          price: 0, 
+          sizes: [], 
+          colors: [], 
+          stock: 0, 
+          imageUrl: "", 
+          imageUrl2: "", 
+          imageUrl3: "", 
+          publicId: "",
+          publicId2: "",
+          publicId3: "",
+          description: "" 
+        });
         setImageFiles([null, null, null]);
         setImagePreviews([null, null, null]);
         setDistribution({});

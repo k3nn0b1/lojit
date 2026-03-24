@@ -14,7 +14,8 @@ interface ImagesTabProps {
   tenantId: string;
   storedProducts: AdminProduct[];
   setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
-  uploadToCloudinary: (file: File) => Promise<string>;
+  uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
+  removeFromCloudinary: (publicId: string) => Promise<void>;
   IS_SUPABASE_READY: boolean;
 }
 
@@ -23,6 +24,7 @@ const ImagesTab = ({
   storedProducts,
   setStoredProducts,
   uploadToCloudinary,
+  removeFromCloudinary,
   IS_SUPABASE_READY,
 }: ImagesTabProps) => {
   const [imagesQuery, setImagesQuery] = useState("");
@@ -47,10 +49,14 @@ const ImagesTab = ({
   const handleReplaceProductImage = async (id: number, index: number, file: File) => {
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file);
+      const result = await uploadToCloudinary(file);
       const suffix = index === 1 ? "" : index;
       const field = `image${suffix}`;
-      const payload = { [field]: url };
+      const publicIdField = `publicId${suffix}`;
+      const payload = { 
+        [field]: result.secure_url,
+        [publicIdField]: result.public_id
+      };
 
       if (IS_SUPABASE_READY && tenantId) {
         const { error } = await supabase.from("products").update(payload).eq("id", id).eq("tenant_id", tenantId);
@@ -75,7 +81,21 @@ const ImagesTab = ({
     try {
       const suffix = index === 1 ? "" : index;
       const field = `image${suffix}`;
-      const payload = { [field]: null };
+      const publicIdField = `publicId${suffix}`;
+
+      // Encontrar o produto para pegar o publicId
+      const prod = storedProducts.find(p => p.id === id);
+      // @ts-ignore
+      const publicId = prod?.[publicIdField];
+
+      if (publicId) {
+        await removeFromCloudinary(publicId);
+      }
+
+      const payload = { 
+        [field]: null,
+        [publicIdField]: null
+      };
 
       if (IS_SUPABASE_READY && tenantId) {
         const { error } = await supabase.from("products").update(payload).eq("id", id).eq("tenant_id", tenantId);

@@ -12,6 +12,7 @@ import {
   sortSizes,
   sortPedidos
 } from "@/lib/utils";
+import { uploadToCloudinary, removeFromCloudinary } from "@/lib/cloudinary";
 import { AdminProduct, Pedido, Color } from "@/lib/types";
 import { useTenant } from "@/hooks/use-tenant";
 
@@ -44,22 +45,9 @@ const Admin = () => {
   const [newPedidoOpen, setNewPedidoOpen] = useState(false);
   const [refreshingOrders, setRefreshingOrders] = useState(false);
 
-  // Cloudinary Config (Centralized logic could be here or in utils)
-  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dff797v9r";
+  // Cloudinary Config
   const MAX_FILE_SIZE_MB = 5;
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "p_ml_default");
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    return data.secure_url;
-  };
 
   const fetchPedidos = async () => {
     if (!IS_SUPABASE_READY) return;
@@ -267,6 +255,7 @@ const Admin = () => {
               storedProducts={storedProducts} 
               setStoredProducts={setStoredProducts}
               uploadToCloudinary={uploadToCloudinary}
+              removeFromCloudinary={removeFromCloudinary}
               IS_SUPABASE_READY={IS_SUPABASE_READY}
             />
           </TabsContent>
