@@ -47,6 +47,10 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
     try {
       const { error } = await supabase.from("categories").insert({ name: val, tenant_id: tenantId });
       if (error) throw error;
+      
+      // Update state manually for instant feedback
+      setCategories(prev => [...prev, val].sort());
+      
       toast.success("Categoria adicionada");
       setNewCategory("");
     } catch (e: any) {
@@ -76,6 +80,10 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
         .eq("name", oldName)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+
+      // Update state manually for instant feedback
+      setCategories(prev => prev.map(c => c === oldName ? val : c).sort());
+
       toast.success("Categoria atualizada");
       setEditingCategory(null);
     } catch (e: any) {
@@ -97,6 +105,10 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
         .eq("name", name)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+
+      // Update state manually for instant feedback
+      setCategories(prev => prev.filter(c => c !== name));
+
       toast.success("Categoria removida");
     } catch (e: any) {
       toast.error("Erro ao remover", { description: parseSupabaseError(e) });

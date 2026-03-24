@@ -41,6 +41,10 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
     try {
       const { error } = await supabase.from("sizes").insert({ name: raw, tenant_id: tenantId });
       if (error) throw error;
+      
+      // Update state manually for instant feedback
+      setGlobalSizes(prev => sortSizes([...prev, raw]));
+      
       toast.success("Tamanho adicionado");
       setNewGlobalSize("");
     } catch (e: any) {
@@ -71,6 +75,10 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         .eq("name", editingSize)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+
+      // Update state manually for instant feedback
+      setGlobalSizes(prev => sortSizes(prev.map(s => s === editingSize ? raw : s)));
+
       toast.success("Tamanho atualizado");
       setEditingSize(null);
     } catch (e: any) {
@@ -92,6 +100,10 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         .eq("name", name)
         .eq("tenant_id", tenantId);
       if (error) throw error;
+
+      // Update state manually for instant feedback
+      setGlobalSizes(prev => prev.filter(s => s !== name));
+
       toast.success("Tamanho removido");
     } catch (e: any) {
       toast.error("Erro ao remover", { description: parseSupabaseError(e) });
