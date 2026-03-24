@@ -224,6 +224,7 @@ const Admin = () => {
               setGlobalColors={setGlobalColors}
               uploadToCloudinary={uploadToCloudinary}
               IS_SUPABASE_READY={IS_SUPABASE_READY}
+              setActiveTab={setActiveTab}
             />
           </TabsContent>
 

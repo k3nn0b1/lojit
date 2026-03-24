@@ -31,6 +31,7 @@ interface ProductsTabProps {
   setGlobalColors: React.Dispatch<React.SetStateAction<Color[]>>;
   uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
   IS_SUPABASE_READY: boolean;
+  setActiveTab: (tab: string) => void;
 }
 
 const ProductsTab = ({
@@ -45,6 +46,7 @@ const ProductsTab = ({
   setGlobalColors,
   uploadToCloudinary,
   IS_SUPABASE_READY,
+  setActiveTab,
 }: ProductsTabProps) => {
   const [product, setProduct] = useState({ 
     name: "", 
@@ -68,7 +70,7 @@ const ProductsTab = ({
   const [uploading, setUploading] = useState(false);
   const [productQuery, setProductQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
+  const [pageSize, setPageSize] = useState(10);
 
   // Quick Addition States
   const [quickAddType, setQuickAddType] = useState<"category" | "size" | "color" | null>(null);
@@ -449,56 +451,74 @@ const ProductsTab = ({
             />
           </div>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleProducts.map((p) => (
-              <div 
-                key={p.id} 
-                className="group relative rounded-3xl border border-primary/10 bg-muted/10 overflow-hidden hover:border-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/5"
-              >
-                <div className="aspect-[4/3] relative overflow-hidden bg-muted">
-                    <img src={p.image || "/placeholder.png"} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                    <div className="absolute top-3 left-3">
-                         <Badge className="bg-black/60 backdrop-blur-md text-white border-none text-[9px] font-black uppercase tracking-widest">{p.category}</Badge>
-                    </div>
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <Button 
-                            variant="destructive" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-full shadow-lg"
-                            onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
-                         >
-                            <Trash2 className="w-4 h-4" />
-                         </Button>
-                    </div>
-                </div>
-                <div className="p-4 space-y-3">
-                    <div className="space-y-0.5">
-                        <h4 className="font-black text-sm truncate uppercase tracking-tighter">{p.name}</h4>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">{p.sizes.join(' · ')}</p>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-primary/5">
-                        <span className="text-lg font-black text-primary">{formatBRL(p.price)}</span>
-                        <div className="text-right">
-                             <div className="text-[8px] font-black uppercase text-muted-foreground">Estoque</div>
-                             <div className="text-xs font-black">{p.stock} <span className="text-[9px] opacity-40">un</span></div>
-                        </div>
-                    </div>
-                </div>
-              </div>
-            ))}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+                <thead>
+                    <tr className="bg-primary/5 border-b border-primary/10">
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Protudo</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Categoria</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Preço</th>
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estoque Total</th>
+                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ações</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-primary/5">
+                    {visibleProducts.map((p) => (
+                        <tr 
+                            key={p.id} 
+                            onClick={() => setActiveTab("stock")}
+                            className="group hover:bg-primary/5 cursor-pointer transition-colors"
+                        >
+                            <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl border border-primary/10 overflow-hidden shrink-0 bg-muted">
+                                        <img src={p.image || "/placeholder.png"} className="w-full h-full object-cover" alt="" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="font-black text-sm uppercase truncate max-w-[200px]">{p.name}</div>
+                                        <div className="text-[10px] font-bold text-muted-foreground uppercase">REF: #{p.id}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <Badge variant="outline" className="border-primary/20 text-muted-foreground text-[9px] font-black uppercase">{p.category}</Badge>
+                            </td>
+                            <td className="px-6 py-4 font-black text-primary text-sm">
+                                {formatBRL(p.price)}
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                    <span className="font-black text-xs">{p.stock} <span className="text-[10px] opacity-40">un</span></span>
+                                    <span className="text-[9px] font-bold text-muted-foreground uppercase truncate max-w-[150px]">{p.sizes.join(' · ')}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                                <Button 
+                                    variant="destructive" 
+                                    size="icon" 
+                                    className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
           </div>
 
           {visibleProducts.length === 0 && (
             <div className="py-20 text-center space-y-3">
-                 <div className="text-4xl">?</div>
+                 <div className="text-4xl opacity-20">?</div>
                  <p className="text-muted-foreground font-medium italic">Nenhum produto encontrado.</p>
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-10">
+            <div className="flex items-center justify-center gap-2 py-8 border-t border-primary/5">
                 <Button 
                     variant="outline" 
                     size="sm" 
