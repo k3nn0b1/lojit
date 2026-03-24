@@ -138,12 +138,13 @@ const [newPedidoOpen, setNewPedidoOpen] = useState(false);
 const [confirmDebitarOpen, setConfirmDebitarOpen] = useState(false);
 
 // Carrinho do admin
-type AdminCartItem = { id: number; name: string; size: string; quantity: number; price: number };
+type AdminCartItem = { id: number; name: string; size: string; color?: string; quantity: number; price: number };
 const [adminCart, setAdminCart] = useState<AdminCartItem[]>([]);
 
 // Seleção do produto/tamanho
 const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
 const [selectedSize, setSelectedSize] = useState<string | null>(null);
+const [selectedColor, setSelectedColor] = useState<string | null>(null);
 const [quantity, setQuantity] = useState<string>('1');
 const [refreshingOrders, setRefreshingOrders] = useState(false);
 
@@ -179,24 +180,30 @@ const addToAdminCart = () => {
   if (!selectedProductId || !selectedSize || qty <= 0) return;
   const prod = storedProducts.find(p => p.id === selectedProductId);
   if (!prod) return;
+
+  // If product has colors, check if one is selected
+  if (prod.colors && prod.colors.length > 0 && !selectedColor) {
+    toast.error("Selecione uma cor");
+    return;
+  }
   const estoque = Math.max(0, Number((prod.stockBySize || {})[selectedSize] || 0));
   if (estoque === 0) {
     toast.error("Tamanho sem estoque");
     return;
   }
-  const existingItem = adminCart.find(it => it.id === selectedProductId && it.size === selectedSize);
+  const existingItem = adminCart.find(it => it.id === selectedProductId && it.size === selectedSize && it.color === selectedColor);
   const combined = (existingItem?.quantity || 0) + qty;
   if (combined > estoque) {
     toast.error(`Quantidade total (${combined}) excede estoque disponível (${estoque})`);
     return;
   }
   setAdminCart(prev => {
-    const idx = prev.findIndex(it => it.id === selectedProductId && it.size === selectedSize);
+    const idx = prev.findIndex(it => it.id === selectedProductId && it.size === selectedSize && it.color === selectedColor);
     const next = [...prev];
     if (idx >= 0) {
       next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
     } else {
-      next.push({ id: selectedProductId, name: prod.name, size: selectedSize, quantity: qty, price: Number(prod.price || 0) });
+      next.push({ id: selectedProductId, name: prod.name, size: selectedSize, color: selectedColor || undefined, quantity: qty, price: Number(prod.price || 0) });
     }
     return next;
   });
@@ -239,6 +246,7 @@ const handleCreateAdminOrder = async (debitarEstoque: boolean) => {
   const itens = adminCart.map(it => ({
     produto: it.name,
     tamanho: it.size,
+    cor: it.color,
     quantidade: it.quantity,
     product_id: it.id,
     preco_unitario: it.price,
@@ -1361,179 +1369,275 @@ const handleConfirmAction = async (id: string, action: "concluir" | "cancelar") 
       )}
 
       {/* Modal de novo pedido */}
-      <Dialog open={newPedidoOpen} onOpenChange={setNewPedidoOpen}>
-        <DialogContent className="bg-card text-primary/90 border border-primary max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Novo pedido</DialogTitle>
+      <Dialog open={newPedidoOpen} onOpenChange={(open) => {
+        setNewPedidoOpen(open);
+        if (!open) {
+          setSelectedProductId(null);
+          setSelectedSize(null);
+          setSelectedColor(null);
+          setQuantity('1');
+        }
+      }}>
+        <DialogContent className="bg-card text-primary/90 border border-primary max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-foreground text-2xl font-bold">Novo pedido</DialogTitle>
             <DialogDescription className="text-muted-foreground">Pesquise o produto, selecione tamanho e quantidade, e conclua o pedido.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 scrollbar-hide">
-            <div>
-              <Label className="text-foreground">Pesquisar produto</Label>
-              <Input
-                value={productQuery}
-                onChange={(e) => setProductQuery(e.target.value)}
-                placeholder="Digite o nome do produto"
-                className="mt-1"
-              />
-              <div className="mt-2 max-h-40 overflow-auto rounded border border-primary/40 scrollbar-hide">
-                {storedProducts
-                  .filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase()))
-                  .slice(0, 20)
-                  .map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => { setSelectedProductId(p.id!); setSelectedSize(null); }}
-                      className={`w-full text-left px-3 py-2 hover:bg-muted/30 ${selectedProductId === p.id ? 'bg-muted/40' : ''}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img src={p.image} alt={p.name} className="w-10 h-10 object-cover rounded" />
-                        <div>
-                          <div className="text-foreground text-sm font-medium">{p.name}</div>
-                          <div className="text-xs text-muted-foreground">{p.category}</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                {storedProducts.filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase())).length === 0 && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum produto encontrado.</div>
-                )}
-              </div>
-            </div>
-
-            {selectedProductId && (
-              (() => {
-                const prod = storedProducts.find(p => p.id === selectedProductId);
-                const sizes = (prod?.sizes && prod.sizes.length ? prod.sizes : ["U"]).sort((a,b) => rankSize(a) - rankSize(b));
-                return (
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Tamanho</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {sizes.filter(s => Math.max(0, Number((prod?.stockBySize || {})[s] || 0)) > 0).map(s => (
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pt-0 scrollbar-hide">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Lado Esquerdo: Seleção de Produto e Atributos */}
+              <div className="lg:col-span-7 space-y-6">
+                <div>
+                  <Label className="text-foreground font-semibold mb-2 block">1. Pesquisar produto</Label>
+                  <Input
+                    value={productQuery}
+                    onChange={(e) => setProductQuery(e.target.value)}
+                    placeholder="Digite o nome do produto..."
+                    className="mb-2 bg-muted/20 border-primary/20 focus:border-primary"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 max-h-60 overflow-y-auto rounded-lg border border-primary/10 p-2 bg-muted/5 scrollbar-hide">
+                    {storedProducts
+                      .filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase()))
+                      .slice(0, 20)
+                      .map(p => (
                         <button
-                          key={s}
+                          key={p.id}
                           type="button"
-                          onClick={() => setSelectedSize(s)}
-                          className={`px-3 py-2 rounded-md border ${selectedSize === s ? 'bg-primary/90 text-primary-foreground border-primary' : 'border-border bg-background text-foreground hover:border-primary/50'}`}
+                          onClick={() => { 
+                            setSelectedProductId(p.id!); 
+                            setSelectedSize(null); 
+                            setSelectedColor(null); 
+                          }}
+                          className={`flex items-center gap-3 p-2 rounded-lg border transition-all text-left group ${selectedProductId === p.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/10' : 'border-border/40 hover:border-primary/40 hover:bg-muted/30'}`}
                         >
-                          {s}
+                          <img src={p.image} alt={p.name} className="w-12 h-12 object-cover rounded-md border border-white/5" />
+                          <div className="min-w-0">
+                            <div className="text-foreground text-sm font-bold truncate group-hover:text-primary transition-colors">{p.name}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{p.category}</div>
+                          </div>
                         </button>
                       ))}
-                      {sizes.filter(s => Math.max(0, Number((prod?.stockBySize || {})[s] || 0)) > 0).length === 0 && (
-                        <span className="text-xs text-muted-foreground">Sem estoque disponível para os tamanhos deste produto.</span>
-                      )}
-                    </div>
-
-                    {selectedSize && (
-                      <p className="text-xs text-muted-foreground">Estoque disponível: {Math.max(0, Number(((storedProducts.find(p => p.id === selectedProductId)?.stockBySize || {})[selectedSize]) || 0))}</p>
+                    {storedProducts.filter(p => (p.name || "").toLowerCase().includes(productQuery.toLowerCase())).length === 0 && (
+                      <div className="col-span-full py-8 text-center text-sm text-muted-foreground italic">Nenhum produto encontrado.</div>
                     )}
-                    <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
-                      <div>
-                        <Label className="text-foreground">Quantidade</Label>
-                        <Input type="number" min={1} value={quantity} onChange={(e) => {
-  const v = e.target.value;
-  const onlyDigits = v.replace(/[^0-9]/g, "");
-  setQuantity(onlyDigits);
-}} onBlur={() => {
-  const raw = parseInt(quantity || "");
-  const val = Number.isFinite(raw) ? raw : 1;
-  const prod = storedProducts.find(p => p.id === selectedProductId);
-  const estoqueSel = selectedSize ? Math.max(0, Number(((prod?.stockBySize || {})[selectedSize]) || 0)) : Number.POSITIVE_INFINITY;
-  const existingItem = selectedSize ? adminCart.find(it => it.id === selectedProductId && it.size === selectedSize) : undefined;
-  const maxAllowed = selectedSize ? Math.max(0, estoqueSel - (existingItem?.quantity || 0)) : val;
-  if (Number.isFinite(maxAllowed) && val > maxAllowed) {
-    if (maxAllowed === 0) {
-      toast.info("Não há estoque disponível para adicionar este tamanho.");
-      setQuantity("1");
-    } else {
-      toast.info(`Estoque disponível: ${maxAllowed}.`);
-      setQuantity(String(maxAllowed));
-    }
-  } else if (val < 1) {
-    setQuantity("1");
-  } else {
-    setQuantity(String(val));
-  }
-}} />
-                      </div>
-                      <Button onClick={addToAdminCart} disabled={!selectedSize || ((parseInt(quantity || "") || 0) <= 0)}>Adicionar</Button>
-                    </div>
-                  </div>
-                );
-              })()
-            )}
-
-            <div>
-              <p className="text-foreground text-sm mb-2">Itens do pedido</p>
-              <div className="space-y-2">
-                {adminCart.map((it, i) => (
-                  <div key={`${it.id}-${it.size}-${i}`} className="rounded-md border border-primary/40 p-2 bg-muted/40 flex items-center gap-3 flex-wrap md:flex-nowrap">
-  {/* modelo (nome) */}
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="text-foreground min-w-0 max-w-[38%] truncate whitespace-nowrap">{it.name}</span>
-      </TooltipTrigger>
-      <TooltipContent>{it.name}</TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-
-  {/* tamanho */}
-  <Badge variant="outline" className="w-8 justify-center text-xs whitespace-nowrap">{it.size}</Badge>
-
-  {/* Estoque */}
-  {(() => {
-    const prod = storedProducts.find(p => p.id === it.id);
-    const estoqueDisp = Math.max(0, Number((prod?.stockBySize || {})[it.size] || 0));
-    return <span className="text-xs text-muted-foreground whitespace-nowrap">Estoque: {estoqueDisp}</span>;
-  })()}
-
-  {/* preço */}
-  <span className="text-xs text-muted-foreground whitespace-nowrap">{formatBRL(it.price)}</span>
-
-  {/* quantidade */}
-  <Input type="number" min={1} value={it.quantity} onChange={(e) => updateAdminCartQuantity(i, parseInt(e.target.value) || 1)} className="w-16 h-8" />
-
-  {/* Remover */}
-  <Button variant="ghost" className="text-destructive hover:bg-destructive/10 whitespace-nowrap ml-auto" onClick={() => removeFromAdminCart(i)}>Remover</Button>
-</div>
-                ))}
-                {adminCart.length === 0 && <p className="text-sm text-muted-foreground">Nenhum item adicionado.</p>}
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-foreground">Total</span>
-                <span className="text-primary font-semibold">{formatBRL(adminCartTotal)}</span>
-              </div>
-            </div>
-
-            <div className="rounded-md border border-primary/40 p-3 bg-muted/40">
-              <label className="flex items-center gap-2 text-foreground">
-                <input type="checkbox" checked={informarCliente} onChange={(e) => setInformarCliente(e.target.checked)} />
-                Informar cliente (nome e telefone)
-              </label>
-              {informarCliente && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                  <div>
-                    <Label className="text-foreground">Nome do cliente</Label>
-                    <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Ex: João" />
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Telefone</Label>
-                    <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(XX) XXXXX-XXXX" />
                   </div>
                 </div>
-              )}
-              {!informarCliente && (
-                <p className="text-xs text-muted-foreground mt-2">Se não informar, será usado nome "LOJA" e telefone "(XX) XXXXXX-XXXX".</p>
-              )}
-            </div>
 
-            <div className="flex justify-end gap-2 sticky bottom-0 bg-card py-2">
-              <Button variant="outline" onClick={() => { setNewPedidoOpen(false); }}>Cancelar</Button>
-              <Button className="bg-green-600 hover:bg-green-700 text-foreground" onClick={() => setConfirmDebitarOpen(true)} disabled={adminCart.length === 0}>Concluir pedido</Button>
+                {selectedProductId && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-muted/10 border border-primary/10">
+                      {/* Seleção de Tamanho */}
+                      <div>
+                        <Label className="text-foreground font-semibold mb-3 block">2. Tamanho</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {(storedProducts.find(p => p.id === selectedProductId)?.sizes || ["U"])
+                            .sort((a,b) => rankSize(a) - rankSize(b))
+                            .map(s => {
+                              const prod = storedProducts.find(p => p.id === selectedProductId);
+                              const stock = Math.max(0, Number((prod?.stockBySize || {})[s] || 0));
+                              const isDisabled = stock === 0;
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  disabled={isDisabled}
+                                  onClick={() => setSelectedSize(s)}
+                                  className={`px-4 py-2 rounded-lg border text-sm font-bold transition-all relative ${
+                                    selectedSize === s 
+                                      ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20 scale-105' 
+                                      : isDisabled 
+                                        ? 'opacity-30 cursor-not-allowed bg-transparent border-transparent'
+                                        : 'border-border bg-muted/20 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                                  }`}
+                                >
+                                  {s}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </div>
 
+                      {/* Seleção de Cor (Se houver) */}
+                      {(() => {
+                        const prod = storedProducts.find(p => p.id === selectedProductId);
+                        if (!prod?.colors || prod.colors.length === 0) return null;
+                        return (
+                          <div>
+                            <Label className="text-foreground font-semibold mb-3 block">3. Cor</Label>
+                            <div className="flex flex-wrap gap-2">
+                              {prod.colors.map(c => (
+                                <button
+                                  key={c.name}
+                                  type="button"
+                                  onClick={() => setSelectedColor(c.name)}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-bold transition-all ${
+                                    selectedColor === c.name
+                                      ? 'bg-primary/20 border-primary text-primary shadow-lg'
+                                      : 'border-border bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                                  }`}
+                                >
+                                  <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                                  {c.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="flex items-end gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                      <div className="flex-1">
+                        <Label className="text-foreground font-semibold mb-2 block">Quantidade</Label>
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          value={quantity} 
+                          onChange={(e) => setQuantity(e.target.value.replace(/[^0-9]/g, ""))} 
+                          className="h-12 bg-muted/20 border-primary/10 text-lg font-bold text-center"
+                        />
+                      </div>
+                      <Button 
+                        onClick={addToAdminCart} 
+                        size="lg"
+                        className="h-12 px-8 font-black uppercase tracking-widest"
+                        disabled={!selectedSize || (parseInt(quantity || "") || 0) <= 0}
+                      >
+                        Adicionar à Lista
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Lado Direito: Carrinho e Cliente */}
+              <div className="lg:col-span-5 flex flex-col h-full bg-muted/5 rounded-2xl border border-primary/10 p-5 gap-6">
+                <div className="flex-1 overflow-hidden flex flex-col">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg text-foreground">Itens do Pedido</h3>
+                    <Badge variant="outline" className="border-primary/40 text-primary">{adminCart.length} itens</Badge>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                    {adminCart.map((it, i) => (
+                      <div key={`${it.id}-${it.size}-${it.color}-${i}`} className="group relative rounded-xl border border-primary/10 p-3 bg-muted/20 hover:border-primary/30 transition-all">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-bold text-foreground truncate">{it.name}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="h-5 text-[10px] px-1.5 font-black">{it.size}</Badge>
+                              {it.color && (
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1.5 font-medium">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                  {it.color}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-primary/80 font-bold ml-auto">{formatBRL(it.price)}/un</span>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => removeFromAdminCart(i)}
+                            className="text-muted-foreground hover:text-destructive p-1 rounded-md hover:bg-destructive/10 transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between pt-2 border-t border-primary/5">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground font-medium">Qtd:</span>
+                            <div className="flex items-center gap-1">
+                              <button 
+                                onClick={() => updateAdminCartQuantity(i, it.quantity - 1)}
+                                className="w-6 h-6 rounded bg-muted/30 flex items-center justify-center text-foreground hover:bg-muted/50"
+                              >-</button>
+                              <span className="w-8 text-center text-sm font-bold text-primary">{it.quantity}</span>
+                              <button 
+                                onClick={() => updateAdminCartQuantity(i, it.quantity + 1)}
+                                className="w-6 h-6 rounded bg-muted/30 flex items-center justify-center text-foreground hover:bg-muted/50"
+                              >+</button>
+                            </div>
+                          </div>
+                          <div className="text-sm font-black text-foreground">
+                            {formatBRL(it.price * it.quantity)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {adminCart.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                        <div className="w-12 h-12 rounded-full bg-muted/20 flex items-center justify-center mb-3 text-muted-foreground/40 italic">?</div>
+                        <p className="text-xs italic">Nenhum item adicionado à lista.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-medium">Subtotal</span>
+                      <span className="text-xl font-black text-primary">{formatBRL(adminCartTotal)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/10 p-4 bg-primary/5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="informar-cliente"
+                      className="w-4 h-4 rounded border-primary/50 text-primary focus:ring-primary bg-background"
+                      checked={informarCliente} 
+                      onChange={(e) => setInformarCliente(e.target.checked)} 
+                    />
+                    <Label htmlFor="informar-cliente" className="text-foreground font-semibold cursor-pointer">Identificar Cliente</Label>
+                  </div>
+                  
+                  {informarCliente ? (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] text-muted-foreground uppercase font-black">Nome Completo</Label>
+                        <Input 
+                          value={clienteNome} 
+                          onChange={(e) => setClienteNome(e.target.value)} 
+                          placeholder="Ex: João Silva"
+                          className="h-10 text-sm bg-background border-primary/10"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] text-muted-foreground uppercase font-black">WhatsApp / Telefone</Label>
+                        <Input 
+                          value={clienteTelefone} 
+                          onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} 
+                          placeholder="(XX) XXXXX-XXXX"
+                          className="h-10 text-sm bg-background border-primary/10"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                      Nenhum cliente identificado. O pedido será registrado com os dados padrão da loja.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 h-12 border-primary/20 hover:bg-muted/20 font-bold"
+                    onClick={() => setNewPedidoOpen(false)}
+                  >
+                    Descartar
+                  </Button>
+                  <Button 
+                    variant="default"
+                    className="flex-[2] h-12 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest shadow-lg shadow-green-900/20"
+                    onClick={() => setConfirmDebitarOpen(true)}
+                    disabled={adminCart.length === 0}
+                  >
+                    Concluir Pedido
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </DialogContent>
