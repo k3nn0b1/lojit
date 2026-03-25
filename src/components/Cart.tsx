@@ -302,6 +302,8 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                     />
                     <Input
                       placeholder="Telefone (WhatsApp)"
+                      type="tel"
+                      inputMode="numeric"
                       value={clienteTelefone}
                       onChange={(e) => {
                         const formatted = formatPhoneMask(e.target.value);
@@ -525,9 +527,15 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-30">R$</span>
                                   <Input 
                                     type="number"
+                                    inputMode="decimal"
                                     step="0.01"
                                     value={paymentValues[m] || ""}
-                                    onChange={(e) => setPaymentValues(prev => ({ ...prev, [m]: e.target.value }))}
+                                    onChange={(e) => {
+                                      const newVal = e.target.value;
+                                      const otherMethod = selectedMethods.find(oth => oth !== m)!;
+                                      const remaining = Math.max(0, total - (parseFloat(newVal) || 0)).toFixed(2);
+                                      setPaymentValues({ [m]: newVal, [otherMethod]: remaining });
+                                    }}
                                     className="bg-background/50 border-border/50 h-10 pl-8 text-xs font-black rounded-xl focus:ring-primary/20"
                                   />
                                 </div>
