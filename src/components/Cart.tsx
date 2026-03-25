@@ -28,7 +28,7 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
   onRemoveItem: (id: number, size: string, color?: string) => void;
-  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string) => void;
+  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string, endereco?: string) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
@@ -43,6 +43,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
   const [selectedPagamento, setSelectedPagamento] = React.useState<string | undefined>(undefined);
   const [clienteNome, setClienteNome] = React.useState("");
   const [clienteTelefone, setClienteTelefone] = React.useState("");
+  const [clienteEndereco, setClienteEndereco] = React.useState("");
 
   const shippingCost = deliveryMethod === "fixo" 
     ? (settings?.fixed_shipping_rate || 0) 
@@ -122,6 +123,10 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
       }
       if (deliveryMethod === "bairro" && !selectedBairro) {
         toast.error("Selecione o bairro de entrega");
+        return;
+      }
+      if ((deliveryMethod === "bairro" || deliveryMethod === "fixo") && !clienteEndereco.trim()) {
+        toast.error("Preencha seu endereço (Rua e Número)");
         return;
       }
       setCurrentStep(3);
@@ -324,7 +329,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                           {deliveryMethod === "bairro" && <Check className="w-5 h-5 text-primary" />}
                         </button>
 
-                        {deliveryMethod === "bairro" && (
+                        {deliveryMethod === "bairro" && !selectedBairro && (
                           <div className="space-y-4 p-5 rounded-3xl bg-background/50 border border-primary/10 mt-2 animate-in fade-in slide-in-from-top-4 duration-500 shadow-2xl">
                             <div className="relative">
                               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-40" />
@@ -358,7 +363,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                                  className={`flex items-center justify-between p-3 rounded-xl border text-[10px] font-black transition-all ${
                                    selectedBairro?.nome === "Outros"
                                      ? 'bg-primary/20 border-primary/40 text-primary' 
-                                     : 'bg-muted/5 border-transparent hover:border-primary/20'
+                                      : 'bg-muted/5 border-transparent hover:border-primary/20'
                                  }`}
                                >
                                   <span className="uppercase italic opacity-60">Outros</span>
@@ -367,29 +372,67 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                             </div>
                           </div>
                         )}
+
+                        {deliveryMethod === "bairro" && selectedBairro && (
+                          <div className="space-y-4 p-5 rounded-3xl bg-background/50 border border-primary/10 mt-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                             <div className="flex items-center justify-between mb-2">
+                               <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Detalhes da Entrega</p>
+                               <button 
+                                 onClick={() => {
+                                   setSelectedBairro(null);
+                                   setBairroSearchQuery("");
+                                 }}
+                                 className="text-[9px] font-black uppercase text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
+                               >
+                                 Trocar Bairro
+                               </button>
+                             </div>
+                             <Input 
+                               placeholder="Rua, número e complemento"
+                               value={clienteEndereco}
+                               onChange={(e) => setClienteEndereco(e.target.value)}
+                               className="bg-muted/10 border-border/50 h-12 text-xs font-bold rounded-xl focus:ring-primary/20"
+                             />
+                             <p className="text-[8px] text-muted-foreground italic px-1 opacity-60 uppercase font-black">Certifique-se de que alguém possa receber o pedido no local.</p>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {settings?.enable_fixed_shipping && (
-                      <button 
-                        onClick={() => setDeliveryMethod("fixo")}
-                        className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                          deliveryMethod === "fixo" 
-                            ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.1)] text-primary' 
-                            : 'bg-muted/10 border-border/30 hover:border-primary/30 text-muted-foreground'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4 text-left">
-                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${deliveryMethod === "fixo" ? 'bg-primary text-black' : 'bg-muted/20'}`}>
-                             <Truck className="w-5 h-5" />
+                      <div className="space-y-2">
+                        <button 
+                          onClick={() => setDeliveryMethod("fixo")}
+                          className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                            deliveryMethod === "fixo" 
+                              ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(var(--primary),0.1)] text-primary' 
+                              : 'bg-muted/10 border-border/30 hover:border-primary/30 text-muted-foreground'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4 text-left">
+                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${deliveryMethod === "fixo" ? 'bg-primary text-black' : 'bg-muted/20'}`}>
+                               <Truck className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest">Entrega Padrão</p>
+                              <p className="text-[9px] text-muted-foreground font-black opacity-60">{formatBRL(settings?.fixed_shipping_rate || 0)}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest">Entrega Padrão</p>
-                            <p className="text-[9px] text-muted-foreground font-black opacity-60">{formatBRL(settings?.fixed_shipping_rate || 0)}</p>
-                          </div>
-                        </div>
-                        {deliveryMethod === "fixo" && <Check className="w-5 h-5 text-primary" />}
-                      </button>
+                          {deliveryMethod === "fixo" && <Check className="w-5 h-5 text-primary" />}
+                        </button>
+
+                        {deliveryMethod === "fixo" && (
+                           <div className="p-5 rounded-3xl bg-background/50 border border-primary/10 mt-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                             <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2 block">Seu Endereço</Label>
+                             <Input 
+                               placeholder="Rua, número e complemento"
+                               value={clienteEndereco}
+                               onChange={(e) => setClienteEndereco(e.target.value)}
+                               className="bg-muted/10 border-border/50 h-12 text-xs font-bold rounded-xl focus:ring-primary/20"
+                             />
+                           </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -481,7 +524,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                        toast.error("Selecione uma forma de pagamento");
                        return;
                      }
-                     onCheckout(clienteNome, clienteTelefone, deliveryMethod, selectedBairro?.nome || undefined, shippingCost, selectedPagamento);
+                     onCheckout(clienteNome, clienteTelefone, deliveryMethod, selectedBairro?.nome || undefined, shippingCost, selectedPagamento, clienteEndereco);
                    } : nextStep}
                    className={`${currentStep === 1 ? 'w-full' : 'flex-[2]'} h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-[0.2em] rounded-2xl glow-soft flex items-center justify-center gap-2 group`}
                  >

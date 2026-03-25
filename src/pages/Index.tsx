@@ -206,7 +206,7 @@ const Index = () => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size && item.color === color)));
   };
 
-  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string) => {
+  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string, endereco?: string) => {
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (freteValor || 0);
 
     // Montar payload de pedido
@@ -247,6 +247,7 @@ const Index = () => {
             frete_valor: freteValor || 0,
             bairro_entrega: bairroEntrega,
             forma_pagamento: formaPagamento,
+            endereco: endereco,
             tenant_id: tenantId,
           });
         if (error) throw error;
@@ -259,9 +260,9 @@ const Index = () => {
     const deliveryText = deliveryMethod === "retirada" 
       ? "\n*Entrega: Retirada (Grátis)*" 
       : deliveryMethod === "fixo"
-        ? `\n*Entrega: Padrão (${formatBRL(settings?.fixed_shipping_rate || 0)})*`
+        ? `\n*Entrega: Padrão (${formatBRL(settings?.fixed_shipping_rate || 0)})*\nEndereço: ${endereco}`
         : deliveryMethod === "bairro"
-          ? `\n*Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*`
+          ? `\n*Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*\nEndereço: ${endereco}`
           : "";
 
     const pagamentoText = formaPagamento ? `\n*Pagamento: ${formaPagamento}*` : "";
