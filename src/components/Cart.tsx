@@ -491,7 +491,6 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                         <span className="text-xs font-black uppercase tracking-widest">Total Final:</span>
                         <div className="text-right">
                            <span className="text-primary text-3xl font-black block leading-none">{formatBRL(total)}</span>
-                           <span className="text-[8px] font-black text-muted-foreground uppercase tracking-tighter opacity-50">em até 12x no cartão*</span>
                         </div>
                      </div>
                   </div>
