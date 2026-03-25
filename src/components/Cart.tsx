@@ -1,5 +1,5 @@
 import React from "react";
-import { X, ShoppingBag, Trash2, Wallet, Truck, MapPin, Check, Search, Map, ChevronRight, ArrowLeft, ArrowRight, User, CreditCard } from "lucide-react";
+import { ShoppingBag, Trash2, Wallet, Truck, MapPin, Check, Search, Map, ChevronRight, ArrowLeft, ArrowRight, User, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -146,9 +146,6 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                {steps.find(s => s.id === currentStep)?.icon}
                <span className="uppercase font-black tracking-tighter">{steps.find(s => s.id === currentStep)?.label}</span>
             </SheetTitle>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full opacity-50 hover:opacity-100">
-               <X className="w-5 h-5" />
-            </Button>
           </div>
 
           <div className="flex items-center justify-between px-2 relative">
@@ -263,7 +260,14 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                     <Input
                       placeholder="Telefone (WhatsApp)"
                       value={clienteTelefone}
-                      onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))}
+                      onChange={(e) => {
+                        const formatted = formatPhoneMask(e.target.value);
+                        setClienteTelefone(formatted);
+                        const digits = e.target.value.replace(/\D/g, "");
+                        if (digits.length >= 11) {
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
                       className="bg-muted/10 border-border/50 h-12 text-xs font-bold rounded-xl focus:ring-primary/20"
                     />
                   </div>
@@ -489,9 +493,6 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                  </Button>
                </div>
                
-               <p className="text-[9px] text-center text-muted-foreground font-black uppercase opacity-30 tracking-widest">
-                  Processo seguro via WhatsApp • 256-bit SSL
-               </p>
              </>
            )}
 
