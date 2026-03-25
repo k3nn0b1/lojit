@@ -28,7 +28,7 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
   onRemoveItem: (id: number, size: string, color?: string) => void;
-  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string, endereco?: string) => void;
+  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string | { method: string; value: number }[], endereco?: string) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
@@ -40,7 +40,8 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
   const [bairrosList, setBairrosList] = React.useState<BairroFrete[]>([]);
   const [bairroSearchQuery, setBairroSearchQuery] = React.useState("");
   const [formasPagamento, setFormasPagamento] = React.useState<FormaPagamento[]>([]);
-  const [selectedPagamento, setSelectedPagamento] = React.useState<string | undefined>(undefined);
+  const [selectedMethods, setSelectedMethods] = React.useState<string[]>([]);
+  const [paymentValues, setPaymentValues] = React.useState<Record<string, string>>({}); // usando string para lidar com inputs
   const [clienteNome, setClienteNome] = React.useState("");
   const [clienteTelefone, setClienteTelefone] = React.useState("");
   const [clienteEndereco, setClienteEndereco] = React.useState("");
@@ -87,9 +88,46 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
   // Reseta para o passo 1 ao abrir/fechar se o carrinho mudar drasticamente
   React.useEffect(() => {
     if (!isOpen) {
-       setTimeout(() => setCurrentStep(1), 300);
+       setTimeout(() => {
+         setCurrentStep(1);
+         setSelectedMethods([]);
+         setPaymentValues({});
+       }, 300);
     }
   }, [isOpen]);
+
+  // Se o total mudar, e tiver só 1 método, atualiza o valor
+  React.useEffect(() => {
+    if (selectedMethods.length === 1) {
+      setPaymentValues({ [selectedMethods[0]]: total.toFixed(2) });
+    }
+  }, [total, selectedMethods.length]);
+
+  const togglePaymentMethod = (method: string) => {
+    setSelectedMethods(prev => {
+      const isSelected = prev.includes(method);
+      if (isSelected) {
+        const next = prev.filter(m => m !== method);
+        const nextValues = { ...paymentValues };
+        delete nextValues[method];
+        setPaymentValues(nextValues);
+        return next;
+      }
+      if (prev.length < 2) {
+        const next = [...prev, method];
+        if (next.length === 1) {
+          setPaymentValues({ [method]: total.toFixed(2) });
+        } else {
+           // Se adicionou o segundo, divide ao meio pra facilitar
+           const half = (total / 2).toFixed(2);
+           setPaymentValues({ [prev[0]]: half, [method]: (total - parseFloat(half)).toFixed(2) });
+        }
+        return next;
+      }
+      toast.error("Você pode selecionar no máximo 2 formas de pagamento");
+      return prev;
+    });
+  };
 
   const filteredBairros = bairrosList.filter(b => 
     b.nome.toLowerCase().includes(bairroSearchQuery.toLowerCase())
@@ -128,6 +166,20 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
       if ((deliveryMethod === "bairro" || deliveryMethod === "fixo") && !clienteEndereco.trim()) {
         toast.error("Preencha seu endereço (Rua e Número)");
         return;
+      }
+      if (formasPagamento.length > 0) {
+        if (selectedMethods.length === 0) {
+          toast.error("Selecione pelo menos uma forma de pagamento");
+          return;
+        }
+        if (selectedMethods.length === 2) {
+          const v1 = parseFloat(paymentValues[selectedMethods[0]]) || 0;
+          const v2 = parseFloat(paymentValues[selectedMethods[1]]) || 0;
+          if (Math.abs((v1 + v2) - total) > 0.01) {
+            toast.error(`A soma dos pagamentos (${formatBRL(v1 + v2)}) deve ser igual ao total (${formatBRL(total)})`);
+            return;
+          }
+        }
       }
       setCurrentStep(3);
     }
@@ -448,26 +500,60 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 className="p-6 space-y-8"
               >
                 {formasPagamento.length > 0 ? (
-                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-1 flex items-center gap-2">
-                       <Wallet className="w-3.5 h-3.5" /> FORMA DE PAGAMENTO
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3">
-                       {formasPagamento.map((p) => (
-                         <button
-                           key={p.id}
-                           onClick={() => setSelectedPagamento(p.name)}
-                           className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${
-                              selectedPagamento === p.name 
-                                ? 'bg-primary/10 border-primary text-primary shadow-[0_0_20px_rgba(var(--primary),0.1)]' 
-                                : 'bg-muted/10 border-border/30 text-muted-foreground hover:border-primary/20'
-                           }`}
-                         >
-                           <CreditCard className={`w-6 h-6 ${selectedPagamento === p.name ? 'text-primary' : 'text-muted-foreground/30'}`} />
-                           <span className="text-[9px] font-black uppercase tracking-widest text-center">{p.name}</span>
-                         </button>
-                       ))}
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-1 flex items-center gap-2">
+                         <Wallet className="w-3.5 h-3.5" /> FORMA DE PAGAMENTO (Até 2)
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                         {formasPagamento.map((p) => (
+                           <button
+                             key={p.id}
+                             onClick={() => togglePaymentMethod(p.name)}
+                             className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all relative ${
+                                selectedMethods.includes(p.name)
+                                  ? 'bg-primary/10 border-primary text-primary shadow-[0_0_20px_rgba(var(--primary),0.1)]' 
+                                  : 'bg-muted/10 border-border/30 text-muted-foreground hover:border-primary/20'
+                             }`}
+                           >
+                             {selectedMethods.includes(p.name) && (
+                               <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary text-black flex items-center justify-center text-[8px] font-black">
+                                 {selectedMethods.indexOf(p.name) + 1}
+                               </div>
+                             )}
+                             <CreditCard className={`w-6 h-6 ${selectedMethods.includes(p.name) ? 'text-primary' : 'text-muted-foreground/30'}`} />
+                             <span className="text-[9px] font-black uppercase tracking-widest text-center">{p.name}</span>
+                           </button>
+                         ))}
+                      </div>
                     </div>
+
+                    {selectedMethods.length === 2 && (
+                      <div className="space-y-4 p-5 rounded-3xl bg-primary/5 border border-primary/20 animate-in zoom-in-95 duration-300">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-primary/80 mb-2">Dividir Pagamento</p>
+                         <div className="grid grid-cols-2 gap-4">
+                            {selectedMethods.map((m) => (
+                              <div key={m} className="space-y-2">
+                                <Label className="text-[8px] font-black uppercase tracking-widest opacity-60">{m}</Label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-30">R$</span>
+                                  <Input 
+                                    type="number"
+                                    step="0.01"
+                                    value={paymentValues[m] || ""}
+                                    onChange={(e) => setPaymentValues(prev => ({ ...prev, [m]: e.target.value }))}
+                                    className="bg-background/50 border-border/50 h-10 pl-8 text-xs font-black rounded-xl focus:ring-primary/20"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                         </div>
+                         <div className="flex justify-between items-center pt-2 border-t border-primary/10">
+                            <span className="text-[8px] font-black uppercase opacity-60">Soma: {formatBRL(Object.values(paymentValues).reduce((a, b) => a + (parseFloat(b) || 0), 0))}</span>
+                            <span className="text-[8px] font-black uppercase text-primary">Total: {formatBRL(total)}</span>
+                         </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-6 rounded-2xl bg-muted/10 border border-primary/10 text-center">
@@ -517,14 +603,29 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                  
                  <Button
                    autoFocus
-                   onClick={currentStep === 3 ? () => {
-                     // Validação final e checkout
-                     if (formasPagamento.length > 0 && !selectedPagamento) {
-                       toast.error("Selecione uma forma de pagamento");
-                       return;
-                     }
-                     onCheckout(clienteNome, clienteTelefone, deliveryMethod, selectedBairro?.nome || undefined, shippingCost, selectedPagamento, clienteEndereco);
-                   } : nextStep}
+                    onClick={currentStep === 3 ? () => {
+                      // Validação final e checkout
+                      if (formasPagamento.length > 0) {
+                        if (selectedMethods.length === 0) {
+                          toast.error("Selecione uma forma de pagamento");
+                          return;
+                        }
+                        if (selectedMethods.length === 2) {
+                          const v1 = parseFloat(paymentValues[selectedMethods[0]]) || 0;
+                          const v2 = parseFloat(paymentValues[selectedMethods[1]]) || 0;
+                          if (Math.abs((v1 + v2) - total) > 0.01) {
+                             toast.error("A soma dos valores deve ser igual ao total");
+                             return;
+                          }
+                        }
+                      }
+                      
+                      const pagamentoFinal = selectedMethods.length === 2 
+                        ? selectedMethods.map(m => ({ method: m, value: parseFloat(paymentValues[m]) || 0 }))
+                        : (selectedMethods[0] || "");
+
+                      onCheckout(clienteNome, clienteTelefone, deliveryMethod, selectedBairro?.nome || undefined, shippingCost, pagamentoFinal, clienteEndereco);
+                    } : nextStep}
                    className={`${currentStep === 1 ? 'w-full' : 'flex-[2]'} h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-[0.2em] rounded-2xl glow-soft flex items-center justify-center gap-2 group`}
                  >
                    {currentStep === 3 ? (

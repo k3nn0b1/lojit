@@ -206,7 +206,7 @@ const Index = () => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size && item.color === color)));
   };
 
-  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string, endereco?: string) => {
+  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string | { method: string; value: number }[], endereco?: string) => {
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (freteValor || 0);
 
     // Montar payload de pedido
@@ -233,6 +233,9 @@ const Index = () => {
           await supabase.from("clientes").insert({ nome: clienteNome, telefone: normalizePhone(clienteTelefone), tenant_id: tenantId });
         } catch {}
 
+        const mappedFormaPgto = Array.isArray(formaPagamento) 
+          ? formaPagamento.map(p => `${p.method}: ${formatBRL(p.value)}`).join(' + ')
+          : formaPagamento;
 
         const { error } = await supabase
           .from("pedidos")
@@ -246,7 +249,7 @@ const Index = () => {
             delivery_method: deliveryMethod,
             frete_valor: freteValor || 0,
             bairro_entrega: bairroEntrega,
-            forma_pagamento: formaPagamento,
+            forma_pagamento: mappedFormaPgto,
             endereco: endereco,
             tenant_id: tenantId,
           });
@@ -265,7 +268,17 @@ const Index = () => {
           ? `\n*Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*\nEndereço: ${endereco}`
           : "";
 
-    const pagamentoText = formaPagamento ? `\n*Pagamento: ${formaPagamento}*` : "";
+    let pagamentoText = "";
+    if (formaPagamento) {
+      if (Array.isArray(formaPagamento)) {
+        pagamentoText = "\n*Pagamento Composto:*";
+        formaPagamento.forEach(p => {
+          pagamentoText += `\n- ${p.method}: ${formatBRL(p.value)}`;
+        });
+      } else {
+        pagamentoText = `\n*Pagamento: ${formaPagamento}*`;
+      }
+    }
 
     const message = `*Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}${pagamentoText}\n\n${cartItems
       .map(
