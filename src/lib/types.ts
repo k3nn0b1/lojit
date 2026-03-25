@@ -64,6 +64,7 @@ export interface Pedido {
   valor_total: number;
   status: PedidoStatus;
   delivery_method?: string;
+  frete_valor?: number;
   data_criacao: string;
   tenant_id: string;
 }
@@ -77,6 +78,7 @@ export interface AdminCartItem {
   quantity: number;
   price: number;
   delivery_method?: string;
+  frete_valor?: number;
 }
 
 // ── Cliente ───────────────────────────────────────────────

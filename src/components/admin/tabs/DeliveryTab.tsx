@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { toast } from "sonner";
 import { Truck, MapPin, Save, CheckCircle2, Circle } from "lucide-react";
@@ -10,11 +11,17 @@ const DeliveryTab = ({ tenantId }: { tenantId: string }) => {
   const { settings, updateSettings } = useStoreSettings();
   const [saving, setSaving] = useState(false);
   const [enablePickup, setEnablePickup] = useState(settings?.enable_pickup ?? false);
+  const [enableFixedShipping, setEnableFixedShipping] = useState(settings?.enable_fixed_shipping ?? false);
+  const [fixedShippingRate, setFixedShippingRate] = useState(settings?.fixed_shipping_rate?.toString() ?? "0");
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateSettings({ enable_pickup: enablePickup });
+      await updateSettings({ 
+        enable_pickup: enablePickup,
+        enable_fixed_shipping: enableFixedShipping,
+        fixed_shipping_rate: parseFloat(fixedShippingRate) || 0
+      });
       toast.success("Configurações de entrega atualizadas!");
     } catch (error) {
       toast.error("Erro ao salvar configurações");
@@ -72,13 +79,57 @@ const DeliveryTab = ({ tenantId }: { tenantId: string }) => {
               </div>
             </div>
 
-            {/* Placeholder para futuras modalidades */}
-            <div className="p-8 rounded-[2.5rem] border-2 border-dashed border-primary/5 bg-transparent flex flex-col items-center justify-center text-center opacity-40 grayscale pointer-events-none">
-                <div className="w-14 h-14 rounded-2xl bg-muted/20 flex items-center justify-center mb-4">
-                    <Truck className="w-8 h-8" />
+            {/* Modalidade: Taxa Fixa */}
+            <div 
+              className={`relative p-8 rounded-[2.5rem] border-2 transition-all cursor-pointer group flex flex-col justify-between ${
+                enableFixedShipping 
+                  ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(var(--primary),0.1)] translate-y-[-4px]' 
+                  : 'bg-muted/10 border-primary/5 hover:border-primary/20'
+              }`}
+              onClick={() => setEnableFixedShipping(!enableFixedShipping)}
+            >
+              <div className="absolute top-6 right-8">
+                {enableFixedShipping ? (
+                  <CheckCircle2 className="w-8 h-8 text-primary animate-in zoom-in duration-300" />
+                ) : (
+                  <Circle className="w-8 h-8 text-muted-foreground opacity-20" />
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${enableFixedShipping ? 'bg-primary text-black' : 'bg-muted text-muted-foreground'}`}>
+                  <Truck className="w-8 h-8" />
                 </div>
-                <h3 className="text-sm font-black uppercase tracking-[.2em] mb-1">Cálculo de Frete</h3>
-                <p className="text-[9px] font-black uppercase tracking-widest text-primary">Em breve</p>
+                
+                <div className="space-y-1">
+                   <h3 className="text-lg font-black uppercase tracking-widest">Taxa Fixa</h3>
+                   <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[9px] font-black uppercase border-primary/20">Valor Único</Badge>
+                      <span className="text-[10px] font-bold text-muted-foreground">Ideal para entregas locais</span>
+                   </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Define um custo fixo de frete para qualquer pedido, independente da distância ou peso.
+                </p>
+
+                {enableFixedShipping && (
+                   <div className="animate-in slide-in-from-top-2 duration-300 pt-2" onClick={(e) => e.stopPropagation()}>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2 block">Valor da Taxa (R$)</Label>
+                      <div className="relative">
+                         <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-xs opacity-50">R$</span>
+                         <input
+                           type="number"
+                           step="0.01"
+                           value={fixedShippingRate}
+                           onChange={(e) => setFixedShippingRate(e.target.value)}
+                           className="w-full h-12 bg-background border border-primary/20 rounded-xl pl-10 pr-4 text-sm font-black focus:outline-none focus:border-primary transition-all"
+                           placeholder="0,00"
+                         />
+                      </div>
+                   </div>
+                )}
+              </div>
             </div>
           </div>
 

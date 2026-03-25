@@ -41,9 +41,18 @@ const NewOrderModal = ({
   const [confirmDebitarOpen, setConfirmDebitarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { settings } = useStoreSettings();
-  const [deliveryMethod, setDeliveryMethod] = useState<string | undefined>(settings?.enable_pickup ? "retirada" : undefined);
+  const [deliveryMethod, setDeliveryMethod] = useState<string | undefined>(undefined);
 
-  const adminCartTotal = useMemo(() => adminCart.reduce((sum, it) => sum + it.price * it.quantity, 0), [adminCart]);
+  // Sincroniza o método inicial
+  useMemo(() => {
+    if (!deliveryMethod && settings) {
+      if (settings.enable_pickup) setDeliveryMethod("retirada");
+      else if (settings.enable_fixed_shipping) setDeliveryMethod("fixo");
+    }
+  }, [settings]);
+
+  const shippingCost = deliveryMethod === "fixo" ? (settings?.fixed_shipping_rate || 0) : 0;
+  const adminCartTotal = useMemo(() => adminCart.reduce((sum, it) => sum + it.price * it.quantity, 0) + shippingCost, [adminCart, shippingCost]);
 
   const addToAdminCart = () => {
     const qty = Math.max(1, parseInt(quantity || '1') || 1);
@@ -158,6 +167,7 @@ const NewOrderModal = ({
           valor_total: adminCartTotal,
           status: debitarEstoque ? "concluido" : "pendente",
           delivery_method: deliveryMethod,
+          frete_valor: shippingCost,
           tenant_id: tenantId,
         });
       if (error) throw error;
@@ -405,26 +415,48 @@ const NewOrderModal = ({
                     </div>
                   )}
 
-                  {settings?.enable_pickup && (
+                  {(settings?.enable_pickup || settings?.enable_fixed_shipping) && (
                     <div className="space-y-2 py-2">
                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
                           <Truck className="w-3 h-3" /> Modalidade de Entrega
                        </Label>
-                       <button
-                         type="button"
-                         onClick={() => setDeliveryMethod(deliveryMethod === "retirada" ? undefined : "retirada")}
-                         className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
-                           deliveryMethod === "retirada" 
-                             ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)] text-primary' 
-                             : 'bg-muted/20 border-primary/5 hover:border-primary/20 text-muted-foreground'
-                         }`}
-                       >
-                         <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Retirada na Loja</span>
-                         </div>
-                         {deliveryMethod === "retirada" && <CheckCircle2 className="w-4 h-4" />}
-                       </button>
+                       <div className="grid grid-cols-1 gap-2">
+                          {settings?.enable_pickup && (
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryMethod(deliveryMethod === "retirada" ? undefined : "retirada")}
+                              className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                                deliveryMethod === "retirada" 
+                                  ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)] text-primary' 
+                                  : 'bg-muted/20 border-primary/5 hover:border-primary/20 text-muted-foreground'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                 <MapPin className="w-4 h-4" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest">Retirada na Loja</span>
+                              </div>
+                              {deliveryMethod === "retirada" && <CheckCircle2 className="w-4 h-4" />}
+                            </button>
+                          )}
+
+                          {settings?.enable_fixed_shipping && (
+                            <button
+                              type="button"
+                              onClick={() => setDeliveryMethod(deliveryMethod === "fixo" ? undefined : "fixo")}
+                              className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                                deliveryMethod === "fixo" 
+                                  ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)] text-primary' 
+                                  : 'bg-muted/20 border-primary/5 hover:border-primary/20 text-muted-foreground'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                 <Truck className="w-4 h-4" />
+                                 <span className="text-[10px] font-black uppercase tracking-widest">Entrega Padrão ({formatBRL(settings.fixed_shipping_rate || 0)})</span>
+                              </div>
+                              {deliveryMethod === "fixo" && <CheckCircle2 className="w-4 h-4" />}
+                            </button>
+                          )}
+                       </div>
                     </div>
                   )}
 

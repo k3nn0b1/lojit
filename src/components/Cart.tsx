@@ -29,16 +29,20 @@ interface CartProps {
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const { settings } = useStoreSettings();
+  const [deliveryMethod, setDeliveryMethod] = React.useState<string | undefined>(undefined);
+
+  const shippingCost = deliveryMethod === "fixo" ? (settings?.fixed_shipping_rate || 0) : 0;
+  const total = subtotal + shippingCost;
   const [clienteNome, setClienteNome] = React.useState("");
   const [clienteTelefone, setClienteTelefone] = React.useState("");
-  const { settings } = useStoreSettings();
-  const [deliveryMethod, setDeliveryMethod] = React.useState<string | undefined>(settings?.enable_pickup ? "retirada" : undefined);
 
   // Sincroniza o método inicial quando as configurações carregam
   React.useEffect(() => {
-    if (settings?.enable_pickup && !deliveryMethod) {
-      setDeliveryMethod("retirada");
+    if (!deliveryMethod && settings) {
+      if (settings.enable_pickup) setDeliveryMethod("retirada");
+      else if (settings.enable_fixed_shipping) setDeliveryMethod("fixo");
     }
   }, [settings]);
 
@@ -54,7 +58,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg bg-card border-border/50">
+      <SheetContent className="w-full sm:max-w-lg bg-card border-border/50 flex flex-col h-full ring-0 focus:ring-0">
         <SheetHeader>
           <SheetTitle className="font-display text-2xl flex items-center gap-2">
             <ShoppingBag className="w-6 h-6 text-primary" />
@@ -62,7 +66,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-6 space-y-4">
+        <div className="flex-1 overflow-y-auto py-6 space-y-4 pr-1">
           {items.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -72,7 +76,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
             items.map((item) => (
               <div
                 key={`${item.id}-${item.size}-${item.color || ""}`}
-                className="flex gap-4 p-4 rounded-lg border border-border/50 bg-background/50"
+                className="flex gap-4 p-4 rounded-lg border border-border/50 bg-background/50 relative group"
               >
                 <img
                   src={item.image}
@@ -80,27 +84,27 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                   className="w-20 h-20 object-cover rounded-md"
                 />
                 <div className="flex-1 space-y-2">
-                  <h4 className="font-semibold line-clamp-1">{item.name}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {item.color ? `Cor: ${item.color} | ` : ""}Tamanho: {item.size}
+                  <h4 className="text-xs font-black uppercase line-clamp-1">{item.name}</h4>
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none">
+                    {item.color ? `${item.color} • ` : ""}TAMANHO {item.size}
                   </p>
-                  <p className="text-primary font-bold">{formatBRL(item.price)}</p>
+                  <p className="text-primary font-black">{formatBRL(item.price)}</p>
                   
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onUpdateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 p-0 border-primary/20 bg-muted/20"
                     >
                       -
                     </Button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <span className="w-6 text-center text-xs font-black">{item.quantity}</span>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1, item.color)}
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 p-0 border-primary/20 bg-muted/20"
                     >
                       +
                     </Button>
@@ -111,7 +115,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                   size="sm"
                   variant="ghost"
                   onClick={() => onRemoveItem(item.id, item.size, item.color)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:text-red-500 hover:bg-red-500/10 h-7 w-7 p-0 ml-auto"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -121,55 +125,88 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
         </div>
 
         {items.length > 0 && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5 pt-4 border-t border-border/50 pb-2">
           <div className="space-y-2 w-full">
             <Input
               placeholder="Nome completo"
               value={clienteNome}
               onChange={(e) => setClienteNome(e.target.value)}
-              autoComplete="name"
+              className="bg-muted/10 border-border/50 h-11 text-xs font-bold"
             />
             <Input
               placeholder="Telefone (WhatsApp) — Ex.: (75) 98128-4738"
               value={clienteTelefone}
               onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))}
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
+              className="bg-muted/10 border-border/50 h-11 text-xs font-bold"
             />
           </div>
-          {settings?.enable_pickup && (
+
+          {(settings?.enable_pickup || settings?.enable_fixed_shipping) && (
             <div className="space-y-3">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Truck className="w-3 h-3" /> FORMA DE ENTREGA
               </h4>
-              <button 
-                onClick={() => setDeliveryMethod("retirada")}
-                className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
-                  deliveryMethod === "retirada" 
-                    ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)]' 
-                    : 'bg-muted/20 border-border/50 hover:border-primary/30'
-                }`}
-              >
-                <div className="flex items-center gap-3 text-left">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${deliveryMethod === "retirada" ? 'bg-primary text-black' : 'bg-muted/40 text-muted-foreground'}`}>
-                    <MapPin className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black uppercase">Retirada na Loja</p>
-                    <p className="text-[10px] text-muted-foreground font-bold">Grátis • Pronto em até 24h</p>
-                  </div>
-                </div>
-                {deliveryMethod === "retirada" && <Check className="w-5 h-5 text-primary" />}
-              </button>
+              <div className="grid grid-cols-1 gap-2">
+                {settings?.enable_pickup && (
+                  <button 
+                    onClick={() => setDeliveryMethod("retirada")}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                      deliveryMethod === "retirada" 
+                        ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)]' 
+                        : 'bg-muted/20 border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 text-left">
+                      <MapPin className={`w-5 h-5 ${deliveryMethod === "retirada" ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <div>
+                        <p className="text-[10px] font-black uppercase">Retirada na Loja</p>
+                        <p className="text-[9px] text-muted-foreground font-bold">Grátis</p>
+                      </div>
+                    </div>
+                    {deliveryMethod === "retirada" && <Check className="w-4 h-4 text-primary" />}
+                  </button>
+                )}
+                
+                {settings?.enable_fixed_shipping && (
+                  <button 
+                    onClick={() => setDeliveryMethod("fixo")}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                      deliveryMethod === "fixo" 
+                        ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)]' 
+                        : 'bg-muted/20 border-border/50 hover:border-primary/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 text-left">
+                      <Truck className={`w-5 h-5 ${deliveryMethod === "fixo" ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <div>
+                        <p className="text-[10px] font-black uppercase">Entrega Padrão</p>
+                        <p className="text-[9px] text-muted-foreground font-bold">{formatBRL(settings?.fixed_shipping_rate || 0)}</p>
+                      </div>
+                    </div>
+                    {deliveryMethod === "fixo" && <Check className="w-4 h-4 text-primary" />}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
-          <Separator />
-          <div className="flex justify-between items-center text-lg font-bold">
-            <span>TOTAL:</span>
-            <span className="text-primary text-2xl">{formatBRL(total)}</span>
+          <div className="space-y-1.5 pt-2 border-t border-border/20">
+             <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <span>Subtotal:</span>
+                <span>{formatBRL(subtotal)}</span>
+             </div>
+             {shippingCost > 0 && (
+                <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <span>Frete:</span>
+                  <span>{formatBRL(shippingCost)}</span>
+                </div>
+             )}
+             <div className="flex justify-between items-center pt-1">
+                <span className="text-xs font-black uppercase tracking-widest">Total:</span>
+                <span className="text-primary text-2xl font-black">{formatBRL(total)}</span>
+             </div>
           </div>
+
           <Button
             onClick={() => {
               const nome = clienteNome.trim();
@@ -178,14 +215,14 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 toast.error("Preencha nome e telefone para finalizar");
                 return;
               }
-              if (settings?.enable_pickup && !deliveryMethod) {
+              if ((settings?.enable_pickup || settings?.enable_fixed_shipping) && !deliveryMethod) {
                 toast.error("Selecione uma forma de entrega");
                 return;
               }
               onCheckout(nome, tel, deliveryMethod);
             }}
             size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg glow-soft"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-widest glow-soft rounded-xl"
           >
             FINALIZAR NO WHATSAPP
           </Button>

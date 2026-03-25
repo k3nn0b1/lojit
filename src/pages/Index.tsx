@@ -253,7 +253,11 @@ const Index = () => {
       }
     }
 
-    const deliveryText = deliveryMethod === "retirada" ? "\n📍 *Entrega: Retirada na Loja (Grátis)*" : "";
+    const deliveryText = deliveryMethod === "retirada" 
+      ? "\n📍 *Entrega: Retirada na Loja (Grátis)*" 
+      : deliveryMethod === "fixo"
+        ? `\n🚚 *Entrega: Padrão (${formatBRL(settings?.fixed_shipping_rate || 0)})*`
+        : "";
 
     const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}\n\n${cartItems
       .map(

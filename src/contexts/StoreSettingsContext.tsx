@@ -34,6 +34,8 @@ export interface StoreSettings {
   collection_subtitle?: string;
   product_size_label?: string;
   enable_pickup?: boolean;
+  enable_fixed_shipping?: boolean;
+  fixed_shipping_rate?: number;
   updated_at?: string;
 }
 
@@ -70,7 +72,9 @@ const defaultSettings: StoreSettings = {
   primary_font: "'Bebas Neue', cursive",
   secondary_font: "'Inter', sans-serif",
   product_size_label: "ESCOLHA SEU TAMANHO",
-  enable_pickup: false
+  enable_pickup: false,
+  enable_fixed_shipping: false,
+  fixed_shipping_rate: 0
 };
 
 const getInitialSettings = (tenantId?: string | null): StoreSettings => {
