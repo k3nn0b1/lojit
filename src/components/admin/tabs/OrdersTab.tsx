@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Check, X } from "lucide-react";
+import { RefreshCw, Check, X, Wallet } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Select,
@@ -499,6 +499,13 @@ const OrdersTab = ({
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-muted-foreground">Status</span>
                         <Badge className={`${pedido.status === 'concluido' ? 'bg-green-500' : 'bg-amber-500'} font-black text-[10px] uppercase text-white`}>{pedido.status}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-primary/5">
+                        <span className="text-sm font-bold text-muted-foreground">Pagamento</span>
+                        <div className="flex items-center gap-1.5 font-black text-[10px] uppercase text-primary">
+                           <Wallet className="w-3 h-3" />
+                           {pedido.forma_pagamento || 'Não Informado'}
+                        </div>
                       </div>
                       <div className="flex items-center justify-between pt-2 border-t border-primary/5">
                         <span className="text-sm font-bold text-muted-foreground">Total Pago</span>

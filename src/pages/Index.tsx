@@ -206,7 +206,7 @@ const Index = () => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size && item.color === color)));
   };
 
-  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number) => {
+  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string) => {
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + (freteValor || 0);
 
     // Montar payload de pedido
@@ -246,6 +246,7 @@ const Index = () => {
             delivery_method: deliveryMethod,
             frete_valor: freteValor || 0,
             bairro_entrega: bairroEntrega,
+            forma_pagamento: formaPagamento,
             tenant_id: tenantId,
           });
         if (error) throw error;
@@ -263,7 +264,9 @@ const Index = () => {
           ? `\n🚚 *Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*`
           : "";
 
-    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}\n\n${cartItems
+    const pagamentoText = formaPagamento ? `\n💳 *Pagamento: ${formaPagamento}*` : "";
+
+    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}${pagamentoText}\n\n${cartItems
       .map(
         (item) =>
           `• ${item.name}\n  ${item.color ? `Cor: ${item.color}\n  ` : ""}Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`

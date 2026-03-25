@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { formatBRL, normalizePhone, formatPhoneMask, rankSize, generateUUID, sortPedidos } from "@/lib/utils";
 import { AdminProduct, AdminCartItem, Pedido, BairroFrete } from "@/lib/types";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import { Truck, MapPin, CheckCircle2, Search, Map, Check } from "lucide-react";
+import { Truck, MapPin, CheckCircle2, Search, Map, Check, Wallet } from "lucide-react";
 import { useEffect } from "react";
 
 interface NewOrderModalProps {
@@ -46,6 +46,8 @@ const NewOrderModal = ({
   const [bairrosList, setBairrosList] = useState<BairroFrete[]>([]);
   const [selectedBairro, setSelectedBairro] = useState<BairroFrete | null>(null);
   const [bairroSearchQuery, setBairroSearchQuery] = useState("");
+  const [formasPagamento, setFormasPagamento] = useState<any[]>([]);
+  const [selectedPagamento, setSelectedPagamento] = useState<string | undefined>(undefined);
 
   // Sincroniza o método inicial
   useEffect(() => {
@@ -57,17 +59,25 @@ const NewOrderModal = ({
   }, [settings]);
 
   useEffect(() => {
-    if (settings?.enable_neighborhood_shipping) {
-      const fetchBairros = async () => {
+    const fetchData = async () => {
+      if (settings?.enable_neighborhood_shipping) {
         const { data } = await supabase
           .from("bairros_frete")
           .select("*")
           .eq("tenant_id", tenantId)
           .order("nome", { ascending: true });
         if (data) setBairrosList(data);
-      };
-      fetchBairros();
-    }
+      }
+
+      // Fetch Pagamentos
+      const { data: pData } = await supabase
+        .from("formas_pagamento")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name", { ascending: true });
+      if (pData) setFormasPagamento(pData);
+    };
+    fetchData();
   }, [settings, tenantId]);
 
   const shippingCost = deliveryMethod === "fixo" 
@@ -145,6 +155,10 @@ const NewOrderModal = ({
       toast.error("Adicione itens ao pedido");
       return;
     }
+    if (formasPagamento.length > 0 && !selectedPagamento) {
+      toast.error("Selecione a forma de pagamento");
+      return;
+    }
     setIsSubmitting(true);
     const nome = informarCliente && clienteNome.trim() ? clienteNome.trim() : "LOJA";
     const telefone = informarCliente && clienteTelefone.trim() ? clienteTelefone.trim() : "(XX) XXXXXX-XXXX";
@@ -192,6 +206,7 @@ const NewOrderModal = ({
           delivery_method: deliveryMethod,
           frete_valor: shippingCost,
           bairro_entrega: selectedBairro?.nome,
+          forma_pagamento: selectedPagamento,
           tenant_id: tenantId,
         });
       if (error) throw error;
@@ -544,6 +559,31 @@ const NewOrderModal = ({
                               )}
                             </div>
                           )}
+                       </div>
+                    </div>
+
+                  )}
+
+                  {formasPagamento.length > 0 && (
+                    <div className="space-y-3 py-2 border-t border-primary/10">
+                       <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                          <Wallet className="w-3 h-3" /> Forma de Pagamento
+                       </Label>
+                       <div className="grid grid-cols-2 gap-2">
+                          {formasPagamento.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedPagamento(p.name)}
+                              className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                                selectedPagamento === p.name 
+                                  ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)] text-primary' 
+                                  : 'bg-muted/20 border-primary/5 hover:border-primary/20 text-muted-foreground'
+                              }`}
+                            >
+                              {p.name}
+                            </button>
+                          ))}
                        </div>
                     </div>
                   )}

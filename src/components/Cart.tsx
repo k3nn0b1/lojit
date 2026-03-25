@@ -1,15 +1,15 @@
 import React from "react";
-import { X, ShoppingBag, Trash2 } from "lucide-react";
+import { X, ShoppingBag, Trash2, Wallet, Truck, MapPin, Check, Search, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import { Truck, MapPin, Check, Search, Map } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { BairroFrete } from "@/lib/types";
+import { BairroFrete, FormaPagamento } from "@/lib/types";
 
 export interface CartItem {
   id: number;
@@ -27,7 +27,7 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
   onRemoveItem: (id: number, size: string, color?: string) => void;
-  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number) => void;
+  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number, formaPagamento?: string) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
@@ -37,6 +37,8 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
   const [selectedBairro, setSelectedBairro] = React.useState<BairroFrete | null>(null);
   const [bairrosList, setBairrosList] = React.useState<BairroFrete[]>([]);
   const [bairroSearchQuery, setBairroSearchQuery] = React.useState("");
+  const [formasPagamento, setFormasPagamento] = React.useState<FormaPagamento[]>([]);
+  const [selectedPagamento, setSelectedPagamento] = React.useState<string | undefined>(undefined);
 
   const shippingCost = deliveryMethod === "fixo" 
     ? (settings?.fixed_shipping_rate || 0) 
@@ -49,16 +51,27 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
   const [clienteTelefone, setClienteTelefone] = React.useState("");
 
   React.useEffect(() => {
-    if (settings?.enable_neighborhood_shipping && settings?.tenant_id) {
-      const fetchBairros = async () => {
-        const { data } = await supabase
-          .from("bairros_frete")
+    if (settings?.tenant_id) {
+      const fetchData = async () => {
+        // Fetch Bairros
+        if (settings.enable_neighborhood_shipping) {
+          const { data: bData } = await supabase
+            .from("bairros_frete")
+            .select("*")
+            .eq("tenant_id", settings.tenant_id)
+            .order("nome", { ascending: true });
+          if (bData) setBairrosList(bData);
+        }
+
+        // Fetch Formas de Pagamento
+        const { data: pData } = await supabase
+          .from("formas_pagamento")
           .select("*")
           .eq("tenant_id", settings.tenant_id)
-          .order("nome", { ascending: true });
-        if (data) setBairrosList(data);
+          .order("name", { ascending: true });
+        if (pData) setFormasPagamento(pData);
       };
-      fetchBairros();
+      fetchData();
     }
   }, [settings]);
 
@@ -284,6 +297,29 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                   </div>
                 )}
               </div>
+
+              {formasPagamento.length > 0 && (
+                <div className="space-y-4 pt-4 border-t border-border/50">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+                    <Wallet className="w-3.5 h-3.5" /> FORMA DE PAGAMENTO
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                     {formasPagamento.map((p) => (
+                       <button
+                         key={p.id}
+                         onClick={() => setSelectedPagamento(p.name)}
+                         className={`p-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                            selectedPagamento === p.name 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-muted/10 border-border/50 text-muted-foreground hover:border-primary/20'
+                         }`}
+                       >
+                         {p.name}
+                       </button>
+                     ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -320,7 +356,11 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 toast.error("Selecione o bairro de entrega");
                 return;
               }
-              onCheckout(nome, tel, deliveryMethod, selectedBairro?.nome || undefined, shippingCost);
+              if (formasPagamento.length > 0 && !selectedPagamento) {
+                toast.error("Selecione a forma de pagamento");
+                return;
+              }
+              onCheckout(nome, tel, deliveryMethod, selectedBairro?.nome || undefined, shippingCost, selectedPagamento);
             }}
             size="lg"
             className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-widest glow-soft rounded-xl"

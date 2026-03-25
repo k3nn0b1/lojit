@@ -66,6 +66,7 @@ export interface Pedido {
   delivery_method?: string;
   frete_valor?: number;
   bairro_entrega?: string;
+  forma_pagamento?: string;
   data_criacao: string;
   tenant_id: string;
 }
@@ -81,13 +82,20 @@ export interface AdminCartItem {
   delivery_method?: string;
   frete_valor?: number;
   bairro_entrega?: string;
+  forma_pagamento?: string;
 }
 
-// ── Bairro Frete ─────────────────────────────────────────
+// ── Outros ────────────────────────────────────────────────
 export interface BairroFrete {
   id: number;
   nome: string;
   valor: number;
+  tenant_id: string;
+}
+
+export interface FormaPagamento {
+  id: number;
+  name: string;
   tenant_id: string;
 }
 
