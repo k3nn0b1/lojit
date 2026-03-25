@@ -140,11 +140,11 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="flex flex-col md:grid md:grid-cols-3 lg:grid-cols-4 gap-3">
             {globalSizes.map((s) => (
-              <div key={s} className="group relative flex items-center justify-between rounded-2xl border border-primary/10 px-6 py-4 bg-muted/10 hover:border-primary/40 transition-all hover:bg-muted/20 hover:translate-y-[-2px] hover:shadow-xl shadow-primary/5">
-                <span className="truncate flex-1 font-black text-xs uppercase tracking-widest text-foreground">{s}</span>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div key={s} className="group relative flex items-center justify-between rounded-2xl border border-primary/10 px-5 py-3 md:py-4 bg-muted/10 hover:border-primary/40 transition-all hover:bg-muted/20 shadow-primary/5">
+                <span className="flex-1 font-black text-xs uppercase tracking-widest text-foreground">{s}</span>
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -152,18 +152,18 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                       setEditingSize(s);
                       setSizeEditValue(s);
                     }}
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                    className="h-9 w-9 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-full"
+                    className="h-9 w-9 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-full"
                     onClick={() => setSizeToRemove(s)}
                     disabled={saving}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

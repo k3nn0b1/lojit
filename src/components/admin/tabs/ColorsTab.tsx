@@ -138,16 +138,16 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex flex-col gap-3">
             {globalColors.map((c) => (
-              <div key={c.id} className="group relative rounded-[2rem] border border-primary/10 p-6 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex flex-col items-center text-center gap-5">
+              <div key={c.id} className="group relative rounded-2xl border border-primary/10 p-4 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex items-center gap-4">
                 {editingId === c.id ? (
-                  <div className="space-y-4 w-full">
-                    <div className="flex items-center gap-3 bg-background/50 p-2 rounded-2xl border border-primary/10">
-                        <Input type="color" className="w-10 h-10 p-1 bg-transparent border-none" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
-                        <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-9 bg-transparent border-none text-[10px] font-black uppercase" />
+                  <div className="flex flex-1 items-center gap-4">
+                    <div className="flex items-center gap-3 bg-background/50 p-2 rounded-2xl border border-primary/10 flex-1">
+                        <Input type="color" className="w-10 h-10 p-1 bg-transparent border-none shrink-0" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
+                        <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-9 bg-transparent border-none text-[10px] font-black uppercase flex-1" />
                     </div>
-                    <div className="flex justify-center gap-2">
+                    <div className="flex gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleUpdateColor(c)} className="h-10 w-10 p-0 rounded-full hover:bg-green-500/10 hover:text-green-500">
                           <Check className="h-5 w-5" />
                         </Button>
@@ -158,14 +158,14 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                   </div>
                 ) : (
                   <>
-                    <div className="relative">
-                        <div className="w-16 h-16 rounded-full border-4 border-white/5 shadow-2xl transform group-hover:scale-110 transition-transform duration-500" style={{ backgroundColor: c.hex }} />
-                        <div className="absolute -bottom-2 -right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-mono text-white opacity-0 group-hover:opacity-100 transition-opacity uppercase">{c.hex}</div>
+                    <div className="relative shrink-0">
+                        <div className="w-10 h-10 rounded-xl border border-white/10 shadow-lg" style={{ backgroundColor: c.hex }} />
                     </div>
-                    <div>
-                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground mb-1">{c.name}</h4>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground truncate">{c.name}</h4>
+                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{c.hex}</p>
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                    <div className="flex gap-1 shrink-0">
                         <Button
                           variant="ghost"
                           size="icon"

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Trash2, Upload, X, Search, PlusCircle } from "lucide-react";
+import { Trash2, Upload, X, Search, PlusCircle, Pencil } from "lucide-react";
 import { formatBRL, parseSupabaseError, sortSizes } from "@/lib/utils";
 import { removeFromCloudinary } from "@/lib/cloudinary";
 import {
@@ -87,6 +87,7 @@ const ProductsTab = ({
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
   const visibleProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const handleQueryChange = (val: string) => {
     setProductQuery(val);
@@ -95,6 +96,28 @@ const ProductsTab = ({
 
   const handleChange = (field: string, value: any) => {
     setProduct((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditProduct = (p: AdminProduct) => {
+      setEditingId(p.id!);
+      setProduct({
+        name: p.name,
+        category: p.category || "",
+        price: p.price,
+        sizes: p.sizes || [],
+        colors: (p.colors || []) as Color[],
+        stock: p.stock || 0,
+        imageUrl: p.image || "",
+        imageUrl2: p.image2 || "",
+        imageUrl3: p.image3 || "",
+        publicId: p.publicId || "",
+        publicId2: p.publicId2 || "",
+        publicId3: p.publicId3 || "",
+        description: p.description || ""
+      });
+      setDistribution(p.stockBySize || {});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.info("Produto carregado para edição");
   };
 
   const handleImage = (file: File | undefined, index: number) => {
@@ -218,28 +241,29 @@ const ProductsTab = ({
       tenant_id: tenantId,
     };
 
-    if (IS_SUPABASE_READY && tenantId) {
+     if (IS_SUPABASE_READY && tenantId) {
       try {
-        const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
-        if (error) throw error;
-        setStoredProducts((prev) => [...prev, data]);
-        toast.success("Produto cadastrado com sucesso!");
+        if (editingId) {
+          const { error } = await supabase
+            .from("products")
+            .update(baseProductForSupabase)
+            .eq("id", editingId)
+            .eq("tenant_id", tenantId);
+          if (error) throw error;
+          setStoredProducts((prev) => prev.map(p => p.id === editingId ? { ...p, ...baseProductForSupabase } : p));
+          toast.success("Produto atualizado com sucesso!");
+          setEditingId(null);
+        } else {
+          const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
+          if (error) throw error;
+          setStoredProducts((prev) => [...prev, data]);
+          toast.success("Produto cadastrado com sucesso!");
+        }
         
         // Reset form
         setProduct({ 
-          name: "", 
-          category: "", 
-          price: 0, 
-          sizes: [], 
-          colors: [], 
-          stock: 0, 
-          imageUrl: "", 
-          imageUrl2: "", 
-          imageUrl3: "", 
-          publicId: "",
-          publicId2: "",
-          publicId3: "",
-          description: "" 
+          name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, 
+          imageUrl: "", imageUrl2: "", imageUrl3: "", publicId: "", publicId2: "", publicId3: "", description: "" 
         });
         setImageFiles([null, null, null]);
         setImagePreviews([null, null, null]);
@@ -270,8 +294,8 @@ const ProductsTab = ({
       <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
         <CardHeader className="bg-primary/5 py-4 border-b border-primary/10">
           <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-2">
-            <PlusCircle className="w-5 h-5" />
-            Novo Produto
+            {editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}
+            {editingId ? "Editar Produto" : "Novo Produto"}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-8">
@@ -424,13 +448,34 @@ const ProductsTab = ({
             </div>
           </div>
 
-          <Button 
-            className="w-full h-14 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest shadow-xl shadow-primary/20" 
-            onClick={handleSubmit} 
-            disabled={uploading}
-          >
-            {uploading ? "Salvando Dados..." : "Cadastrar Produto"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              className="flex-1 h-14 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest shadow-xl shadow-primary/20" 
+              onClick={handleSubmit} 
+              disabled={uploading}
+            >
+              {uploading ? "Salvando Dados..." : editingId ? "Atualizar Produto" : "Cadastrar Produto"}
+            </Button>
+            
+            {editingId && (
+              <Button 
+                variant="outline"
+                className="h-14 px-8 border-primary/20 font-black uppercase tracking-widest text-[10px]"
+                onClick={() => {
+                  setEditingId(null);
+                  setProduct({ 
+                    name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, 
+                    imageUrl: "", imageUrl2: "", imageUrl3: "", publicId: "", publicId2: "", publicId3: "", description: "" 
+                  });
+                  setDistribution({});
+                  setImageFiles([null, null, null]);
+                  setImagePreviews([null, null, null]);
+                }}
+              >
+                Cancelar
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -482,14 +527,24 @@ const ProductsTab = ({
                   <div className="text-[10px] font-bold text-muted-foreground uppercase bg-muted/20 px-2 py-1 rounded-lg">
                     {p.sizes.join(' · ')}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10"
-                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full text-primary hover:bg-primary/10"
+                      onClick={(e) => { e.stopPropagation(); handleEditProduct(p); }}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -538,14 +593,24 @@ const ProductsTab = ({
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <Button 
-                                    variant="destructive" 
-                                    size="icon" 
-                                    className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <div className="flex justify-end gap-2">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8 rounded-full text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => { e.stopPropagation(); handleEditProduct(p); }}
+                                    >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button 
+                                        variant="destructive" 
+                                        size="icon" 
+                                        className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
                             </td>
                         </tr>
                     ))}

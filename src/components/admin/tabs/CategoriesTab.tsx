@@ -135,18 +135,18 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex flex-col gap-3">
             {categories.map((c) => (
-              <div key={c} className="group relative border border-primary/10 rounded-2xl p-6 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex flex-col items-center text-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-black transition-all transform group-hover:scale-110">
-                    <Tag className="w-6 h-6" />
+              <div key={c} className="group relative border border-primary/10 rounded-2xl p-4 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-black transition-all">
+                    <Tag className="w-5 h-5" />
                 </div>
-                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground">{c}</h4>
-                <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-9 w-9 p-0 rounded-full hover:bg-primary/10 hover:text-primary">
+                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground flex-1 truncate">{c}</h4>
+                <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-10 w-10 p-0 rounded-full hover:bg-primary/10 hover:text-primary">
                         <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setCatToRemove(c)} className="h-9 w-9 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive">
+                    <Button variant="ghost" size="sm" onClick={() => setCatToRemove(c)} className="h-10 w-10 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive">
                         <X className="h-4 w-4" />
                     </Button>
                 </div>

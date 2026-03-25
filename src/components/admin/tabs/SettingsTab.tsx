@@ -408,13 +408,13 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
       </Tabs>
 
       {/* Floating Save Button Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-sm pointer-events-none">
-          <div className="container mx-auto max-w-7xl flex justify-end pointer-events-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-sm pointer-events-none">
+          <div className="container mx-auto max-w-7xl flex justify-center md:justify-end pointer-events-auto">
               <Button 
                 onClick={handleSave} 
-                className="h-16 px-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.3em] rounded-2xl shadow-[0_0_30px_rgba(var(--primary),0.4)] animate-pulse-subtle flex items-center gap-3 active:scale-95 transition-all"
+                className="h-12 md:h-16 px-8 md:px-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] md:tracking-[0.3em] rounded-xl md:rounded-2xl shadow-[0_0_30px_rgba(var(--primary),0.4)] animate-pulse-subtle flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-[10px] md:text-sm"
               >
-                  <Save className="w-6 h-6" /> Aplicar Configurações
+                  <Save className="w-4 h-4 md:w-6 md:h-6" /> Aplicar Configurações
               </Button>
           </div>
       </div>
