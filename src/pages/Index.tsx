@@ -257,21 +257,21 @@ const Index = () => {
     }
 
     const deliveryText = deliveryMethod === "retirada" 
-      ? "\n📍 *Entrega: Retirada na Loja (Grátis)*" 
+      ? "\n*Entrega: Retirada (Grátis)*" 
       : deliveryMethod === "fixo"
-        ? `\n🚚 *Entrega: Padrão (${formatBRL(settings?.fixed_shipping_rate || 0)})*`
+        ? `\n*Entrega: Padrão (${formatBRL(settings?.fixed_shipping_rate || 0)})*`
         : deliveryMethod === "bairro"
-          ? `\n🚚 *Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*`
+          ? `\n*Entrega: ${bairroEntrega}${freteValor === 0 && bairroEntrega === "Outros" ? " (A combinar)" : ` (${formatBRL(freteValor || 0)})` }*`
           : "";
 
-    const pagamentoText = formaPagamento ? `\n💳 *Pagamento: ${formaPagamento}*` : "";
+    const pagamentoText = formaPagamento ? `\n*Pagamento: ${formaPagamento}*` : "";
 
-    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}${pagamentoText}\n\n${cartItems
+    const message = `*Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}${pagamentoText}\n\n${cartItems
       .map(
         (item) =>
-          `• ${item.name}\n  ${item.color ? `Cor: ${item.color}\n  ` : ""}Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`
+          `• ${item.name}\n  Tamanho: ${item.size}${item.color ? `\n  Cor: ${item.color}` : ""}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`
       )
-      .join("\n\n")}\n\n💰 *TOTAL: ${formatBRL(total)}*\n\nPedido ID: ${pedidoId ?? "—"}`;
+      .join("\n\n")}\n\n *TOTAL: ${formatBRL(total)}*`;
 
     const cleanPhone = (settings?.whatsapp || "5575999999999").replace(/\D/g, "");
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(message)}`;
