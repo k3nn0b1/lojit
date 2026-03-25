@@ -167,20 +167,6 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
         toast.error("Preencha seu endereço (Rua e Número)");
         return;
       }
-      if (formasPagamento.length > 0) {
-        if (selectedMethods.length === 0) {
-          toast.error("Selecione pelo menos uma forma de pagamento");
-          return;
-        }
-        if (selectedMethods.length === 2) {
-          const v1 = parseFloat(paymentValues[selectedMethods[0]]) || 0;
-          const v2 = parseFloat(paymentValues[selectedMethods[1]]) || 0;
-          if (Math.abs((v1 + v2) - total) > 0.01) {
-            toast.error(`A soma dos pagamentos (${formatBRL(v1 + v2)}) deve ser igual ao total (${formatBRL(total)})`);
-            return;
-          }
-        }
-      }
       setCurrentStep(3);
     }
   };
