@@ -9,20 +9,14 @@ interface HeaderProps {
   onCartClick?: () => void;
   rightAction?: React.ReactNode;
   showCart?: boolean; // default true
-  isStatic?: boolean;
 }
 
-const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true, isStatic = false }: HeaderProps) => {
+const Header = ({ cartItemCount = 0, onCartClick = () => {}, rightAction, showCart = true }: HeaderProps) => {
   const { settings } = useStoreSettings();
   const storeName = settings?.store_name || "";
-  const [isVisible, setIsVisible] = React.useState(isStatic);
+  const [isVisible, setIsVisible] = React.useState(false);
 
   React.useEffect(() => {
-    if (isStatic) {
-      setIsVisible(true);
-      return;
-    }
-
     const handleScroll = () => {
       // Aparece após 100px de scroll OU se houver itens no carrinho
       if (window.scrollY > 150 || cartItemCount > 0) {
