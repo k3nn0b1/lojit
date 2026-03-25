@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,6 +185,10 @@ const NewOrderModal = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="bg-card text-foreground border-primary/30 max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden border">
+          <DialogClose className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/10 transition-colors z-[60]">
+            <X className="h-5 w-5 text-muted-foreground/60" />
+            <span className="sr-only">Fechar</span>
+          </DialogClose>
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-2xl font-black uppercase tracking-widest text-primary">Novo Pedido Admin</DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium italic">Selecione produtos, defina o cliente e conclua a venda interna.</DialogDescription>
