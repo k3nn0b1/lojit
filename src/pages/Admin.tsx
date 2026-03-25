@@ -187,7 +187,7 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex overflow-x-auto lg:overflow-x-visible items-center flex-nowrap lg:justify-center p-1 bg-muted border border-border shadow-md mb-2">
+          <TabsList className="w-full h-auto flex justify-start lg:justify-center overflow-x-auto lg:overflow-x-visible items-center flex-nowrap p-1 bg-muted border border-border shadow-md mb-2 relative">
             <TabsTrigger value="pedidos" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PEDIDOS</TabsTrigger>
             <TabsTrigger value="products" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PRODUTOS</TabsTrigger>
             <TabsTrigger value="stock" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">ESTOQUE</TabsTrigger>
