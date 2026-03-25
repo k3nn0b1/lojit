@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ShoppingCart, Package, Layers, Maximize2, Image, Users, CheckCircle, Palette, Settings } from "lucide-react";
 import {
   parseSupabaseError,
   normalizeProductStock,
@@ -176,6 +176,7 @@ const Admin = () => {
     <div className="flex-1 flex flex-col relative w-full min-h-screen bg-background">
       <Header
         showCart={false}
+        isStatic={true}
         rightAction={(
           <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={handleLogout}>Sair</Button>
         )}
@@ -187,17 +188,37 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex overflow-x-auto lg:overflow-x-visible items-center scrollbar-none flex-nowrap lg:justify-center p-1 bg-muted border border-border shadow-md mb-2">
-            <TabsTrigger value="pedidos" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Pedidos</TabsTrigger>
-            <TabsTrigger value="products" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Produtos</TabsTrigger>
-            <TabsTrigger value="stock" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Estoque</TabsTrigger>
-            <TabsTrigger value="sizes" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tamanhos</TabsTrigger>
-            <TabsTrigger value="images" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Imagens</TabsTrigger>
-            <TabsTrigger value="clientes" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Clientes</TabsTrigger>
-            <TabsTrigger value="categories" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categorias</TabsTrigger>
-            <TabsTrigger value="colors" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Cores</TabsTrigger>
-            <TabsTrigger value="config" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Configurações</TabsTrigger>
-          </TabsList>
+          <div className="sticky top-[64px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-2 border-b border-border/50 lg:static lg:bg-transparent lg:p-0 lg:border-none mb-6 overflow-hidden">
+            <TabsList className="w-full h-auto flex overflow-x-auto items-center p-1 bg-muted/50 border border-border/50 shadow-sm flex-nowrap lg:justify-center scrollbar-thin scrollbar-thumb-primary/20">
+              <TabsTrigger value="pedidos" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <ShoppingCart className="w-3.5 h-3.5" /> Pedidos
+              </TabsTrigger>
+              <TabsTrigger value="products" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Package className="w-3.5 h-3.5" /> Produtos
+              </TabsTrigger>
+              <TabsTrigger value="stock" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Layers className="w-3.5 h-3.5" /> Estoque
+              </TabsTrigger>
+              <TabsTrigger value="sizes" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Maximize2 className="w-3.5 h-3.5" /> Tamanhos
+              </TabsTrigger>
+              <TabsTrigger value="images" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Image className="w-3.5 h-3.5" /> Imagens
+              </TabsTrigger>
+              <TabsTrigger value="clientes" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Users className="w-3.5 h-3.5" /> Clientes
+              </TabsTrigger>
+              <TabsTrigger value="categories" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <CheckCircle className="w-3.5 h-3.5" /> Categorias
+              </TabsTrigger>
+              <TabsTrigger value="colors" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Palette className="w-3.5 h-3.5" /> Cores
+              </TabsTrigger>
+              <TabsTrigger value="config" className="flex-none gap-2 py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Settings className="w-3.5 h-3.5" /> Configurações
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="pedidos" className="mt-6">
             <OrdersTab 
