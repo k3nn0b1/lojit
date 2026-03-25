@@ -8,9 +8,10 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { formatBRL, normalizePhone, formatPhoneMask, rankSize, generateUUID, sortPedidos } from "@/lib/utils";
-import { AdminProduct, AdminCartItem, Pedido } from "@/lib/types";
+import { AdminProduct, AdminCartItem, Pedido, BairroFrete } from "@/lib/types";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import { Truck, MapPin, CheckCircle2 } from "lucide-react";
+import { Truck, MapPin, CheckCircle2, Search, Map, Check } from "lucide-react";
+import { useEffect } from "react";
 
 interface NewOrderModalProps {
   open: boolean;
@@ -42,16 +43,38 @@ const NewOrderModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { settings } = useStoreSettings();
   const [deliveryMethod, setDeliveryMethod] = useState<string | undefined>(undefined);
+  const [bairrosList, setBairrosList] = useState<BairroFrete[]>([]);
+  const [selectedBairro, setSelectedBairro] = useState<BairroFrete | null>(null);
+  const [bairroSearchQuery, setBairroSearchQuery] = useState("");
 
   // Sincroniza o método inicial
-  useMemo(() => {
+  useEffect(() => {
     if (!deliveryMethod && settings) {
       if (settings.enable_pickup) setDeliveryMethod("retirada");
       else if (settings.enable_fixed_shipping) setDeliveryMethod("fixo");
+      else if (settings.enable_neighborhood_shipping) setDeliveryMethod("bairro");
     }
   }, [settings]);
 
-  const shippingCost = deliveryMethod === "fixo" ? (settings?.fixed_shipping_rate || 0) : 0;
+  useEffect(() => {
+    if (settings?.enable_neighborhood_shipping) {
+      const fetchBairros = async () => {
+        const { data } = await supabase
+          .from("bairros_frete")
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .order("nome", { ascending: true });
+        if (data) setBairrosList(data);
+      };
+      fetchBairros();
+    }
+  }, [settings, tenantId]);
+
+  const shippingCost = deliveryMethod === "fixo" 
+    ? (settings?.fixed_shipping_rate || 0) 
+    : deliveryMethod === "bairro" 
+      ? (selectedBairro?.valor || 0) 
+      : 0;
   const adminCartTotal = useMemo(() => adminCart.reduce((sum, it) => sum + it.price * it.quantity, 0) + shippingCost, [adminCart, shippingCost]);
 
   const addToAdminCart = () => {
@@ -168,6 +191,7 @@ const NewOrderModal = ({
           status: debitarEstoque ? "concluido" : "pendente",
           delivery_method: deliveryMethod,
           frete_valor: shippingCost,
+          bairro_entrega: selectedBairro?.nome,
           tenant_id: tenantId,
         });
       if (error) throw error;
@@ -415,7 +439,7 @@ const NewOrderModal = ({
                     </div>
                   )}
 
-                  {(settings?.enable_pickup || settings?.enable_fixed_shipping) && (
+                  {(settings?.enable_pickup || settings?.enable_fixed_shipping || settings?.enable_neighborhood_shipping) && (
                     <div className="space-y-2 py-2">
                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
                           <Truck className="w-3 h-3" /> Modalidade de Entrega
@@ -455,6 +479,70 @@ const NewOrderModal = ({
                               </div>
                               {deliveryMethod === "fixo" && <CheckCircle2 className="w-4 h-4" />}
                             </button>
+                          )}
+
+                          {settings?.enable_neighborhood_shipping && (
+                            <div className="space-y-2">
+                              <button
+                                type="button"
+                                onClick={() => setDeliveryMethod(deliveryMethod === "bairro" ? undefined : "bairro")}
+                                className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                                  deliveryMethod === "bairro" 
+                                    ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)] text-primary' 
+                                    : 'bg-muted/20 border-primary/5 hover:border-primary/20 text-muted-foreground'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                   <Map className="w-4 h-4" />
+                                   <span className="text-[10px] font-black uppercase tracking-widest">
+                                     Por Bairro {selectedBairro ? `(${selectedBairro.nome})` : ""}
+                                   </span>
+                                </div>
+                                {deliveryMethod === "bairro" && <CheckCircle2 className="w-4 h-4" />}
+                              </button>
+
+                              {deliveryMethod === "bairro" && (
+                                <div className="space-y-2 p-3 rounded-xl bg-muted/20 border border-primary/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                                   <div className="relative">
+                                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground opacity-40" />
+                                      <input 
+                                        type="text" 
+                                        placeholder="Buscar bairro..."
+                                        value={bairroSearchQuery}
+                                        onChange={(e) => setBairroSearchQuery(e.target.value)}
+                                        className="w-full h-8 bg-background border border-primary/5 rounded-lg pl-8 pr-3 text-[9px] font-black focus:outline-none focus:border-primary/30 transition-all"
+                                      />
+                                   </div>
+                                   <div className="grid grid-cols-1 gap-1 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                                      {bairrosList.filter(b => b.nome.toLowerCase().includes(bairroSearchQuery.toLowerCase())).map(b => (
+                                        <button
+                                          key={b.id}
+                                          onClick={() => setSelectedBairro(b)}
+                                          className={`flex items-center justify-between p-2 rounded-lg border text-[9px] font-black transition-all ${
+                                            selectedBairro?.id === b.id 
+                                              ? 'bg-primary/20 border-primary/40 text-primary' 
+                                              : 'bg-muted/10 border-transparent hover:border-primary/10'
+                                          }`}
+                                        >
+                                          <span>{b.nome}</span>
+                                          <span>{formatBRL(b.valor)}</span>
+                                        </button>
+                                      ))}
+                                      <button
+                                         onClick={() => setSelectedBairro({ id: -1, nome: "Outros", valor: 0, tenant_id: tenantId })}
+                                         className={`flex items-center justify-between p-2 rounded-lg border text-[9px] font-black transition-all ${
+                                           selectedBairro?.nome === "Outros" 
+                                             ? 'bg-primary/20 border-primary/40 text-primary' 
+                                             : 'bg-muted/10 border-transparent hover:border-primary/10'
+                                         }`}
+                                       >
+                                         <span className="italic">Outros</span>
+                                         <span className="uppercase opacity-60">A Combinar</span>
+                                       </button>
+                                   </div>
+                                </div>
+                              )}
+                            </div>
                           )}
                        </div>
                     </div>

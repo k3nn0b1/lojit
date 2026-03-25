@@ -35,6 +35,7 @@ export interface StoreSettings {
   product_size_label?: string;
   enable_pickup?: boolean;
   enable_fixed_shipping?: boolean;
+  enable_neighborhood_shipping?: boolean;
   fixed_shipping_rate?: number;
   updated_at?: string;
 }
@@ -74,6 +75,7 @@ const defaultSettings: StoreSettings = {
   product_size_label: "ESCOLHA SEU TAMANHO",
   enable_pickup: false,
   enable_fixed_shipping: false,
+  enable_neighborhood_shipping: false,
   fixed_shipping_rate: 0
 };
 

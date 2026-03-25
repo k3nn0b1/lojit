@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import { Truck, MapPin, Check } from "lucide-react";
+import { Truck, MapPin, Check, Search, Map } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { BairroFrete } from "@/lib/types";
 
 export interface CartItem {
   id: number;
@@ -25,26 +27,53 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
   onRemoveItem: (id: number, size: string, color?: string) => void;
-  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string) => void;
+  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string, bairroEntrega?: string, freteValor?: number) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const { settings } = useStoreSettings();
   const [deliveryMethod, setDeliveryMethod] = React.useState<string | undefined>(undefined);
+  const [selectedBairro, setSelectedBairro] = React.useState<BairroFrete | null>(null);
+  const [bairrosList, setBairrosList] = React.useState<BairroFrete[]>([]);
+  const [bairroSearchQuery, setBairroSearchQuery] = React.useState("");
 
-  const shippingCost = deliveryMethod === "fixo" ? (settings?.fixed_shipping_rate || 0) : 0;
+  const shippingCost = deliveryMethod === "fixo" 
+    ? (settings?.fixed_shipping_rate || 0) 
+    : deliveryMethod === "bairro" 
+      ? (selectedBairro?.valor || 0) 
+      : 0;
+
   const total = subtotal + shippingCost;
   const [clienteNome, setClienteNome] = React.useState("");
   const [clienteTelefone, setClienteTelefone] = React.useState("");
+
+  React.useEffect(() => {
+    if (settings?.enable_neighborhood_shipping && settings?.tenant_id) {
+      const fetchBairros = async () => {
+        const { data } = await supabase
+          .from("bairros_frete")
+          .select("*")
+          .eq("tenant_id", settings.tenant_id)
+          .order("nome", { ascending: true });
+        if (data) setBairrosList(data);
+      };
+      fetchBairros();
+    }
+  }, [settings]);
 
   // Sincroniza o método inicial quando as configurações carregam
   React.useEffect(() => {
     if (!deliveryMethod && settings) {
       if (settings.enable_pickup) setDeliveryMethod("retirada");
       else if (settings.enable_fixed_shipping) setDeliveryMethod("fixo");
+      else if (settings.enable_neighborhood_shipping) setDeliveryMethod("bairro");
     }
   }, [settings]);
+
+  const filteredBairros = bairrosList.filter(b => 
+    b.nome.toLowerCase().includes(bairroSearchQuery.toLowerCase())
+  );
 
   const formatPhoneMask = (value: string) => {
     const digits = value.replace(/\D+/g, "").slice(0, 11);
@@ -186,6 +215,74 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                     {deliveryMethod === "fixo" && <Check className="w-4 h-4 text-primary" />}
                   </button>
                 )}
+
+                {settings?.enable_neighborhood_shipping && (
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => setDeliveryMethod("bairro")}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                        deliveryMethod === "bairro" 
+                          ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)]' 
+                          : 'bg-muted/20 border-border/50 hover:border-primary/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 text-left">
+                        <Map className={`w-5 h-5 ${deliveryMethod === "bairro" ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <div>
+                          <p className="text-[10px] font-black uppercase">Entrega por Bairro</p>
+                          <p className="text-[9px] text-muted-foreground font-bold">
+                            {selectedBairro ? `${selectedBairro.nome === "Outros" ? "A combinar" : formatBRL(selectedBairro.valor)}` : "Selecione o bairro"}
+                          </p>
+                        </div>
+                      </div>
+                      {deliveryMethod === "bairro" && <Check className="w-4 h-4 text-primary" />}
+                    </button>
+
+                    {deliveryMethod === "bairro" && (
+                      <div className="space-y-3 p-4 rounded-xl bg-background/50 border border-primary/10 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground opacity-50" />
+                          <input 
+                            type="text"
+                            placeholder="Buscar seu bairro..."
+                            value={bairroSearchQuery}
+                            onChange={(e) => setBairroSearchQuery(e.target.value)}
+                            className="w-full h-9 bg-muted/20 border border-primary/5 rounded-lg pl-9 pr-3 text-[10px] font-bold focus:outline-none focus:border-primary/30 transition-all"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-1.5 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                           {filteredBairros.map(b => (
+                            <button
+                              key={b.id}
+                              onClick={() => setSelectedBairro(b)}
+                              className={`flex items-center justify-between p-2.5 rounded-lg border text-[10px] font-bold transition-all ${
+                                selectedBairro?.id === b.id 
+                                  ? 'bg-primary/20 border-primary/40 text-primary' 
+                                  : 'bg-muted/10 border-transparent hover:border-primary/10'
+                              }`}
+                            >
+                              <span className="uppercase">{b.nome}</span>
+                              <span className="font-black text-[9px]">{formatBRL(b.valor)}</span>
+                            </button>
+                           ))}
+                           
+                           <button
+                             onClick={() => setSelectedBairro({ id: -1, nome: "Outros", valor: 0, tenant_id: settings?.tenant_id || "" })}
+                             className={`flex items-center justify-between p-2.5 rounded-lg border text-[10px] font-bold transition-all ${
+                               selectedBairro?.nome === "Outros"
+                                 ? 'bg-primary/20 border-primary/40 text-primary' 
+                                 : 'bg-muted/10 border-transparent hover:border-primary/10'
+                             }`}
+                           >
+                              <span className="uppercase italic">Outros</span>
+                              <span className="font-black text-[9px] uppercase tracking-tighter">A Combinar</span>
+                           </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -215,11 +312,15 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 toast.error("Preencha nome e telefone para finalizar");
                 return;
               }
-              if ((settings?.enable_pickup || settings?.enable_fixed_shipping) && !deliveryMethod) {
+              if ((settings?.enable_pickup || settings?.enable_fixed_shipping || settings?.enable_neighborhood_shipping) && !deliveryMethod) {
                 toast.error("Selecione uma forma de entrega");
                 return;
               }
-              onCheckout(nome, tel, deliveryMethod);
+              if (deliveryMethod === "bairro" && !selectedBairro) {
+                toast.error("Selecione o bairro de entrega");
+                return;
+              }
+              onCheckout(nome, tel, deliveryMethod, selectedBairro?.nome || undefined, shippingCost);
             }}
             size="lg"
             className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-widest glow-soft rounded-xl"
