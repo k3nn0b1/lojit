@@ -206,7 +206,7 @@ const Index = () => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size && item.color === color)));
   };
 
-  const handleCheckout = async (clienteNome: string, clienteTelefone: string) => {
+  const handleCheckout = async (clienteNome: string, clienteTelefone: string, deliveryMethod?: string) => {
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     // Montar payload de pedido
@@ -243,6 +243,7 @@ const Index = () => {
             itens,
             valor_total: total,
             status: "pendente",
+            delivery_method: deliveryMethod,
             tenant_id: tenantId,
           });
         if (error) throw error;
@@ -252,7 +253,9 @@ const Index = () => {
       }
     }
 
-    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}\n\n${cartItems
+    const deliveryText = deliveryMethod === "retirada" ? "\n📍 *Entrega: Retirada na Loja (Grátis)*" : "";
+
+    const message = `🛍️ *Novo Pedido - ${settings?.store_name || "Loja"}*\n\nCliente: ${clienteNome}\nTelefone: ${clienteTelefone}${deliveryText}\n\n${cartItems
       .map(
         (item) =>
           `• ${item.name}\n  ${item.color ? `Cor: ${item.color}\n  ` : ""}Tamanho: ${item.size}\n  Qtd: ${item.quantity}\n  Subtotal: ${formatBRL(item.price * item.quantity)}`

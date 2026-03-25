@@ -26,6 +26,7 @@ import ColorsTab from "@/components/admin/tabs/ColorsTab";
 import ImagesTab from "@/components/admin/tabs/ImagesTab";
 import CustomersTab from "@/components/admin/tabs/CustomersTab";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
+import DeliveryTab from "@/components/admin/tabs/DeliveryTab";
 
 // Modals
 import NewOrderModal from "@/components/admin/modals/NewOrderModal";
@@ -196,6 +197,7 @@ const Admin = () => {
             <TabsTrigger value="clientes" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CLIENTES</TabsTrigger>
             <TabsTrigger value="categories" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CATEGORIAS</TabsTrigger>
             <TabsTrigger value="colors" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CORES</TabsTrigger>
+            <TabsTrigger value="delivery" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">ENTREGA</TabsTrigger>
             <TabsTrigger value="config" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CONFIGURAÇÕES</TabsTrigger>
           </TabsList>
 
@@ -263,6 +265,10 @@ const Admin = () => {
 
           <TabsContent value="clientes" className="mt-6">
             <CustomersTab tenantId={tenantId} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+          </TabsContent>
+
+          <TabsContent value="delivery" className="mt-6">
+            <DeliveryTab tenantId={tenantId} />
           </TabsContent>
 
           <TabsContent value="config" className="mt-6">

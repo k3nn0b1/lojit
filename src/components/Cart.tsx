@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/utils";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { Truck, MapPin, Check } from "lucide-react";
 
 export interface CartItem {
   id: number;
@@ -23,13 +25,22 @@ interface CartProps {
   items: CartItem[];
   onUpdateQuantity: (id: number, size: string, quantity: number, color?: string) => void;
   onRemoveItem: (id: number, size: string, color?: string) => void;
-  onCheckout: (clienteNome: string, clienteTelefone: string) => void;
+  onCheckout: (clienteNome: string, clienteTelefone: string, deliveryMethod?: string) => void;
 }
 
 const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onCheckout }: CartProps) => {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [clienteNome, setClienteNome] = React.useState("");
   const [clienteTelefone, setClienteTelefone] = React.useState("");
+  const { settings } = useStoreSettings();
+  const [deliveryMethod, setDeliveryMethod] = React.useState<string | undefined>(settings?.enable_pickup ? "retirada" : undefined);
+
+  // Sincroniza o método inicial quando as configurações carregam
+  React.useEffect(() => {
+    if (settings?.enable_pickup && !deliveryMethod) {
+      setDeliveryMethod("retirada");
+    }
+  }, [settings]);
 
   const formatPhoneMask = (value: string) => {
     const digits = value.replace(/\D+/g, "").slice(0, 11);
@@ -127,6 +138,33 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
               autoComplete="tel"
             />
           </div>
+          {settings?.enable_pickup && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Truck className="w-3 h-3" /> FORMA DE ENTREGA
+              </h4>
+              <button 
+                onClick={() => setDeliveryMethod("retirada")}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                  deliveryMethod === "retirada" 
+                    ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(var(--primary),0.05)]' 
+                    : 'bg-muted/20 border-border/50 hover:border-primary/30'
+                }`}
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${deliveryMethod === "retirada" ? 'bg-primary text-black' : 'bg-muted/40 text-muted-foreground'}`}>
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase">Retirada na Loja</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">Grátis • Pronto em até 24h</p>
+                  </div>
+                </div>
+                {deliveryMethod === "retirada" && <Check className="w-5 h-5 text-primary" />}
+              </button>
+            </div>
+          )}
+
           <Separator />
           <div className="flex justify-between items-center text-lg font-bold">
             <span>TOTAL:</span>
@@ -140,7 +178,11 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                 toast.error("Preencha nome e telefone para finalizar");
                 return;
               }
-              onCheckout(nome, tel);
+              if (settings?.enable_pickup && !deliveryMethod) {
+                toast.error("Selecione uma forma de entrega");
+                return;
+              }
+              onCheckout(nome, tel, deliveryMethod);
             }}
             size="lg"
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg glow-soft"

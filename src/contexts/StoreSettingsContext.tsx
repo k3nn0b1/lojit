@@ -33,6 +33,7 @@ export interface StoreSettings {
   collection_title_l2?: string;
   collection_subtitle?: string;
   product_size_label?: string;
+  enable_pickup?: boolean;
   updated_at?: string;
 }
 
@@ -68,7 +69,8 @@ const defaultSettings: StoreSettings = {
   youtube_url: "",
   primary_font: "'Bebas Neue', cursive",
   secondary_font: "'Inter', sans-serif",
-  product_size_label: "ESCOLHA SEU TAMANHO"
+  product_size_label: "ESCOLHA SEU TAMANHO",
+  enable_pickup: false
 };
 
 const getInitialSettings = (tenantId?: string | null): StoreSettings => {

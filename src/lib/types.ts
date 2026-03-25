@@ -63,6 +63,7 @@ export interface Pedido {
   itens: PedidoItem[];
   valor_total: number;
   status: PedidoStatus;
+  delivery_method?: string;
   data_criacao: string;
   tenant_id: string;
 }
@@ -75,6 +76,7 @@ export interface AdminCartItem {
   color?: string;
   quantity: number;
   price: number;
+  delivery_method?: string;
 }
 
 // ── Cliente ───────────────────────────────────────────────
