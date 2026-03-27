@@ -1,5 +1,5 @@
 -- ============================================================
--- MIGRAÇÃO MULTI-TENANT — FUT75
+-- MIGRAÇÃO MULTI-TENANT — LOJIT
 -- Execute este script no SQL Editor do Supabase
 -- ATENÇÃO: Faça backup antes de executar!
 -- ============================================================
@@ -10,7 +10,7 @@
 
 CREATE TABLE IF NOT EXISTS public.tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug TEXT UNIQUE NOT NULL,             -- ex: "fut75" → fut75.seudominio.com.br
+  slug TEXT UNIQUE NOT NULL,             -- ex: "lojit" → lojit.seudominio.com.br
   name TEXT NOT NULL,                    -- Nome da loja exibido
   owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   active BOOLEAN DEFAULT true,
@@ -111,18 +111,18 @@ ALTER TABLE public.store_settings ADD COLUMN IF NOT EXISTS tenant_id UUID REFERE
 
 -- Inserir seu tenant atual
 INSERT INTO public.tenants (slug, name, active, plan, max_products)
-VALUES ('fut75', 'FUT75 Store', true, 'pro', 999)
+VALUES ('lojit', 'Lojit Store', true, 'pro', 999)
 ON CONFLICT (slug) DO NOTHING;
 
--- Atualizar TODOS os registros existentes com o tenant_id do fut75
-UPDATE public.products SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.categories SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.sizes SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.pedidos SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.clientes SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.audit_logs SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.admins SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
-UPDATE public.store_settings SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'fut75') WHERE tenant_id IS NULL;
+-- Atualizar TODOS os registros existentes com o tenant_id do lojit
+UPDATE public.products SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.categories SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.sizes SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.pedidos SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.clientes SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.audit_logs SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.admins SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
+UPDATE public.store_settings SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'lojit') WHERE tenant_id IS NULL;
 
 -- ============================================================
 -- PARTE 7: Tornar tenant_id NOT NULL (após migração)

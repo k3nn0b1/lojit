@@ -1,5 +1,5 @@
 -- ============================================================
--- Supabase schema para FUT75 — Multi-Tenant
+-- Supabase schema para LOJIT — Multi-Tenant
 -- Execute este script no SQL Editor do seu projeto Supabase
 -- ============================================================
 
