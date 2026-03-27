@@ -96,7 +96,7 @@ const DeliveryTab = ({ tenantId }: { tenantId: string }) => {
   );
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-10">
+    <div className="space-y-6 w-full mx-auto pb-10">
       <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
         <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10 text-center sm:text-left">
           <div className="space-y-2">
