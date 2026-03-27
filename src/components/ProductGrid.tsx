@@ -17,7 +17,7 @@ interface ProductGridProps {
 const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(10);
 
   const categories = ["Todos", ...Array.from(new Set(products.map(p => p.category)))];
   
@@ -94,7 +94,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                   <SelectValue placeholder={String(pageSize)} />
                 </SelectTrigger>
                 <SelectContent>
-                  {[12, 24, 48, 96].map((size) => (
+                  {[10, 20, 40].map((size) => (
                     <SelectItem key={size} value={String(size)}>
                       {size}
                     </SelectItem>

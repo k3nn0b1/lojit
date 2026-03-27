@@ -161,7 +161,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         className="h-full"
       >
         <Card 
-          className="group overflow-hidden border-border/50 bg-card/90 backdrop-blur-xl hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
+          className="group overflow-hidden border-border/50 bg-card/90 backdrop-blur-none md:backdrop-blur-xl hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
         >
         <div 
           className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
