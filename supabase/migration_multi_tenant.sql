@@ -55,6 +55,20 @@ ALTER TABLE public.pedidos ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES pu
 ALTER TABLE public.clientes ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE;
 ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE;
 ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE;
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS password TEXT;
+
+-- PARTE 3.1: Criar tabela de cores (Colors)
+CREATE TABLE IF NOT EXISTS public.colors (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  hex TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT unique_color_per_tenant UNIQUE (name, tenant_id)
+);
+CREATE INDEX IF NOT EXISTS idx_colors_tenant ON public.colors(tenant_id);
+ALTER TABLE public.colors ENABLE ROW LEVEL SECURITY;
 
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_products_tenant ON public.products(tenant_id);
@@ -93,6 +107,35 @@ RETURNS BOOLEAN AS $$
     WHERE user_id = auth.uid()
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+-- Função Master para Criar/Vincular Lojista
+CREATE OR REPLACE FUNCTION public.master_create_lojista(
+  p_email TEXT,
+  p_password TEXT,
+  p_tenant_id UUID
+)
+RETURNS UUID AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  IF NOT public.is_master_admin() THEN
+    RAISE EXCEPTION 'Acesso negado: Apenas Master Admins podem realizar esta operação.';
+  END IF;
+
+  SELECT id INTO v_user_id FROM auth.users WHERE email = p_email;
+
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Usuário "%" não encontrado na base Auth.', p_email;
+  END IF;
+
+  INSERT INTO public.admins (user_id, tenant_id, email, password)
+  VALUES (v_user_id, p_tenant_id, p_email, p_password)
+  ON CONFLICT (user_id, tenant_id) DO UPDATE 
+  SET email = EXCLUDED.email, password = EXCLUDED.password;
+
+  RETURN v_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================================
 -- PARTE 5: Alterar store_settings para multi-tenant
@@ -345,6 +388,20 @@ CREATE POLICY "Tenant admins read self"
   ON public.admins FOR SELECT
   TO authenticated
   USING (user_id = auth.uid());
+
+CREATE POLICY "Master manage admins"
+  ON public.admins FOR ALL
+  TO authenticated
+  USING (public.is_master_admin())
+  WITH CHECK (public.is_master_admin());
+
+-- ---- COLORS ----
+DROP POLICY IF EXISTS "Tenant public read colors" ON public.colors;
+CREATE POLICY "Tenant public read colors" ON public.colors FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Tenant admins manage colors" ON public.colors;
+CREATE POLICY "Tenant admins manage colors" ON public.colors FOR ALL TO authenticated 
+  WITH CHECK (public.is_tenant_admin(tenant_id) OR public.is_master_admin());
 
 -- ---- STORE_SETTINGS ----
 DROP POLICY IF EXISTS "Public read settings" ON public.store_settings;

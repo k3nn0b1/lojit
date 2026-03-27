@@ -61,6 +61,42 @@ RETURNS BOOLEAN AS $$
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
+-- Função Master para Criar/Vincular Lojista
+CREATE OR REPLACE FUNCTION public.master_create_lojista(
+  p_email TEXT,
+  p_password TEXT,
+  p_tenant_id UUID
+)
+RETURNS UUID AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  -- Apenas Master Admins
+  IF NOT public.is_master_admin() THEN
+    RAISE EXCEPTION 'Acesso negado: Apenas Master Admins podem realizar esta operação.';
+  END IF;
+
+  -- 1. Buscar usuário existente no auth.users por e-mail
+  SELECT id INTO v_user_id FROM auth.users WHERE email = p_email;
+
+  IF v_user_id IS NULL THEN
+    -- Nota: A criação direta no auth.users via SQL requer extensões como supabase_auth_admin.
+    -- Para evitar complexidade, o Master Panel deve lidar com o cadastro Auth via SDK
+    -- ou a função deve ser chamada quando o usuário já houver sido criado no Auth.
+    RAISE EXCEPTION 'Usuário "%" não encontrado em nossa base de autenticação central.', p_email;
+  END IF;
+
+  -- 2. Vincular na tabela public.admins
+  -- Aqui você pode optar por salvar email/pass por conveniência na gestão Master
+  INSERT INTO public.admins (user_id, tenant_id, email, password)
+  VALUES (v_user_id, p_tenant_id, p_email, p_password)
+  ON CONFLICT (user_id, tenant_id) DO UPDATE 
+  SET email = EXCLUDED.email, password = EXCLUDED.password;
+
+  RETURN v_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- ============================================================
 -- CATEGORIAS
 -- ============================================================
@@ -133,6 +169,8 @@ FOR EACH ROW EXECUTE FUNCTION public.compute_stock_from_stock_by_size();
 CREATE TABLE IF NOT EXISTS public.admins (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  email TEXT,
+  password TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, tenant_id)
 );
@@ -210,6 +248,22 @@ CREATE INDEX IF NOT EXISTS idx_clientes_tenant ON public.clientes(tenant_id);
 ALTER TABLE public.clientes ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
+-- CORES (Catálogo por Tenant)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.colors (
+  id BIGSERIAL PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  hex TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT unique_color_per_tenant UNIQUE (name, tenant_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_colors_tenant ON public.colors(tenant_id);
+ALTER TABLE public.colors ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
 -- CONFIGURAÇÕES DA LOJA (POR TENANT)
 -- ============================================================
 
@@ -285,6 +339,12 @@ CREATE POLICY "Tenant admins select audit_logs" ON public.audit_logs FOR SELECT 
 
 -- ADMINS
 CREATE POLICY "Tenant admins read self" ON public.admins FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Master manage admins" ON public.admins FOR ALL TO authenticated USING (public.is_master_admin()) WITH CHECK (public.is_master_admin());
+
+-- COLORS
+CREATE POLICY "Tenant public read colors" ON public.colors FOR SELECT USING (true);
+CREATE POLICY "Tenant admins manage colors" ON public.colors FOR ALL TO authenticated 
+  WITH CHECK (public.is_tenant_admin(tenant_id) OR public.is_master_admin());
 
 -- STORE SETTINGS
 CREATE POLICY "Tenant public read settings" ON public.store_settings FOR SELECT USING (true);
