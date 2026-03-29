@@ -170,45 +170,45 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                 </div>
              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              {/* Mobile: lista vertical / Desktop: grid uniforme */}
+              <div className="flex flex-col md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                  {filteredColors.map((c) => {
                    const isEditing = editingId === c.id;
                    return (
-                     <div key={c.id} className={`group relative rounded-2xl md:rounded-[2.5rem] border transition-all p-4 md:p-6 flex flex-row md:flex-col items-center gap-4 text-left md:text-center overflow-hidden shadow-xl ${isEditing ? 'bg-primary/10 border-primary scale-[1.02] md:scale-[1.05] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 -z-10 group-hover:scale-150 transition-transform" />
+                     <div key={c.id} className={`group relative rounded-2xl md:rounded-[2rem] border transition-all px-4 md:px-6 h-16 md:h-24 flex items-center gap-4 overflow-hidden shadow-md ${isEditing ? 'bg-primary/10 border-primary scale-[1.02] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
                       
                       {isEditing ? (
-                        <div className="space-y-6 w-full animate-in fade-in duration-300">
-                           <div className="flex items-center gap-3 bg-background/40 p-2 rounded-2xl border border-primary/10">
-                              <Input type="color" className="w-12 h-12 p-0 bg-transparent border-none shrink-0 cursor-pointer" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
-                              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-12 bg-transparent border-none text-[10px] font-black uppercase tracking-widest flex-1 px-2" />
+                        <div className="flex items-center gap-3 w-full animate-in fade-in duration-300">
+                           <div className="flex items-center gap-2 bg-background/40 p-1.5 rounded-xl border border-primary/20 flex-1">
+                              <Input type="color" className="w-8 h-8 p-0 bg-transparent border-none shrink-0 cursor-pointer" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
+                              <Input value={editName} onChange={(e) => setEditName(e.target.value.toUpperCase())} className="h-8 bg-transparent border-none text-[10px] font-black uppercase tracking-widest flex-1 px-1" />
                            </div>
-                           <div className="flex gap-2 justify-center">
-                              <Button variant="ghost" size="icon" onClick={() => handleUpdateColor(c)} className="h-12 w-12 rounded-2xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black shadow-xl shadow-green-500/10 transition-all">
-                                 <Check className="h-6 w-6" />
+                           <div className="flex gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" onClick={() => handleUpdateColor(c)} className="h-9 w-9 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black transition-all">
+                                 <Check className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => setEditingId(null)} className="h-12 w-12 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive hover:text-white shadow-xl shadow-destructive/10 transition-all">
-                                 <X className="h-6 w-6" />
+                              <Button variant="ghost" size="icon" onClick={() => setEditingId(null)} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all">
+                                 <X className="h-4 w-4" />
                               </Button>
                            </div>
                         </div>
                       ) : (
                         <>
-                           <div className="relative group/color shrink-0">
-                               <div className="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-[2rem] border-2 border-white/5 shadow-lg transition-all" style={{ backgroundColor: c.hex }} />
+                           <div className="relative shrink-0">
+                               <div className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-2xl border border-white/10 shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: c.hex }} />
                            </div>
-                           <div className="space-y-0.5 flex-1 min-w-0">
+                           <div className="flex-1 min-w-0">
                                <h5 className="font-black text-[10px] md:text-xs uppercase tracking-widest text-foreground truncate">{c.name}</h5>
                                <code className="text-[8px] md:text-[9px] font-mono text-primary font-black opacity-60 uppercase">{c.hex}</code>
                            </div>
-                           <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all pt-0 shrink-0">
+                           <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all shrink-0">
                                <Button 
                                  variant="ghost" 
                                  size="icon" 
                                  onClick={() => { setEditingId(c.id!); setEditName(c.name); setEditHex(c.hex); }}
                                  className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
                                >
-                                 <Pencil className="h-4 w-4" />
+                                 <Pencil className="h-3.5 w-3.5" />
                                </Button>
                                <Button 
                                  variant="ghost" 
@@ -216,22 +216,22 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                                  onClick={() => handleRemoveColor(c.id!)}
                                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
                                >
-                                 <Trash2 className="h-4 w-4" />
+                                 <Trash2 className="h-3.5 w-3.5" />
                                </Button>
                            </div>
                         </>
                       )}
                     </div>
-                  );
-                })}
-                
-                {filteredColors.length === 0 && (
-                   <div className="col-span-full py-20 text-center opacity-20">
-                      <Droplets className="w-16 h-16 mx-auto mb-6 opacity-30 animate-pulse" />
-                      <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhum matiz registrado nesta visualização</p>
-                   </div>
-                )}
-             </div>
+                   );
+                 })}
+                 
+                 {filteredColors.length === 0 && (
+                    <div className="md:col-span-full py-20 text-center opacity-20">
+                       <Droplets className="w-16 h-16 mx-auto mb-6 opacity-30 animate-pulse" />
+                       <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhum matiz registrado nesta visualização</p>
+                    </div>
+                 )}
+              </div>
           </div>
         </CardContent>
       </Card>

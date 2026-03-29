@@ -171,39 +171,40 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                 </div>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+             {/* Mobile: lista vertical / Desktop: grid multi-colunas com altura uniforme */}
+             <div className="flex flex-col md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                 {filteredSizes.map((s) => (
-                  <div key={s} className="group relative rounded-xl md:rounded-[1.5rem] border border-primary/5 p-3 md:p-4 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-lg flex items-center justify-between overflow-hidden">
+                  <div key={s} className="group relative rounded-2xl md:rounded-[1.5rem] border border-primary/5 px-4 h-14 md:h-16 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-lg flex items-center justify-between overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-2xl -z-10 group-hover:scale-150 transition-transform" />
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/10">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/10 shrink-0">
                             <Ruler className="w-3.5 h-3.5 text-primary opacity-60" />
                         </div>
-                        <span className="font-black text-[11px] md:text-[11px] uppercase tracking-widest text-foreground truncate">{s}</span>
+                        <span className="font-black text-[11px] uppercase tracking-widest text-foreground truncate">{s}</span>
                     </div>
-                    <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all shrink-0">
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => { setEditingSize(s); setSizeEditValue(s); }}
-                            className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
                         >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-3 w-3" />
                         </Button>
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             onClick={() => setSizeToRemove(s)}
-                            className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
                         >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3 w-3" />
                         </Button>
                     </div>
                   </div>
                 ))}
                 
                 {filteredSizes.length === 0 && (
-                   <div className="col-span-full py-20 text-center opacity-20">
+                   <div className="md:col-span-full py-20 text-center opacity-20">
                       <Ruler className="w-16 h-16 mx-auto mb-6 opacity-30 animate-pulse" />
                       <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhuma grade detectada</p>
                    </div>

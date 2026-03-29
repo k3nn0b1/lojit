@@ -166,29 +166,30 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                 </div>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {/* Mobile: lista vertical / Desktop: grid 3 colunas com altura uniforme */}
+             <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {filteredCategories.map((c) => (
-                  <div key={c} className="group relative rounded-[2rem] border border-primary/5 p-6 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-xl flex items-center justify-between overflow-hidden">
+                  <div key={c} className="group relative rounded-2xl md:rounded-[2rem] border border-primary/5 px-4 md:px-6 h-16 md:h-20 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-xl flex items-center justify-between overflow-hidden">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
-                    <div className="flex items-center gap-6">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform">
-                            <Tag className="w-6 h-6" />
+                    <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform shrink-0">
+                            <Tag className="w-5 h-5 md:w-6 md:h-6" />
                         </div>
-                        <span className="font-black text-xs uppercase tracking-widest text-foreground truncate max-w-[150px]">{c}</span>
+                        <span className="font-black text-xs uppercase tracking-widest text-foreground truncate">{c}</span>
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl">
-                            <Pencil className="h-4 w-4" />
+                    <div className="flex gap-1 md:gap-2 md:opacity-0 group-hover:opacity-100 transition-all md:transform md:translate-x-4 md:group-hover:translate-x-0 shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-9 w-9 md:h-10 md:w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl">
+                            <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setCatToRemove(c)} className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl">
-                            <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => setCatToRemove(c)} className="h-9 w-9 md:h-10 md:w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl">
+                            <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                         </Button>
                     </div>
                   </div>
                 ))}
                 
                 {filteredCategories.length === 0 && (
-                   <div className="col-span-full py-20 text-center opacity-20">
+                   <div className="md:col-span-full py-20 text-center opacity-20">
                       <Tag className="w-16 h-16 mx-auto mb-6 opacity-30" />
                       <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhum registro encontrado</p>
                    </div>
