@@ -1171,9 +1171,10 @@ export default function MasterPanel() {
               <Button 
                 onClick={handleUpdatePlanConfigs}
                 disabled={isSavingPlanConfigs}
-                className="flex-[2] h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                className="flex-[2] h-14 font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                style={{ backgroundColor: themeColor, color: '#000' }}
               >
-                {isSavingPlanConfigs ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Configurações"}
+                {isSavingPlanConfigs ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Salvar Configurações"}
               </Button>
             </div>
           </div>
