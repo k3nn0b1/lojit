@@ -1,32 +1,45 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Pencil, ChevronDown, ChevronUp, Package, Layers, X, Box, Save, PlusCircle, Search, ArrowRight, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatBRL, sortSizes, parseSupabaseError } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Package, 
+  Search, 
+  ChevronDown, 
+  ChevronUp, 
+  Layers, 
+  Pencil, 
+  X, 
+  PlusCircle, 
+  Box, 
+  Save,
+  CheckCircle2,
+  AlertCircle
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { AdminProduct, Color } from "@/lib/types";
+import { parseSupabaseError } from "@/lib/utils";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
-import { AdminProduct, Color } from "@/lib/types";
 
 interface StockTabProps {
   tenantId: string;
@@ -36,57 +49,71 @@ interface StockTabProps {
   globalColors: Color[];
 }
 
-const StockTab = ({
-  tenantId,
-  storedProducts,
-  setStoredProducts,
-  globalSizes,
-  globalColors,
-}: StockTabProps) => {
+const formatBRL = (val: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+};
+
+const sortSizes = (sizes: string[]) => {
+  const order = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG', 'XXXG'];
+  return [...sizes].sort((a, b) => {
+    const ia = order.indexOf(a);
+    const ib = order.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+};
+
+const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, globalColors }: StockTabProps) => {
   const [stockQuery, setStockQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
   const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-  const [editFields, setEditFields] = useState<Record<number, any>>({});
-  
+  const [editFields, setEditFields] = useState<Record<number, Partial<AdminProduct>>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Estados para nova grade
   const [isNewSizeDialogOpen, setIsNewSizeDialogOpen] = useState(false);
   const [newSizeName, setNewSizeName] = useState("");
-  const [creatingSize, setCreatingSize] = useState(false);
   const [targetProductForNewSize, setTargetProductForNewSize] = useState<number | null>(null);
+  const [creatingSize, setCreatingSize] = useState(false);
 
-  const filteredStock = storedProducts.filter((p) =>
-    `${p.name} ${p.category || ""} ${String(p.id ?? "")}`
-      .toLowerCase()
-      .includes(stockQuery.toLowerCase())
+  const filteredStock = storedProducts.filter(p => 
+    p.name.toLowerCase().includes(stockQuery.toLowerCase()) ||
+    (p.category || "").toLowerCase().includes(stockQuery.toLowerCase())
   );
 
-  const totalPages = Math.max(1, Math.ceil(filteredStock.length / pageSize));
-  const startIndex = (currentPage - 1) * pageSize;
-  const visibleStock = filteredStock.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
+  const visibleStock = filteredStock.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleQueryChange = (val: string) => {
     setStockQuery(val);
     setCurrentPage(1);
   };
 
-  const handleStockBySizeChange = async (id: number, size: string, newStock: number) => {
+  const handleStockBySizeChange = async (productId: number, size: string, newVal: number) => {
     try {
-      const target = storedProducts.find(p => p.id === id);
-      if (!target) return;
-      
-      const nextStockBySize = { ...(target.stockBySize || {}), [size]: Math.max(0, newStock) };
-      const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-      
+      const product = storedProducts.find(p => p.id === productId);
+      if (!product) return;
+
+      const updatedStockBySize = {
+        ...(product.stockBySize || {}),
+        [size]: newVal
+      };
+
+      const totalStock = Object.values(updatedStockBySize).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0) as number;
+
       const { error } = await supabase
         .from('products')
-        .update({ stockBySize: nextStockBySize, stock: nextTotal })
-        .eq('id', id)
+        .update({ stockBySize: updatedStockBySize, stock: totalStock })
+        .eq('id', productId)
         .eq('tenant_id', tenantId);
-        
+
       if (error) throw error;
-      
-      setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, stockBySize: nextStockBySize, stock: nextTotal } : p));
-      toast.success("Estoque atualizado", { description: `${target.name} (${size}): ${newStock}un` });
+
+      setStoredProducts(prev => prev.map(p => 
+        p.id === productId ? { ...p, stockBySize: updatedStockBySize, stock: totalStock } : p
+      ));
     } catch (e: any) {
       toast.error("Erro ao atualizar estoque", { description: parseSupabaseError(e) });
     }
@@ -95,25 +122,25 @@ const StockTab = ({
   const handleUpdateProductFields = async (id: number) => {
     const fields = editFields[id];
     if (!fields) return;
-    
+
     try {
       const { error } = await supabase
         .from('products')
         .update(fields)
         .eq('id', id)
         .eq('tenant_id', tenantId);
-        
+
       if (error) throw error;
-      
+
       setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, ...fields } : p));
       setEditFields(prev => {
         const next = { ...prev };
         delete next[id];
         return next;
       });
-      toast.success("Produto atualizado com sucesso!");
+      toast.success("Produto atualizado com maestria");
     } catch (e: any) {
-      toast.error("Erro ao atualizar produto", { description: parseSupabaseError(e) });
+      toast.error("Falha na atualização", { description: parseSupabaseError(e) });
     }
   };
 
@@ -121,21 +148,19 @@ const StockTab = ({
     try {
       const target = storedProducts.find(p => p.id === id);
       if (!target) return;
-      
-      const currentSizes = Array.isArray(target.sizes) ? target.sizes : [];
-      if (currentSizes.includes(newSize)) return;
-      
-      const nextSizes = sortSizes([...currentSizes, newSize]);
+      if ((target.sizes || []).includes(newSize)) return;
+
+      const nextSizes = [...(target.sizes || []), newSize];
       const nextStockBySize = { ...(target.stockBySize || {}), [newSize]: 0 };
-      
+
       const { error } = await supabase
         .from('products')
         .update({ sizes: nextSizes, stockBySize: nextStockBySize })
         .eq('id', id)
         .eq('tenant_id', tenantId);
-        
+
       if (error) throw error;
-      
+
       setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, sizes: nextSizes, stockBySize: nextStockBySize } : p));
       toast.success(`Tamanho ${newSize} adicionado ao modelo`);
     } catch (e: any) {
@@ -233,36 +258,34 @@ const StockTab = ({
 
           <div className="p-6 md:p-10 space-y-8 md:space-y-10">
             {/* Listagem Mobile */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
+            <div className="md:hidden space-y-4">
               {visibleStock.map((p) => (
-                  <div 
-                    key={p.id} 
-                    className="p-6 rounded-[2rem] bg-muted/5 border border-primary/10 hover:border-primary/20 shadow-xl transition-all active:scale-[0.98]"
-                    onClick={() => setExpandedProductId(p.id!)}
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-2xl bg-background/50 border border-primary/10 overflow-hidden shrink-0 flex items-center justify-center shadow-lg">
-                        {p.image ? <img src={p.image} className="w-full h-full object-cover grayscale" /> : <Package className="w-6 h-6 text-primary/20" />}
+                <div 
+                  key={p.id} 
+                  className={`bg-card/40 border border-primary/5 rounded-[2rem] p-5 space-y-4 transition-all ${expandedProductId === p.id ? 'border-primary/40 ring-1 ring-primary/20' : ''}`}
+                  onClick={() => setExpandedProductId(p.id!)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 max-w-[70%]">
+                      <div className="w-12 h-12 rounded-2xl bg-muted/20 border border-primary/10 overflow-hidden shrink-0">
+                        {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 m-3.5 opacity-20" />}
                       </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="font-black text-sm uppercase truncate leading-tight">{p.name}</div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-[8px] uppercase font-black border-primary/10 text-primary h-5 px-1.5 bg-primary/5">{p.category}</Badge>
-                          <div className={`h-1.5 w-1.5 rounded-full ${p.stock > 10 ? 'bg-green-500' : p.stock > 0 ? 'bg-amber-500' : 'bg-destructive'} animate-pulse`} />
-                          <span className="font-black text-[10px] text-muted-foreground">{p.stock || 0} UNI</span>
-                        </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-black uppercase truncate leading-tight">{p.name}</h4>
+                        <p className="text-[10px] font-black text-primary">{formatBRL(p.price)}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-primary/5 text-primary">
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
                     </div>
+                    <Badge variant="outline" className={`text-[8px] font-black uppercase px-2 py-1 rounded-lg ${p.stock > 10 ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
+                      {p.stock} UN
+                    </Badge>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
 
-            {/* Modal de Gestão de Produto (Mobile) */}
+            {/* Modal de Gestão de Produto (Mobile APENAS) */}
             <Dialog open={!!expandedProductId} onOpenChange={(open) => !open && setExpandedProductId(null)}>
-              <DialogContent className="max-w-[95vw] w-full bg-card border-primary/30 rounded-[2.5rem] p-6 text-foreground shadow-3xl overflow-hidden max-h-[90vh] flex flex-col">
+              <DialogContent className="md:hidden max-w-[95vw] w-full bg-card border-primary/30 rounded-[2.5rem] p-6 text-foreground shadow-3xl overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
                 <DialogHeader className="mb-4 shrink-0">
                   <DialogTitle className="text-xl font-black uppercase tracking-tight text-primary truncate max-w-[80%]">
@@ -449,34 +472,40 @@ const StockTab = ({
                                         </div>
                                       ))}
                                       
-                                      {/* Slot de Adição Premium */}
-                                      <div className="flex flex-col gap-2 p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/10 hover:border-primary/40 hover:bg-primary/10 transition-all justify-center items-center text-center group cursor-pointer min-h-[140px] shadow-xl">
-                                        <Select
-                                          onValueChange={(val) => {
-                                            if (val) handleAddSizeToModel(p.id!, val);
-                                          }}
-                                        >
-                                          <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary hover:text-primary transition-colors flex flex-col items-center gap-2 h-auto p-0">
-                                            <PlusCircle className="w-12 h-12 opacity-20 group-hover:opacity-100 transition-all transform group-hover:scale-110" />
-                                            <span className="text-[8px] font-black uppercase tracking-[0.2em]">Acoplar Tamanho</span>
-                                          </SelectTrigger>
-                                          <SelectContent className="bg-card border-primary/30 rounded-[2rem] p-4 min-w-[240px] shadow-3xl">
-                                              <div className="px-4 py-4 border-b border-primary/10 text-[9px] font-black uppercase tracking-[0.3em] text-primary opacity-50 text-center mb-4">Grade Global Sistemática</div>
-                                              <div className="max-h-[240px] overflow-y-auto px-1 custom-scrollbar grid grid-cols-2 gap-2">
-                                                  {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
-                                                      <SelectItem key={gs} value={gs} className="font-black py-4 rounded-xl hover:bg-primary/20 text-xs px-6 uppercase cursor-pointer border border-transparent hover:border-primary/20">
-                                                          {gs}
-                                                      </SelectItem>
-                                                  ))}
-                                              </div>
-                                              <div 
-                                                  className="p-4 mt-6 rounded-2xl bg-primary text-black text-[10px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-primary/90 transition-all shadow-xl shadow-primary/10 mx-1"
-                                                  onClick={(e) => { e.preventDefault(); setIsNewSizeDialogOpen(true); setTargetProductForNewSize(p.id!); }}
-                                              >
-                                                  + Criar Novo Tamanho Global
-                                              </div>
-                                          </SelectContent>
-                                        </Select>
+                                      <div className="flex flex-col gap-3 p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center group hover:bg-primary/10 transition-all cursor-pointer">
+                                         <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
+                                            <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-2 h-auto p-0">
+                                              <PlusCircle className="w-10 h-10 opacity-30 group-hover:opacity-100 transition-opacity shrink-0" />
+                                              <span className="text-[9px] font-black uppercase tracking-[0.2em]">Acoplar Grade</span>
+                                              <ChevronDown className="w-4 h-4 opacity-20" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-card border-primary/30 rounded-3xl min-w-[240px] shadow-3xl">
+                                               <div className="p-3 border-b border-primary/5 mb-2">
+                                                  <p className="text-[8px] font-black text-primary/40 uppercase tracking-widest text-center">Grades Disponíveis</p>
+                                               </div>
+                                               {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
+                                                  <SelectItem key={gs} value={gs} className="font-black py-4 rounded-2xl text-xs uppercase px-6 cursor-pointer focus:bg-primary/10 focus:text-primary transition-colors">{gs}</SelectItem>
+                                               ))}
+                                               {globalSizes.filter(gs => !p.sizes.includes(gs)).length === 0 && (
+                                                  <div className="py-8 px-6 text-center opacity-40">
+                                                     <p className="text-[9px] font-black uppercase">Todas as grades já aplicadas</p>
+                                                  </div>
+                                               )}
+                                               <div className="p-2 mt-2 border-t border-primary/5">
+                                                  <Button 
+                                                    variant="ghost" 
+                                                    className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary hover:bg-primary/5 rounded-xl h-10"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setTargetProductForNewSize(p.id!);
+                                                        setIsNewSizeDialogOpen(true);
+                                                    }}
+                                                  >
+                                                     CRIAR NOVA GRADE GLOBAL
+                                                  </Button>
+                                               </div>
+                                            </SelectContent>
+                                         </Select>
                                       </div>
                                     </div>
                                   </TabsContent>
