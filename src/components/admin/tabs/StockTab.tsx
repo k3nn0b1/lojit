@@ -515,33 +515,33 @@ const StockTab = ({
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[120px] -z-10" />
           
           <div className="flex flex-col h-[90vh] md:h-auto max-h-[90vh]">
-            <div className="p-8 md:p-12 border-b border-primary/10 bg-primary/5 flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-6">
+            <div className="p-6 md:p-12 border-b border-primary/10 bg-primary/5 flex flex-col md:flex-row items-center md:items-center justify-between shrink-0 gap-6">
+               <div className="flex items-center gap-6 w-full md:w-auto">
                   <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0 relative">
                     {editingProduct?.active === false && <div className="absolute inset-0 bg-destructive/10 backdrop-grayscale-[0.5] z-10" />}
                     {editingProduct?.image ? <img src={editingProduct.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-5 opacity-20" />}
                   </div>
-                  <div className="space-y-1">
-                    <DialogTitle className="text-2xl md:text-3xl font-black uppercase tracking-tight text-primary truncate max-w-[200px] md:max-w-md">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <DialogTitle className="text-xl md:text-3xl font-black uppercase tracking-tight text-primary truncate">
                       {editingProduct?.name || "Editor de Ativo"}
                     </DialogTitle>
                     <div className="flex items-center gap-3">
-                        <DialogDescription className="text-[10px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
+                        <DialogDescription className="text-[9px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
                         {editingProduct?.active === false && <Badge className="bg-destructive text-white border-none text-[8px] font-black h-4 px-2 tracking-widest">DESATIVADO</Badge>}
                     </div>
                   </div>
                </div>
                
-               <div className="flex items-center gap-3 md:gap-4">
+               <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
                   <Button 
                     variant="outline" 
-                    className={`h-12 w-12 md:h-14 md:w-auto md:px-6 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
+                    className={`flex-1 md:flex-none h-12 md:h-14 md:px-6 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
                     onClick={() => handleToggleActive(editingProduct?.active ?? true)}
                   >
-                    {editingProduct?.active ? <><Eye className="w-5 h-5" /> <span className="hidden md:inline">Ativo na Loja</span></> : <><EyeOff className="w-5 h-5" /> <span className="hidden md:inline">Oculto na Loja</span></>}
+                    {editingProduct?.active ? <><Eye className="w-5 h-5" /> <span className="hidden md:inline">Ativo na Loja</span><span className="md:hidden">Ativo</span></> : <><EyeOff className="w-5 h-5" /> <span className="hidden md:inline">Oculto na Loja</span><span className="md:hidden">Oculto</span></>}
                   </Button>
                   
-                  <Button variant="ghost" className="h-12 w-12 md:h-14 md:w-14 rounded-2xl hover:bg-destructive/10 text-destructive border border-destructive/5" onClick={() => editingProduct && setDeleteId(editingProduct.id!)}>
+                  <Button variant="ghost" className="h-12 w-12 md:h-14 md:w-14 rounded-2xl hover:bg-destructive/10 text-destructive border border-destructive/5 flex items-center justify-center shrink-0" onClick={() => editingProduct && setDeleteId(editingProduct.id!)}>
                     <Trash2 className="w-5 h-5" />
                   </Button>
                </div>
@@ -549,27 +549,27 @@ const StockTab = ({
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <Tabs defaultValue="geral" className="w-full h-full flex flex-col">
-                <TabsList className="bg-muted/30 p-2 border-b border-primary/5 w-full flex justify-start h-16 rounded-none px-8 md:px-12 gap-8">
-                  <TabsTrigger value="geral" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
-                    <Info className="w-4 h-4" /> Geral
+                <TabsList className="bg-muted/30 p-2 border-b border-primary/5 w-full flex justify-start h-16 rounded-none px-4 md:px-12 md:gap-8 overflow-x-auto no-scrollbar">
+                  <TabsTrigger value="geral" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                    <Info className="w-4 h-4" /> <span className="hidden xs:inline">Geral</span>
                   </TabsTrigger>
-                  <TabsTrigger value="estoque" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
-                    <BarChart3 className="w-4 h-4" /> Estoque
+                  <TabsTrigger value="estoque" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                    <BarChart3 className="w-4 h-4" /> <span className="hidden xs:inline">Estoque</span>
                   </TabsTrigger>
-                  <TabsTrigger value="estilo" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
-                    <Palette className="w-4 h-4" /> Estilo & Fotos
+                  <TabsTrigger value="estilo" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                    <Palette className="w-4 h-4" /> <span className="hidden xs:inline">Estilo & Fotos</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <div className="p-8 md:p-12 flex-1">
-                  <TabsContent value="geral" className="m-0 outline-none space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                <div className="p-6 md:p-12 flex-1">
+                  <TabsContent value="geral" className="m-0 outline-none space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
                       <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Título do Ativo</Label>
                         <Input 
                           value={editingProduct?.name || ""} 
                           onChange={(e) => handleUpdateField("name", e.target.value)}
-                          className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-lg px-8 shadow-2xl focus:ring-primary/20"
+                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-base md:text-lg px-6 md:px-8 shadow-2xl focus:ring-primary/20"
                         />
                       </div>
                       <div className="space-y-3">
@@ -578,7 +578,7 @@ const StockTab = ({
                           type="number"
                           value={editingProduct?.price || ""} 
                           onChange={(e) => handleUpdateField("price", parseFloat(e.target.value) || 0)}
-                          className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-2xl text-primary px-8 shadow-2xl"
+                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-xl md:text-2xl text-primary px-6 md:px-8 shadow-2xl"
                         />
                       </div>
                     </div>
@@ -587,14 +587,14 @@ const StockTab = ({
                       <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Classificação de Catálogo</Label>
                       <div className="flex gap-4">
                         <Select value={editingProduct?.category} onValueChange={(val) => handleUpdateField("category", val)}>
-                          <SelectTrigger className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black uppercase text-[11px] tracking-widest px-8 shadow-2xl flex-1">
+                          <SelectTrigger className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest px-6 md:px-8 shadow-2xl flex-1">
                             <SelectValue placeholder="CATEGORIA" />
                           </SelectTrigger>
                           <SelectContent className="bg-card border-primary/20 rounded-2xl">
                             {categories.map(c => <SelectItem key={c} value={c} className="font-black uppercase text-[10px] py-4">{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
-                        <Button variant="outline" className="h-16 w-16 rounded-2xl border-primary/10 bg-primary/5 text-primary shrink-0 hover:bg-primary/20" onClick={() => setQuickAddType("category")}>
+                        <Button variant="outline" className="h-14 w-14 md:h-16 md:w-16 rounded-2xl border-primary/10 bg-primary/5 text-primary shrink-0 hover:bg-primary/20" onClick={() => setQuickAddType("category")}>
                           <PlusCircle className="w-6 h-6" />
                         </Button>
                       </div>
@@ -605,29 +605,29 @@ const StockTab = ({
                       <Textarea 
                         value={editingProduct?.description || ""} 
                         onChange={(e) => handleUpdateField("description", e.target.value)}
-                        className="min-h-[180px] bg-background/50 border-primary/10 rounded-[2rem] p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl"
+                        className="min-h-[150px] md:min-h-[180px] bg-background/50 border-primary/10 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl"
                         placeholder="Detalhes técnicos, materiais, cuidados..."
                       />
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="estoque" className="m-0 outline-none space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <TabsContent value="estoque" className="m-0 outline-none space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-6">
                       <div className="flex items-center justify-between px-2">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Matriz de Grade Ativa</Label>
-                        <Button variant="ghost" size="sm" className="h-10 px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("size")}>
-                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Novo Tamanho Global
+                        <Button variant="ghost" size="sm" className="h-10 px-4 md:px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[8px] md:text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("size")}>
+                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Novo
                         </Button>
                       </div>
                       
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-2 md:gap-3">
                         {globalSizes.map((s) => {
                           const isSelected = editingProduct?.sizes?.includes(s);
                           return (
                             <button
                               key={s}
                               onClick={() => handleToggleSize(s)}
-                              className={`h-12 px-8 rounded-2xl border transition-all font-black text-[11px] uppercase tracking-widest ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:border-primary/40'}`}
+                              className={`h-11 md:h-12 px-5 md:px-8 rounded-xl md:rounded-2xl border transition-all font-black text-[10px] md:text-[11px] uppercase tracking-widest ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:border-primary/40'}`}
                             >
                               {s}
                             </button>
@@ -637,18 +637,18 @@ const StockTab = ({
                     </div>
 
                     {editingProduct?.sizes && editingProduct.sizes.length > 0 && (
-                      <div className="space-y-6 p-8 rounded-[2.5rem] bg-muted/5 border border-primary/5">
+                      <div className="space-y-6 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] bg-muted/5 border border-primary/5">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 block mb-6 text-center">Unidades por Tamanho</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
                           {sortSizes(editingProduct.sizes).map((s) => (
-                            <div key={s} className="space-y-2 p-5 rounded-2xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
+                            <div key={s} className="space-y-2 p-4 md:p-5 rounded-xl md:rounded-2xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
                               <Label className="text-[9px] font-black text-primary/40 uppercase block text-center tracking-widest">{s}</Label>
                               <Input 
                                 type="number" 
                                 min={0} 
                                 value={editingProduct.stockBySize?.[s] || 0}
                                 onChange={(e) => handleStockUpdate(s, parseInt(e.target.value) || 0)}
-                                className="h-10 border-none bg-transparent text-center font-black text-lg focus:ring-0 p-0"
+                                className="h-8 md:h-10 border-none bg-transparent text-center font-black text-base md:text-lg focus:ring-0 p-0"
                               />
                             </div>
                           ))}
@@ -657,36 +657,36 @@ const StockTab = ({
                     )}
                   </TabsContent>
 
-                  <TabsContent value="estilo" className="m-0 outline-none space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <TabsContent value="estilo" className="m-0 outline-none space-y-10 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-6">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2 flex items-center gap-2">
                             <ImageIcon className="w-4 h-4" /> Portfólio de Imagens do Ativo
                         </Label>
-                        <div className="grid grid-cols-3 gap-6 md:gap-8">
+                        <div className="grid grid-cols-3 gap-3 md:gap-8">
                             {[0, 1, 2].map((idx) => {
                                 const urlField = idx === 0 ? "image" : idx === 1 ? "image2" : "image3";
                                 const currentUrl = editingProduct?.[urlField as keyof AdminProduct] as string;
                                 const isUploading = uploadingIdx === idx;
 
                                 return (
-                                    <div key={idx} className="group relative aspect-square rounded-[2rem] border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-2xl">
+                                    <div key={idx} className="group relative aspect-square rounded-[1rem] md:rounded-[2rem] border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-2xl">
                                         {currentUrl ? (
                                             <>
                                                 <img src={currentUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                 <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
-                                                    <Button variant="destructive" size="icon" className="rounded-full h-12 w-12 shadow-2xl transform scale-75 group-hover:scale-100 transition-transform" onClick={() => handleImageRemove(idx)}>
-                                                        <Trash2 className="w-5 h-5" />
+                                                    <Button variant="destructive" size="icon" className="rounded-full h-10 w-10 md:h-12 md:w-12 shadow-2xl transform scale-75 group-hover:scale-100 transition-transform" onClick={() => handleImageRemove(idx)}>
+                                                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
                                                     </Button>
                                                 </div>
                                             </>
                                         ) : (
-                                            <Label htmlFor={`edit-img-${idx}`} className={`flex flex-col items-center justify-center gap-2 h-full cursor-pointer group-hover:bg-primary/5 transition-colors ${isUploading ? 'pointer-events-none' : ''}`}>
+                                            <Label htmlFor={`edit-img-${idx}`} className={`flex flex-col items-center justify-center gap-1 md:gap-2 h-full cursor-pointer group-hover:bg-primary/5 transition-colors ${isUploading ? 'pointer-events-none' : ''}`}>
                                                 {isUploading ? (
-                                                    <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+                                                    <RefreshCw className="w-6 h-6 md:w-8 md:h-8 text-primary animate-spin" />
                                                 ) : (
                                                     <>
-                                                        <Upload className="w-8 h-8 text-primary/20 group-hover:text-primary transition-colors" />
-                                                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 group-hover:text-primary">FOTO {idx+1}</span>
+                                                        <Upload className="w-6 h-6 md:w-8 md:h-8 text-primary/20 group-hover:text-primary transition-colors" />
+                                                        <span className="text-[7px] md:text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 group-hover:text-primary">FOTO {idx+1}</span>
                                                     </>
                                                 )}
                                                 <input id={`edit-img-${idx}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e.target.files?.[0], idx)} />
@@ -701,22 +701,22 @@ const StockTab = ({
                     <div className="space-y-6">
                       <div className="flex items-center justify-between px-2">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Paleta Colorimétrica</Label>
-                        <Button variant="ghost" size="sm" className="h-10 px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("color")}>
-                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Nova Cor Global
+                        <Button variant="ghost" size="sm" className="h-10 px-4 md:px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[8px] md:text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("color")}>
+                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Nova
                         </Button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {globalColors.map((c) => {
                           const isSelected = (editingProduct?.colors as Color[])?.some(pc => pc.name === c.name);
                           return (
                             <button
                               key={c.name}
                               onClick={() => handleToggleColor(c)}
-                              className={`flex items-center gap-4 px-6 py-5 rounded-2xl border transition-all group ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-card/40 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'}`}
+                              className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 md:py-5 rounded-xl md:rounded-2xl border transition-all group ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-card/40 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'}`}
                             >
-                              <div className="w-6 h-6 rounded-full border border-white/10 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: c.hex }} />
-                              <span className="font-black uppercase text-[10px] tracking-widest">{c.name}</span>
+                              <div className="w-5 h-5 md:w-6 md:h-6 rounded-full border border-white/10 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: c.hex }} />
+                              <span className="font-black uppercase text-[9px] md:text-[10px] tracking-widest truncate">{c.name}</span>
                             </button>
                           );
                         })}
@@ -727,12 +727,12 @@ const StockTab = ({
               </Tabs>
             </div>
 
-            <div className="p-8 md:p-12 border-t border-primary/10 bg-primary/5 shrink-0 flex gap-4">
-               <Button variant="ghost" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest text-xs" onClick={() => setEditingProduct(null)}>
+            <div className="p-6 md:p-12 border-t border-primary/10 bg-primary/5 shrink-0 flex flex-col md:flex-row gap-4">
+               <Button variant="ghost" className="h-14 md:h-16 rounded-2xl font-black uppercase tracking-widest text-xs w-full md:flex-1" onClick={() => setEditingProduct(null)}>
                   Desistir
                </Button>
-               <Button className="flex-[2] h-16 bg-primary text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all" onClick={handleSaveProduct} disabled={isSaving}>
-                  {isSaving ? "Sincronizando..." : <><Save className="w-5 h-5 mr-3" /> Confirmar Atualização</>}
+               <Button className="h-14 md:h-16 bg-primary text-black font-black uppercase tracking-[0.1em] md:tracking-[0.2em] rounded-2xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all w-full md:flex-[2]" onClick={handleSaveProduct} disabled={isSaving}>
+                  {isSaving ? "Sincronizando..." : <><Save className="w-5 h-5 mr-3" /> <span className="hidden xs:inline">Confirmar Atualização</span><span className="xs:hidden">Confirmar</span></>}
                </Button>
             </div>
           </div>
@@ -741,36 +741,36 @@ const StockTab = ({
 
       {/* QUICK ADD SUB-MODAL */}
       <Dialog open={quickAddType !== null} onOpenChange={(open) => !open && setQuickAddType(null)}>
-        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[3rem] p-12 shadow-3xl text-foreground">
-          <DialogHeader className="mb-10 text-center">
-            <DialogTitle className="text-2xl font-black uppercase text-primary flex items-center justify-center gap-4">
-              <PlusCircle className="w-8 h-8" /> {quickAddType === "category" ? "Nova Categoria" : quickAddType === "size" ? "Nova Grade" : "Nova Cor"}
+        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 shadow-3xl text-foreground">
+          <DialogHeader className="mb-8 md:mb-10 text-center">
+            <DialogTitle className="text-xl md:text-2xl font-black uppercase text-primary flex items-center justify-center gap-3 md:gap-4">
+              <PlusCircle className="w-6 h-6 md:w-8 md:h-8" /> {quickAddType === "category" ? "Nova Categoria" : quickAddType === "size" ? "Nova Grade" : "Nova Cor"}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Identificador Visual</Label>
               <Input 
                 value={quickInput} 
                 onChange={(e) => setQuickInput(e.target.value)} 
-                className="h-16 bg-background/50 border-primary/10 rounded-2xl text-xl font-black px-8"
+                className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl text-lg md:text-xl font-black px-6 md:px-8"
                 autoFocus
               />
             </div>
 
             {quickAddType === "color" && (
-              <div className="space-y-3 p-8 rounded-[2rem] bg-muted/5 border border-primary/5">
+              <div className="space-y-3 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-muted/5 border border-primary/5">
                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 block mb-4 text-center">Seletor de Hex</Label>
-                <div className="flex items-center justify-center gap-8">
+                <div className="flex items-center justify-center gap-6 md:gap-8">
                   <Input 
                     type="color" 
                     value={quickHex} 
                     onChange={(e) => setQuickHex(e.target.value)} 
-                    className="w-24 h-24 p-1 rounded-3xl bg-background border-primary/20 cursor-pointer shadow-2xl"
+                    className="w-20 h-20 md:w-24 md:h-24 p-1 rounded-[1.5rem] md:rounded-3xl bg-background border-primary/20 cursor-pointer shadow-2xl"
                   />
                   <div className="flex flex-col">
-                    <span className="text-xl font-black font-mono text-primary">{quickHex.toUpperCase()}</span>
+                    <span className="text-lg md:text-xl font-black font-mono text-primary">{quickHex.toUpperCase()}</span>
                     <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">Matiz Hex</span>
                   </div>
                 </div>
@@ -778,39 +778,39 @@ const StockTab = ({
             )}
           </div>
 
-          <DialogFooter className="mt-12 gap-4">
-            <Button variant="ghost" onClick={() => setQuickAddType(null)} className="flex-1 h-14 rounded-2xl font-black uppercase">Voltar</Button>
-            <Button onClick={handleQuickAdd} disabled={!quickInput.trim()} className="flex-[2] h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl">Cadastrar Global</Button>
+          <DialogFooter className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4">
+            <Button variant="ghost" onClick={() => setQuickAddType(null)} className="h-14 rounded-2xl font-black uppercase w-full sm:flex-1">Voltar</Button>
+            <Button onClick={handleQuickAdd} disabled={!quickInput.trim()} className="h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl w-full sm:flex-[2]">Cadastrar Global</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* CONFIRMAÇÃO DE EXCLUSÃO PERSONALIZADA */}
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="max-w-md bg-card border-2 border-destructive/20 rounded-[3rem] p-12 shadow-3xl text-foreground overflow-hidden">
+        <AlertDialogContent className="max-w-md bg-card border-2 border-destructive/20 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 shadow-3xl text-foreground overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-destructive/20" />
-          <AlertDialogHeader className="mb-8 space-y-6">
-            <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4 border border-destructive/20 animate-pulse">
-                <AlertTriangle className="w-10 h-10 text-destructive" />
+          <AlertDialogHeader className="mb-6 md:mb-8 space-y-4 md:space-y-6">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2 border border-destructive/20 animate-pulse">
+                <AlertTriangle className="w-8 h-8 md:w-10 md:h-10 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight text-center text-primary">
+            <AlertDialogTitle className="text-xl md:text-2xl font-black uppercase tracking-tight text-center text-primary">
               Operação Crítica
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center font-medium text-muted-foreground px-4 leading-relaxed">
-               Você está prestes a remover este ativo permanentemente do banco de dados. Esta ação <span className="text-destructive font-black underline underline-offset-4 decoration-destructive/30">NÃO PODE SER DESFEITA.</span>
+            <AlertDialogDescription className="text-center font-medium text-muted-foreground px-4 leading-relaxed text-sm">
+               Você está prestes a remover este ativo permanentemente. Esta ação <span className="text-destructive font-black underline underline-offset-4 decoration-destructive/30">NÃO PODE SER DESFEITA.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-4 mt-4">
             <AlertDialogCancel asChild>
-                <Button variant="ghost" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest text-xs border border-primary/5" disabled={isDeleting}>Abortar</Button>
+                <Button variant="ghost" className="h-14 md:h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-primary/5 w-full" disabled={isDeleting}>Abortar</Button>
             </AlertDialogCancel>
             <AlertDialogAction asChild>
                 <Button 
-                    className="flex-[2] h-16 bg-destructive text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-destructive/20 hover:bg-destructive/90 transition-all active:scale-95"
+                    className="h-14 md:h-16 bg-destructive text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-destructive/20 hover:bg-destructive/90 transition-all active:scale-95 w-full"
                     onClick={handleRemoveProduct}
                     disabled={isDeleting}
                 >
-                    {isDeleting ? "Excluindo..." : "Sim, Excluir Agora"}
+                    {isDeleting ? "Excluindo..." : "Sim, Excluir"}
                 </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
