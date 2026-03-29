@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { parseSupabaseError } from "@/lib/utils";
-import { Image as ImageIcon, Search, Upload, Trash2, Edit3, ImagePlus, Box, Info, Layout } from "lucide-react";
+import { Image as ImageIcon, Search, Upload, Trash2, Edit3, ImagePlus, Box, Info, Layout, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AdminProduct } from "@/lib/types";
 import { Label } from "@/components/ui/label";
