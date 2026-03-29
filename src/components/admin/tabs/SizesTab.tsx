@@ -171,12 +171,17 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                 </div>
              </div>
 
-             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                 {filteredSizes.map((s) => (
-                  <div key={s} className="group relative rounded-[1.5rem] border border-primary/5 p-4 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-xl flex items-center justify-between overflow-hidden">
+                  <div key={s} className="group relative rounded-xl md:rounded-[1.5rem] border border-primary/5 p-3 md:p-4 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-lg flex items-center justify-between overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-2xl -z-10 group-hover:scale-150 transition-transform" />
-                    <span className="font-black text-[11px] uppercase tracking-[0.2em] text-foreground truncate pl-2">{s}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/10">
+                            <Ruler className="w-3.5 h-3.5 text-primary opacity-60" />
+                        </div>
+                        <span className="font-black text-[11px] md:text-[11px] uppercase tracking-widest text-foreground truncate">{s}</span>
+                    </div>
+                    <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all">
                         <Button 
                             variant="ghost" 
                             size="icon" 

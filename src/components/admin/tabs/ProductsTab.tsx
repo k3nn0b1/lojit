@@ -613,23 +613,23 @@ const ProductsTab = ({
 
           {/* Pagination Premium */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between gap-6 p-8 bg-primary/5 border-t border-primary/10">
+            <div className="flex items-center justify-between gap-2 md:gap-6 p-4 md:p-8 bg-primary/5 border-t border-primary/10 rounded-b-[2rem] md:rounded-b-[2.5rem]">
                 <Button 
                     variant="ghost" 
                     disabled={currentPage <= 1} 
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="h-12 px-8 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary/10 rounded-xl"
+                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
                 >
                     Anterior
                 </Button>
-                <div className="flex items-center gap-1.5 p-2 bg-muted/20 rounded-2xl border border-primary/5 shadow-inner">
-                    <span className="px-4 text-xs font-black text-primary">{currentPage} <span className="text-muted-foreground opacity-30 mx-1">/</span> {totalPages}</span>
+                <div className="flex items-center gap-1.5 p-1 md:p-2 bg-muted/20 rounded-xl md:rounded-2xl border border-primary/5 shadow-inner px-2 shrink-0">
+                    <span className="px-2 md:px-4 text-[10px] md:text-xs font-black text-primary whitespace-nowrap">{currentPage} <span className="text-muted-foreground opacity-30 mx-1">/</span> {totalPages}</span>
                 </div>
                 <Button 
                     variant="ghost" 
                     disabled={currentPage >= totalPages} 
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="h-12 px-8 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary/10 rounded-xl"
+                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
                 >
                     Próxima
                 </Button>

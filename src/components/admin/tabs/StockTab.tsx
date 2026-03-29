@@ -234,14 +234,11 @@ const StockTab = ({
           <div className="p-6 md:p-10 space-y-8 md:space-y-10">
             {/* Listagem Mobile */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
-              {visibleStock.map((p) => {
-                const isExpanded = expandedProductId === p.id;
-                const sortedSizes = sortSizes(p.sizes || []);
-                return (
+              {visibleStock.map((p) => (
                   <div 
                     key={p.id} 
-                    className={`p-6 rounded-[2rem] bg-muted/5 border border-primary/10 transition-all ${isExpanded ? 'bg-primary/5 border-primary shadow-2xl scale-[1.02]' : 'hover:border-primary/20 shadow-xl'}`}
-                    onClick={() => setExpandedProductId(isExpanded ? null : p.id!)}
+                    className="p-6 rounded-[2rem] bg-muted/5 border border-primary/10 hover:border-primary/20 shadow-xl transition-all active:scale-[0.98]"
+                    onClick={() => setExpandedProductId(p.id!)}
                   >
                     <div className="flex items-center gap-6">
                       <div className="w-16 h-16 rounded-2xl bg-background/50 border border-primary/10 overflow-hidden shrink-0 flex items-center justify-center shadow-lg">
@@ -255,33 +252,111 @@ const StockTab = ({
                           <span className="font-black text-[10px] text-muted-foreground">{p.stock || 0} UNI</span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className={`h-10 w-10 rounded-xl ${isExpanded ? 'bg-primary text-black' : 'bg-primary/5 text-primary'}`}>
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl bg-primary/5 text-primary">
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                     </div>
-
-                    {isExpanded && (
-                      <div className="mt-8 pt-8 border-t border-primary/5 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500" onClick={(e) => e.stopPropagation()}>
-                        <div className="grid grid-cols-2 gap-3">
-                          {sortedSizes.map((s) => (
-                            <div key={s} className="p-4 rounded-[1.5rem] bg-background/50 border border-primary/5 shadow-inner">
-                              <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest">{s}</span>
-                              <Input
-                                type="number"
-                                min={0}
-                                className="h-8 text-lg font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
-                                value={Number((p.stockBySize || {})[s] || 0)}
-                                onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
+                ))}
             </div>
+
+            {/* Modal de Gestão de Produto (Mobile) */}
+            <Dialog open={!!expandedProductId} onOpenChange={(open) => !open && setExpandedProductId(null)}>
+              <DialogContent className="max-w-[95vw] w-full bg-card border-primary/30 rounded-[2.5rem] p-6 text-foreground shadow-3xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
+                <DialogHeader className="mb-4 shrink-0">
+                  <DialogTitle className="text-xl font-black uppercase tracking-tight text-primary truncate max-w-[80%]">
+                    {storedProducts.find(p => p.id === expandedProductId)?.name || "Gestão de Produto"}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  {expandedProductId && (() => {
+                    const p = storedProducts.find(prod => prod.id === expandedProductId)!;
+                    const fieldData = editFields[p.id!] || p;
+                    const sortedSizes = sortSizes(p.sizes || []);
+                    return (
+                      <Tabs defaultValue="stock" className="w-full">
+                        <TabsList className="bg-muted/40 p-1.5 rounded-xl border border-primary/10 mb-6 w-full flex">
+                          <TabsTrigger value="stock" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
+                            Grade
+                          </TabsTrigger>
+                          <TabsTrigger value="edit" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
+                            Ficha
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="stock" className="mt-0 outline-none space-y-6">
+                          <div className="grid grid-cols-2 gap-3">
+                            {sortedSizes.map((s) => (
+                              <div key={s} className="group relative flex flex-col gap-2 p-4 rounded-2xl bg-card/60 border border-primary/5 shadow-xl">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">{s}</span>
+                                  <button onClick={() => handleRemoveSizeFromModel(p.id!, s)} className="text-muted-foreground/40 hover:text-destructive">
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  className="h-8 text-xl font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
+                                  value={Number((p.stockBySize || {})[s] || 0)}
+                                  onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
+                                />
+                              </div>
+                            ))}
+                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center">
+                               <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
+                                  <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-1 h-auto p-0">
+                                    <PlusCircle className="w-8 h-8 opacity-40 shrink-0" />
+                                    <span className="text-[8px] font-black uppercase tracking-widest">Add Grade</span>
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-card border-primary/30 rounded-2xl min-w-[200px]">
+                                     {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
+                                        <SelectItem key={gs} value={gs} className="font-black py-3 rounded-lg text-xs uppercase px-4 cursor-pointer">{gs}</SelectItem>
+                                     ))}
+                                  </SelectContent>
+                               </Select>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="edit" className="mt-0 outline-none space-y-4">
+                           <div className="space-y-2">
+                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Nome do Produto</Label>
+                             <Input
+                               className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl focus:ring-primary/20"
+                               value={fieldData.name}
+                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, name: e.target.value } }))}
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Preço (BRL)</Label>
+                             <Input
+                               type="number"
+                               className="h-12 bg-background/50 border-primary/5 rounded-xl text-lg font-black text-primary px-4 shadow-xl focus:ring-primary/20"
+                               value={String(fieldData.price || '')}
+                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, price: parseFloat(e.target.value) || 0 } }))}
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Descrição</Label>
+                             <Textarea
+                               className="min-h-[120px] bg-background/50 border-primary/5 rounded-xl p-4 text-xs font-medium resize-none leading-relaxed shadow-xl focus:ring-primary/20"
+                               value={fieldData.description || ""}
+                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
+                             />
+                           </div>
+                           <Button onClick={() => handleUpdateProductFields(p.id!)} className="w-full h-12 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl shadow-primary/20 mt-4">
+                              Salvar Alterações
+                           </Button>
+                        </TabsContent>
+                      </Tabs>
+                    );
+                  })()}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Tabela Desktop Elite */}
             <div className="hidden md:block overflow-hidden rounded-[2.5rem] border border-primary/10 bg-muted/5 shadow-2xl">
@@ -502,23 +577,23 @@ const StockTab = ({
 
             {/* Pagination Premium */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-6 p-8 bg-primary/5 border-t border-primary/10">
+              <div className="flex items-center justify-between gap-2 md:gap-6 p-4 md:p-8 bg-primary/5 border-t border-primary/10 rounded-b-[2rem] md:rounded-b-[2.5rem]">
                 <Button 
                     variant="ghost" 
                     disabled={currentPage <= 1} 
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="h-12 px-8 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary/10 rounded-xl"
+                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
                 >
                     Anterior
                 </Button>
-                <div className="flex items-center gap-1.5 p-2 bg-muted/20 rounded-2xl border border-primary/5 shadow-inner">
-                    <span className="px-4 text-xs font-black text-primary">{currentPage} <span className="text-muted-foreground opacity-30 mx-1">/</span> {totalPages}</span>
+                <div className="flex items-center gap-1.5 p-1 md:p-2 bg-muted/20 rounded-xl md:rounded-2xl border border-primary/5 shadow-inner px-2 shrink-0">
+                    <span className="px-2 md:px-4 text-[10px] md:text-xs font-black text-primary whitespace-nowrap">{currentPage} <span className="text-muted-foreground opacity-30 mx-1">/</span> {totalPages}</span>
                 </div>
                 <Button 
                     variant="ghost" 
                     disabled={currentPage >= totalPages} 
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="h-12 px-8 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-primary/10 rounded-xl"
+                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
                 >
                     Próxima
                 </Button>

@@ -170,11 +170,11 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                 </div>
              </div>
 
-             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {filteredColors.map((c) => {
-                  const isEditing = editingId === c.id;
-                  return (
-                    <div key={c.id} className={`group relative rounded-[2.5rem] border transition-all p-6 flex flex-col items-center gap-4 text-center overflow-hidden shadow-2xl ${isEditing ? 'bg-primary/10 border-primary scale-[1.05] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                 {filteredColors.map((c) => {
+                   const isEditing = editingId === c.id;
+                   return (
+                     <div key={c.id} className={`group relative rounded-2xl md:rounded-[2.5rem] border transition-all p-4 md:p-6 flex flex-row md:flex-col items-center gap-4 text-left md:text-center overflow-hidden shadow-xl ${isEditing ? 'bg-primary/10 border-primary scale-[1.02] md:scale-[1.05] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
                       
                       {isEditing ? (
@@ -194,33 +194,30 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                         </div>
                       ) : (
                         <>
-                           <div className="relative group/color">
-                              <div className="w-20 h-20 rounded-[2rem] border-4 border-white/5 shadow-2xl transition-all group-hover/color:rotate-12 group-hover/color:scale-110" style={{ backgroundColor: c.hex }} />
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/color:opacity-100 transition-opacity pointer-events-none">
-                                 <Droplets className="w-6 h-6 text-white drop-shadow-lg" />
-                              </div>
+                           <div className="relative group/color shrink-0">
+                               <div className="w-12 h-12 md:w-20 md:h-20 rounded-xl md:rounded-[2rem] border-2 border-white/5 shadow-lg transition-all" style={{ backgroundColor: c.hex }} />
                            </div>
-                           <div className="space-y-1 flex-1 min-w-0">
-                              <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground truncate">{c.name}</h5>
-                              <code className="text-[9px] font-mono text-primary font-black opacity-60 uppercase">{c.hex}</code>
+                           <div className="space-y-0.5 flex-1 min-w-0">
+                               <h5 className="font-black text-[10px] md:text-xs uppercase tracking-widest text-foreground truncate">{c.name}</h5>
+                               <code className="text-[8px] md:text-[9px] font-mono text-primary font-black opacity-60 uppercase">{c.hex}</code>
                            </div>
-                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0 pt-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => { setEditingId(c.id!); setEditName(c.name); setEditHex(c.hex); }}
-                                className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => handleRemoveColor(c.id!)}
-                                className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                           <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all pt-0 shrink-0">
+                               <Button 
+                                 variant="ghost" 
+                                 size="icon" 
+                                 onClick={() => { setEditingId(c.id!); setEditName(c.name); setEditHex(c.hex); }}
+                                 className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
+                               >
+                                 <Pencil className="h-4 w-4" />
+                               </Button>
+                               <Button 
+                                 variant="ghost" 
+                                 size="icon" 
+                                 onClick={() => handleRemoveColor(c.id!)}
+                                 className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
                            </div>
                         </>
                       )}

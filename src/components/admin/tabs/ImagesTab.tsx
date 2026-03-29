@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { parseSupabaseError } from "@/lib/utils";
-import { Image as ImageIcon, Search, Upload, Trash2, Edit3, ImagePlus, Box, Info, Layout, PlusCircle } from "lucide-react";
+import { Image as ImageIcon, Search, Trash2, Edit3, PlusCircle, Layout } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AdminProduct } from "@/lib/types";
-import { Label } from "@/components/ui/label";
 
 interface ImagesTabProps {
   tenantId: string;
@@ -141,33 +140,33 @@ const ImagesTab = ({
         <CardContent className="p-10">
           {filteredProducts.length === 0 ? (
             <div className="py-32 text-center space-y-6 opacity-20">
-                 <Layout className="w-20 h-20 mx-auto opacity-30 animate-pulse" />
-                 <p className="text-[10px] font-black uppercase tracking-[0.4em]">Nenhum ativo detectado nesta visualização.</p>
+                  <Layout className="w-20 h-20 mx-auto opacity-30 animate-pulse" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em]">Nenhum ativo detectado nesta visualização.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {filteredProducts.map((p) => (
-                <div key={p.id} className="group relative rounded-[3rem] border border-primary/5 bg-card/40 p-10 flex flex-col gap-10 hover:border-primary/40 transition-all shadow-[0_0_50px_rgba(0,0,0,0.2)] hover:shadow-[0_0_70px_rgba(var(--primary),0.05)] overflow-hidden">
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 blur-[60px] -z-10 group-hover:scale-150 transition-transform" />
+                <div key={p.id} className="group relative rounded-[2rem] md:rounded-[3rem] border border-primary/5 bg-card/40 p-6 md:p-10 flex flex-col gap-6 md:gap-10 hover:border-primary/40 transition-all shadow-xl overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 md:w-40 md:h-40 bg-primary/5 blur-[50px] -z-10 group-hover:scale-150 transition-transform" />
                   
-                  <div className="flex items-center justify-between border-b border-primary/10 pb-6">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-primary/10 pb-4 md:pb-6 gap-4">
                     <div className="min-w-0 space-y-1">
-                      <h4 className="font-black text-base uppercase tracking-tight truncate max-w-[250px] leading-tight group-hover:text-primary transition-colors">{p.name}</h4>
-                      <p className="text-[10px] font-black text-muted-foreground uppercase opacity-40 tracking-widest leading-none">ID DE REGISTRO: #{p.id}</p>
+                      <h4 className="font-black text-sm md:text-base uppercase tracking-tight truncate max-w-full md:max-w-[250px] leading-tight group-hover:text-primary transition-colors">{p.name}</h4>
+                      <p className="text-[8px] md:text-[10px] font-black text-muted-foreground uppercase opacity-40 tracking-widest leading-none">ID DE REGISTRO: #{p.id}</p>
                     </div>
-                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[9px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest shadow-inner">{p.category}</Badge>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[8px] md:text-[9px] font-black uppercase px-3 md:px-4 py-1 md:py-1.5 rounded-full tracking-widest shadow-inner shrink-0">{p.category}</Badge>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                     {[1, 2, 3].map((idx) => {
                       const suffix = idx === 1 ? "" : idx;
                       // @ts-ignore
                       const imageUrl = p[`image${suffix}`];
 
                       return (
-                        <div key={idx} className="flex flex-col gap-4 group/slot">
-                          <div className="group/img relative aspect-square rounded-[2rem] border-2 border-primary/5 bg-background shadow-2xl overflow-hidden flex items-center justify-center transition-all group-hover/slot:translate-y-[-4px]">
-                            <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 text-[9px] text-white font-black uppercase tracking-widest opacity-80 shadow-2xl">
+                        <div key={idx} className="flex flex-row md:flex-col gap-4 items-center group/slot bg-muted/5 p-3 md:p-0 rounded-2xl md:rounded-none border border-primary/5 md:border-none">
+                          <div className="group/img relative aspect-square w-20 h-20 md:w-full md:h-auto rounded-xl md:rounded-[2rem] border-2 border-primary/5 bg-background shadow-lg md:shadow-2xl overflow-hidden flex items-center justify-center transition-all shrink-0">
+                            <div className="absolute top-2 left-2 md:top-3 md:left-3 z-10 bg-black/60 backdrop-blur-md px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-white/5 text-[7px] md:text-[9px] text-white font-black uppercase tracking-widest opacity-80 shadow-2xl">
                                 POS {idx}
                             </div>
                             
@@ -176,40 +175,58 @@ const ImagesTab = ({
                                 <img
                                   src={imageUrl}
                                   alt={`${p.name} - ${idx}`}
-                                  className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110 grayscale group-hover/slot:grayscale-0"
+                                  className="w-full h-full object-cover transition-transform duration-700 grayscale md:group-hover/slot:scale-110"
                                 />
-                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                                    <div className="flex gap-2">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            onClick={() => triggerFilePickerForProduct(p.id!, idx)} 
-                                            className="h-11 w-11 bg-primary/20 hover:bg-primary text-primary hover:text-black rounded-full border border-primary/20 transition-all shadow-2xl"
-                                        >
-                                            <Edit3 className="w-5 h-5" />
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            onClick={() => handleRemoveProductImage(p.id!, idx)} 
-                                            className="h-11 w-11 bg-destructive/20 hover:bg-destructive text-white rounded-full border border-destructive/20 transition-all shadow-2xl"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </Button>
-                                    </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest text-primary/60">Trocar Ativo</span>
+                                <div className="absolute inset-0 bg-black/70 opacity-0 md:group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                                     <Button 
+                                         variant="ghost" 
+                                         size="icon" 
+                                         onClick={() => triggerFilePickerForProduct(p.id!, idx)} 
+                                         className="h-9 w-9 bg-primary/20 hover:bg-primary text-primary hover:text-black rounded-full border border-primary/20 transition-all shadow-2xl"
+                                     >
+                                         <Edit3 className="w-4 h-4" />
+                                     </Button>
                                 </div>
                               </>
                             ) : (
-                              <div className="flex flex-col items-center justify-center gap-3 h-full w-full cursor-pointer hover:bg-primary/5 transition-all group/empty" onClick={() => triggerFilePickerForProduct(p.id!, idx)}>
-                                <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-dashed border-primary/20 flex items-center justify-center group-hover/empty:scale-110 transition-transform">
-                                   <ImagePlus className="w-6 h-6 text-primary/20 group-hover/empty:text-primary transition-colors" />
-                                </div>
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 group-hover/empty:text-primary transition-colors">Vazio</span>
+                              <div className="flex items-center justify-center h-full w-full cursor-pointer hover:bg-primary/5 transition-all group/empty" onClick={() => triggerFilePickerForProduct(p.id!, idx)}>
+                                 <PlusCircle className="w-6 h-6 text-primary/10 group-hover/empty:text-primary transition-colors" />
                               </div>
                             )}
                           </div>
                           
+                          <div className="flex-1 md:w-full flex md:flex-col gap-2 justify-end">
+                            {imageUrl ? (
+                              <div className="flex gap-2 w-full">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => triggerFilePickerForProduct(p.id!, idx)} 
+                                    className="md:hidden flex-1 h-10 bg-primary/20 text-primary rounded-xl text-[8px] font-black uppercase tracking-widest border border-primary/10"
+                                >
+                                    ALTERAR
+                                </Button>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => handleRemoveProductImage(p.id!, idx)} 
+                                    className="flex-1 md:w-full h-10 bg-destructive/10 hover:bg-destructive text-destructive hover:text-white rounded-xl text-[8px] font-black uppercase tracking-widest border border-destructive/10 transition-all"
+                                >
+                                    REMOVER
+                                </Button>
+                              </div>
+                            ) : (
+                               <Button
+                                  variant="outline"
+                                  onClick={() => triggerFilePickerForProduct(p.id!, idx)}
+                                  disabled={uploading}
+                                  className="w-full h-10 text-[8px] font-black uppercase tracking-[0.2em] border-primary/10 hover:bg-primary/5 rounded-xl transition-all shadow-inner"
+                               >
+                                  UPLOAD
+                               </Button>
+                            )}
+                          </div>
+
                           <input
                             ref={(el) => { fileInputRefs.current[`${p.id}-${idx}`] = el; }}
                             type="file"
@@ -217,17 +234,6 @@ const ImagesTab = ({
                             className="hidden"
                             onChange={(e) => handleSelectReplaceFile(p.id!, idx, e.target.files?.[0] ?? undefined)}
                           />
-                          
-                          {!imageUrl && (
-                             <Button
-                                variant="outline"
-                                onClick={() => triggerFilePickerForProduct(p.id!, idx)}
-                                disabled={uploading}
-                                className="h-10 text-[9px] font-black uppercase tracking-[0.2em] border-primary/10 hover:bg-primary/5 rounded-xl transition-all shadow-inner"
-                             >
-                                <PlusCircle className="w-3.5 h-3.5 mr-2" /> Upload
-                             </Button>
-                          )}
                         </div>
                       );
                     })}
