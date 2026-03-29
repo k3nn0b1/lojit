@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import FootballBackground from "@/components/FootballBackground";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ProductGrid from "@/components/ProductGrid";
@@ -322,7 +321,7 @@ const Index = () => {
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
         <div className="flex-grow">
         <Hero />
-        <header className="text-center space-y-4 mb-8 md:mb-10 relative pt-10 md:pt-20">
+        <header className="text-center space-y-4 mb-8 md:mb-10 relative pt-10 md:pt-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/10 blur-[100px] rounded-full" />
           <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.85] flex flex-col items-center justify-center">
             <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{settings?.collection_title_l1 || "NOSSA"}</span>

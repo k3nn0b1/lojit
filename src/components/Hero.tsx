@@ -31,26 +31,27 @@ const Hero = () => {
       <div className="absolute bottom-1/4 -right-10 w-80 h-80 rounded-full bg-primary/5 blur-[140px] animate-pulse" style={{ animationDelay: "2s" }} />
 
       <div className="container mx-auto px-4 relative z-10 flex flex-col items-center justify-center">
-        {/* Logo Section */}
+        {/* Logo Section - Removed AOS for instant FCP/LCP */}
         {settings?.logo_url && (
           <div
-            className="relative mb-8 md:mb-12 hover-scale transition-smooth"
-            data-aos="zoom-in"
+            className="relative mb-8 md:mb-12 hover-scale transition-smooth animate-in fade-in zoom-in duration-1000 fill-mode-both"
           >
             <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
             <img
               src={settings.logo_url}
               alt={storeName}
+              width={420}
+              height={280}
+              fetchPriority="high"
+              loading="eager"
               className="relative w-full max-w-[280px] md:max-w-[420px] h-auto max-h-[15vh] md:max-h-[22vh] object-contain"
             />
           </div>
         )}
 
-        {/* Content Section */}
+        {/* Content Section - Instant visibility */}
         <div
-          className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8"
-          data-aos="fade-up"
-          data-aos-delay="200"
+          className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 fill-mode-both"
         >
           <div className="space-y-4">
             <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] uppercase flex flex-col items-center justify-center">
@@ -100,8 +101,6 @@ const Hero = () => {
       />
       <div
         className="absolute inset-x-0 bottom-3 flex justify-center"
-        data-aos="fade-up"
-        data-aos-delay="600"
       >
         <button
           type="button"
@@ -137,3 +136,4 @@ const Hero = () => {
 };
 
 export default Hero;
+

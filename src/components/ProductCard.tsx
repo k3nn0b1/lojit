@@ -191,12 +191,17 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <AdvancedImage
                   cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
                   alt={product.name}
+                  width={400}
+                  height={400}
                   className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
                 />
               ) : (
                 <img
                   src={productPhotos[currentPhotoIndex]?.url || product.image}
                   alt={product.name}
+                  width={400}
+                  height={400}
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
                 />
               )}
