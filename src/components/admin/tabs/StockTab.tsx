@@ -339,7 +339,7 @@ const StockTab = ({
 
   return (
     <div className="space-y-10">
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-2xl md:rounded-3xl overflow-hidden">
         <CardHeader className="bg-primary/5 py-6 md:py-8 border-b border-primary/10 px-6 md:px-10">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
             <div className="space-y-1">
@@ -351,11 +351,11 @@ const StockTab = ({
             
             <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
                 {/* Status Filter */}
-                <div className="flex bg-background/50 p-1.5 rounded-2xl border border-primary/5 shadow-inner w-full md:w-auto">
+                <div className="flex bg-background/50 p-1.5 rounded-xl border border-primary/5 shadow-inner w-full md:w-auto">
                   <Button 
                     variant={filterStatus === 'all' ? 'default' : 'ghost'} 
                     size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
                     onClick={() => handleStatusFilter('all')}
                   >
                     Todos
@@ -363,7 +363,7 @@ const StockTab = ({
                   <Button 
                     variant={filterStatus === 'active' ? 'default' : 'ghost'} 
                     size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'active' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'active' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
                     onClick={() => handleStatusFilter('active')}
                   >
                     Ativos
@@ -371,7 +371,7 @@ const StockTab = ({
                   <Button 
                     variant={filterStatus === 'inactive' ? 'default' : 'ghost'} 
                     size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'inactive' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-zinc-500 hover:bg-primary/5'}`}
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'inactive' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-zinc-500 hover:bg-primary/5'}`}
                     onClick={() => handleStatusFilter('inactive')}
                   >
                     Ocultos
@@ -384,7 +384,7 @@ const StockTab = ({
                      placeholder="PESQUISAR SKU OU NOME..." 
                      value={stockQuery}
                      onChange={(e) => handleQueryChange(e.target.value)}
-                     className="h-14 bg-background/50 border-primary/5 pl-14 pr-6 rounded-2xl uppercase font-black text-xs tracking-widest focus:ring-primary/20 shadow-xl"
+                     className="h-14 bg-background/50 border-primary/5 pl-14 pr-6 rounded-xl uppercase font-black text-xs tracking-widest focus:ring-primary/20 shadow-xl"
                    />
                 </div>
             </div>
@@ -399,7 +399,7 @@ const StockTab = ({
                { label: 'Est. Crítico', val: storedProducts.filter(p => p.stock <= 5 && p.stock > 0).length, color: 'text-amber-500' },
                { label: 'Esgotados', val: storedProducts.filter(p => p.stock === 0).length, color: 'text-destructive' }
              ].map((stat, i) => (
-                <div key={i} className="bg-muted/10 p-5 rounded-2xl md:rounded-3xl border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all shadow-xl">
+                <div key={i} className="bg-muted/10 p-5 rounded-2xl border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all shadow-xl">
                    <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 group-hover:text-primary transition-colors text-center">{stat.label}</span>
                    <span className={`text-xl md:text-2xl font-black ${stat.color}`}>{stat.val}</span>
                 </div>
@@ -412,7 +412,7 @@ const StockTab = ({
               {visibleStock.length > 0 ? visibleStock.map((p) => (
                 <div 
                   key={p.id} 
-                  className={`bg-card/40 border border-primary/5 rounded-[2rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all ${!p.active ? 'grayscale opacity-60' : ''}`}
+                  className={`bg-card/40 border border-primary/5 rounded-2xl p-5 flex items-center justify-between active:scale-[0.98] transition-all ${!p.active ? 'grayscale opacity-60' : ''}`}
                   onClick={() => handleOpenEdit(p)}
                 >
                   <div className="flex items-center gap-4">
@@ -432,7 +432,7 @@ const StockTab = ({
                   </Badge>
                 </div>
               )) : (
-                <div className="text-center py-12 bg-muted/5 rounded-[2.5rem] border border-dashed border-primary/10">
+                <div className="text-center py-12 bg-muted/5 rounded-2xl border border-dashed border-primary/10">
                     <Filter className="w-10 h-10 text-primary/10 mx-auto mb-4" />
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">Nenhum resultado para os filtros atuais</p>
                 </div>
@@ -440,7 +440,7 @@ const StockTab = ({
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden md:block overflow-hidden rounded-[2.5rem] border border-primary/10 bg-muted/5 shadow-2xl">
+            <div className="hidden md:block overflow-hidden rounded-2xl border border-primary/10 bg-muted/5 shadow-2xl">
               <Table>
                 <TableHeader className="bg-primary/5 border-b border-primary/10">
                   <TableRow className="border-none">
@@ -456,7 +456,7 @@ const StockTab = ({
                     <TableRow key={p.id} className={`cursor-pointer transition-all border-none hover:bg-primary/5 group ${!p.active ? 'opacity-40 grayscale-[0.5]' : ''}`} onClick={() => handleOpenEdit(p)}>
                       <TableCell className="px-10 py-6">
                         <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 rounded-[1.2rem] border border-primary/10 overflow-hidden shadow-lg shrink-0 group-hover:scale-110 transition-transform duration-500">
+                          <div className="w-14 h-14 rounded-xl border border-primary/10 overflow-hidden shadow-lg shrink-0 group-hover:scale-110 transition-transform duration-500">
                             {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-primary/20" />}
                           </div>
                           <div className="flex flex-col">
@@ -501,7 +501,7 @@ const StockTab = ({
             {totalPages > 1 && (
               <div className="flex items-center justify-between gap-6 p-6 border-t border-primary/10 mt-4">
                 <Button variant="ghost" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl border border-primary/5 hover:bg-primary/5">Anterior</Button>
-                <div className="bg-muted/10 rounded-2xl border border-primary/5 px-6 h-10 flex items-center font-black text-xs text-primary shadow-inner">{currentPage} / {totalPages}</div>
+                <div className="bg-muted/10 rounded-xl border border-primary/5 px-6 h-10 flex items-center font-black text-xs text-primary shadow-inner">{currentPage} / {totalPages}</div>
                 <Button variant="ghost" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl border border-primary/5 hover:bg-primary/5">Próxima</Button>
               </div>
             )}
@@ -511,13 +511,13 @@ const StockTab = ({
 
       {/* MODAL DE EDIÇÃO COMPLETA */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] md:w-full bg-card border-primary/20 rounded-[2.5rem] md:rounded-[3.5rem] p-0 overflow-hidden shadow-3xl text-foreground">
+        <DialogContent className="max-w-4xl w-[95vw] md:w-full bg-card border-primary/20 rounded-2xl md:rounded-3xl p-0 overflow-hidden shadow-3xl text-foreground">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[120px] -z-10" />
           
           <div className="flex flex-col h-[90vh] md:h-auto max-h-[90vh]">
             <div className="p-6 md:p-12 border-b border-primary/10 bg-primary/5 flex flex-col md:flex-row items-center md:items-center justify-between shrink-0 gap-6">
                <div className="flex items-center gap-6 w-full md:w-auto">
-                  <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0 relative">
+                  <div className="w-16 h-16 rounded-xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0 relative">
                     {editingProduct?.active === false && <div className="absolute inset-0 bg-destructive/10 backdrop-grayscale-[0.5] z-10" />}
                     {editingProduct?.image ? <img src={editingProduct.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-5 opacity-20" />}
                   </div>
@@ -535,13 +535,13 @@ const StockTab = ({
                <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
                   <Button 
                     variant="outline" 
-                    className={`flex-1 md:flex-none h-12 md:h-14 md:px-6 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
+                    className={`flex-1 md:flex-none h-12 md:h-14 md:px-6 rounded-xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
                     onClick={() => handleToggleActive(editingProduct?.active ?? true)}
                   >
                     {editingProduct?.active ? <><Eye className="w-5 h-5" /> <span className="hidden md:inline">Ativo na Loja</span><span className="md:hidden">Ativo</span></> : <><EyeOff className="w-5 h-5" /> <span className="hidden md:inline">Oculto na Loja</span><span className="md:hidden">Oculto</span></>}
                   </Button>
                   
-                  <Button variant="ghost" className="h-12 w-12 md:h-14 md:w-14 rounded-2xl hover:bg-destructive/10 text-destructive border border-destructive/5 flex items-center justify-center shrink-0" onClick={() => editingProduct && setDeleteId(editingProduct.id!)}>
+                  <Button variant="ghost" className="h-12 w-12 md:h-14 md:w-14 rounded-xl hover:bg-destructive/10 text-destructive border border-destructive/5 flex items-center justify-center shrink-0" onClick={() => editingProduct && setDeleteId(editingProduct.id!)}>
                     <Trash2 className="w-5 h-5" />
                   </Button>
                </div>
@@ -549,14 +549,14 @@ const StockTab = ({
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <Tabs defaultValue="geral" className="w-full h-full flex flex-col">
-                <TabsList className="bg-muted/30 p-2 border-b border-primary/5 w-full flex justify-start h-16 rounded-none px-4 md:px-12 md:gap-8 overflow-x-auto no-scrollbar">
-                  <TabsTrigger value="geral" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                <TabsList className="bg-muted/30 p-2 border-b border-primary/5 w-full grid grid-cols-3 h-16 rounded-none px-2 md:px-12 md:gap-4">
+                  <TabsTrigger value="geral" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/10 h-full flex items-center justify-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all rounded-xl">
                     <Info className="w-4 h-4" /> <span className="hidden xs:inline">Geral</span>
                   </TabsTrigger>
-                  <TabsTrigger value="estoque" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                  <TabsTrigger value="estoque" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/10 h-full flex items-center justify-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all rounded-xl">
                     <BarChart3 className="w-4 h-4" /> <span className="hidden xs:inline">Estoque</span>
                   </TabsTrigger>
-                  <TabsTrigger value="estilo" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-4 md:px-6 flex items-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all shrink-0">
+                  <TabsTrigger value="estilo" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/10 h-full flex items-center justify-center gap-2 md:gap-3 font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all rounded-xl">
                     <Palette className="w-4 h-4" /> <span className="hidden xs:inline">Estilo & Fotos</span>
                   </TabsTrigger>
                 </TabsList>
@@ -569,7 +569,7 @@ const StockTab = ({
                         <Input 
                           value={editingProduct?.name || ""} 
                           onChange={(e) => handleUpdateField("name", e.target.value)}
-                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-base md:text-lg px-6 md:px-8 shadow-2xl focus:ring-primary/20"
+                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-xl font-black text-base md:text-lg px-6 md:px-8 shadow-2xl focus:ring-primary/20"
                         />
                       </div>
                       <div className="space-y-3">
@@ -578,7 +578,7 @@ const StockTab = ({
                           type="number"
                           value={editingProduct?.price || ""} 
                           onChange={(e) => handleUpdateField("price", parseFloat(e.target.value) || 0)}
-                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-xl md:text-2xl text-primary px-6 md:px-8 shadow-2xl"
+                          className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-xl font-black text-xl md:text-2xl text-primary px-6 md:px-8 shadow-2xl"
                         />
                       </div>
                     </div>
@@ -587,14 +587,14 @@ const StockTab = ({
                       <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Classificação de Catálogo</Label>
                       <div className="flex gap-4">
                         <Select value={editingProduct?.category} onValueChange={(val) => handleUpdateField("category", val)}>
-                          <SelectTrigger className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest px-6 md:px-8 shadow-2xl flex-1">
+                          <SelectTrigger className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-xl font-black uppercase text-[10px] md:text-[11px] tracking-widest px-6 md:px-8 shadow-2xl flex-1">
                             <SelectValue placeholder="CATEGORIA" />
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-primary/20 rounded-2xl">
+                          <SelectContent className="bg-card border-primary/20 rounded-xl">
                             {categories.map(c => <SelectItem key={c} value={c} className="font-black uppercase text-[10px] py-4">{c}</SelectItem>)}
                           </SelectContent>
                         </Select>
-                        <Button variant="outline" className="h-14 w-14 md:h-16 md:w-16 rounded-2xl border-primary/10 bg-primary/5 text-primary shrink-0 hover:bg-primary/20" onClick={() => setQuickAddType("category")}>
+                        <Button variant="outline" className="h-14 w-14 md:h-16 md:w-16 rounded-xl border-primary/10 bg-primary/5 text-primary shrink-0 hover:bg-primary/20" onClick={() => setQuickAddType("category")}>
                           <PlusCircle className="w-6 h-6" />
                         </Button>
                       </div>
@@ -605,7 +605,7 @@ const StockTab = ({
                       <Textarea 
                         value={editingProduct?.description || ""} 
                         onChange={(e) => handleUpdateField("description", e.target.value)}
-                        className="min-h-[150px] md:min-h-[180px] bg-background/50 border-primary/10 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl"
+                        className="min-h-[150px] md:min-h-[180px] bg-background/50 border-primary/10 rounded-xl p-6 md:p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl"
                         placeholder="Detalhes técnicos, materiais, cuidados..."
                       />
                     </div>
@@ -627,7 +627,7 @@ const StockTab = ({
                             <button
                               key={s}
                               onClick={() => handleToggleSize(s)}
-                              className={`h-11 md:h-12 px-5 md:px-8 rounded-xl md:rounded-2xl border transition-all font-black text-[10px] md:text-[11px] uppercase tracking-widest ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:border-primary/40'}`}
+                              className={`h-11 md:h-12 px-5 md:px-8 rounded-xl border transition-all font-black text-[10px] md:text-[11px] uppercase tracking-widest ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:border-primary/40'}`}
                             >
                               {s}
                             </button>
@@ -637,11 +637,11 @@ const StockTab = ({
                     </div>
 
                     {editingProduct?.sizes && editingProduct.sizes.length > 0 && (
-                      <div className="space-y-6 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] bg-muted/5 border border-primary/5">
+                      <div className="space-y-6 p-6 md:p-8 rounded-2xl bg-muted/5 border border-primary/5">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 block mb-6 text-center">Unidades por Tamanho</Label>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
                           {sortSizes(editingProduct.sizes).map((s) => (
-                            <div key={s} className="space-y-2 p-4 md:p-5 rounded-xl md:rounded-2xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
+                            <div key={s} className="space-y-2 p-4 md:p-5 rounded-xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
                               <Label className="text-[9px] font-black text-primary/40 uppercase block text-center tracking-widest">{s}</Label>
                               <Input 
                                 type="number" 
@@ -669,7 +669,7 @@ const StockTab = ({
                                 const isUploading = uploadingIdx === idx;
 
                                 return (
-                                    <div key={idx} className="group relative aspect-square rounded-[1rem] md:rounded-[2rem] border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-2xl">
+                                    <div key={idx} className="group relative aspect-square rounded-xl md:rounded-2xl border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-2xl">
                                         {currentUrl ? (
                                             <>
                                                 <img src={currentUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -713,7 +713,7 @@ const StockTab = ({
                             <button
                               key={c.name}
                               onClick={() => handleToggleColor(c)}
-                              className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 md:py-5 rounded-xl md:rounded-2xl border transition-all group ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-card/40 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'}`}
+                              className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 md:py-5 rounded-xl border transition-all group ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-card/40 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'}`}
                             >
                               <div className="w-5 h-5 md:w-6 md:h-6 rounded-full border border-white/10 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: c.hex }} />
                               <span className="font-black uppercase text-[9px] md:text-[10px] tracking-widest truncate">{c.name}</span>
@@ -728,10 +728,10 @@ const StockTab = ({
             </div>
 
             <div className="p-6 md:p-12 border-t border-primary/10 bg-primary/5 shrink-0 flex flex-col md:flex-row gap-4">
-               <Button variant="ghost" className="h-14 md:h-16 rounded-2xl font-black uppercase tracking-widest text-xs w-full md:flex-1" onClick={() => setEditingProduct(null)}>
+               <Button variant="ghost" className="h-14 md:h-16 rounded-xl font-black uppercase tracking-widest text-xs w-full md:flex-1" onClick={() => setEditingProduct(null)}>
                   Desistir
                </Button>
-               <Button className="h-14 md:h-16 bg-primary text-black font-black uppercase tracking-[0.1em] md:tracking-[0.2em] rounded-2xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all w-full md:flex-[2]" onClick={handleSaveProduct} disabled={isSaving}>
+               <Button className="h-14 md:h-16 bg-primary text-black font-black uppercase tracking-[0.1em] md:tracking-[0.2em] rounded-xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all w-full md:flex-[2]" onClick={handleSaveProduct} disabled={isSaving}>
                   {isSaving ? "Sincronizando..." : <><Save className="w-5 h-5 mr-3" /> <span className="hidden xs:inline">Confirmar Atualização</span><span className="xs:hidden">Confirmar</span></>}
                </Button>
             </div>
@@ -741,7 +741,7 @@ const StockTab = ({
 
       {/* QUICK ADD SUB-MODAL */}
       <Dialog open={quickAddType !== null} onOpenChange={(open) => !open && setQuickAddType(null)}>
-        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 shadow-3xl text-foreground">
+        <DialogContent className="max-w-md bg-card border-primary/30 rounded-2xl md:rounded-3xl p-8 md:p-12 shadow-3xl text-foreground">
           <DialogHeader className="mb-8 md:mb-10 text-center">
             <DialogTitle className="text-xl md:text-2xl font-black uppercase text-primary flex items-center justify-center gap-3 md:gap-4">
               <PlusCircle className="w-6 h-6 md:w-8 md:h-8" /> {quickAddType === "category" ? "Nova Categoria" : quickAddType === "size" ? "Nova Grade" : "Nova Cor"}
@@ -754,20 +754,20 @@ const StockTab = ({
               <Input 
                 value={quickInput} 
                 onChange={(e) => setQuickInput(e.target.value)} 
-                className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-2xl text-lg md:text-xl font-black px-6 md:px-8"
+                className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-xl text-lg md:text-xl font-black px-6 md:px-8"
                 autoFocus
               />
             </div>
 
             {quickAddType === "color" && (
-              <div className="space-y-3 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-muted/5 border border-primary/5">
+              <div className="space-y-3 p-6 md:p-8 rounded-xl md:rounded-2xl bg-muted/5 border border-primary/5">
                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 block mb-4 text-center">Seletor de Hex</Label>
                 <div className="flex items-center justify-center gap-6 md:gap-8">
                   <Input 
                     type="color" 
                     value={quickHex} 
                     onChange={(e) => setQuickHex(e.target.value)} 
-                    className="w-20 h-20 md:w-24 md:h-24 p-1 rounded-[1.5rem] md:rounded-3xl bg-background border-primary/20 cursor-pointer shadow-2xl"
+                    className="w-20 h-20 md:w-24 md:h-24 p-1 rounded-2xl bg-background border-primary/20 cursor-pointer shadow-2xl"
                   />
                   <div className="flex flex-col">
                     <span className="text-lg md:text-xl font-black font-mono text-primary">{quickHex.toUpperCase()}</span>
@@ -779,15 +779,15 @@ const StockTab = ({
           </div>
 
           <DialogFooter className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4">
-            <Button variant="ghost" onClick={() => setQuickAddType(null)} className="h-14 rounded-2xl font-black uppercase w-full sm:flex-1">Voltar</Button>
-            <Button onClick={handleQuickAdd} disabled={!quickInput.trim()} className="h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl w-full sm:flex-[2]">Cadastrar Global</Button>
+            <Button variant="ghost" onClick={() => setQuickAddType(null)} className="h-14 rounded-xl font-black uppercase w-full sm:flex-1">Voltar</Button>
+            <Button onClick={handleQuickAdd} disabled={!quickInput.trim()} className="h-14 rounded-xl bg-primary text-black font-black uppercase shadow-xl w-full sm:flex-[2]">Cadastrar Global</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* CONFIRMAÇÃO DE EXCLUSÃO PERSONALIZADA */}
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="max-w-md bg-card border-2 border-destructive/20 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 shadow-3xl text-foreground overflow-hidden">
+        <AlertDialogContent className="max-w-md bg-card border-2 border-destructive/20 rounded-2xl md:rounded-3xl p-8 md:p-12 shadow-3xl text-foreground overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-destructive/20" />
           <AlertDialogHeader className="mb-6 md:mb-8 space-y-4 md:space-y-6">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-2 border border-destructive/20 animate-pulse">
@@ -802,11 +802,11 @@ const StockTab = ({
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-4 mt-4">
             <AlertDialogCancel asChild>
-                <Button variant="ghost" className="h-14 md:h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-primary/5 w-full" disabled={isDeleting}>Abortar</Button>
+                <Button variant="ghost" className="h-14 md:h-16 rounded-xl font-black uppercase tracking-widest text-[10px] border border-primary/5 w-full" disabled={isDeleting}>Abortar</Button>
             </AlertDialogCancel>
             <AlertDialogAction asChild>
                 <Button 
-                    className="h-14 md:h-16 bg-destructive text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-destructive/20 hover:bg-destructive/90 transition-all active:scale-95 w-full"
+                    className="h-14 md:h-16 bg-destructive text-white font-black uppercase tracking-widest rounded-xl shadow-2xl shadow-destructive/20 hover:bg-destructive/90 transition-all active:scale-95 w-full"
                     onClick={handleRemoveProduct}
                     disabled={isDeleting}
                 >
