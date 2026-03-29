@@ -244,7 +244,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
 
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full max-w-[100vw] overflow-hidden">
-      <Card className="bg-background/20 backdrop-blur-xl border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-3xl overflow-hidden border-none p-1 md:p-2">
+      <Card className="bg-background/20 backdrop-blur-xl border border-white/10 rounded-[2rem] md:rounded-[3rem] shadow-2xl overflow-hidden p-1 md:p-2">
         <CardHeader className="p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
            <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20">
