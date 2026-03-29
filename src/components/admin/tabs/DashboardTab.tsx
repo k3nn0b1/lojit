@@ -412,13 +412,13 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                         )}
 
                         <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
-                           <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
-                              <p className="text-xl font-black text-foreground">{formatBRL(stats.ticket)}</p>
-                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">TICKET MÉDIO</p>
+                           <div className="text-center p-3 bg-background/40 rounded-2xl border border-white/5 flex flex-col justify-center min-w-0">
+                              <p className="text-[14px] font-black text-foreground truncate">{formatBRL(stats.ticket)}</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mt-1">TICKET MÉDIO</p>
                            </div>
-                           <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
-                              <p className="text-xl font-black text-primary">{stats.orders}</p>
-                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">ORDENS NO PERÍODO</p>
+                           <div className="text-center p-3 bg-background/40 rounded-2xl border border-white/5 flex flex-col justify-center min-w-0">
+                              <p className="text-[14px] font-black text-primary">{stats.orders}</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest mt-1">ORDENS</p>
                            </div>
                         </div>
                      </div>
