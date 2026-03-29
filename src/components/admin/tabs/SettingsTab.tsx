@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { hexToHSL, hslStringToHex } from "@/lib/colors";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save, CreditCard, Trash2, Plus, Search, Wallet, MapPin, Truck, ExternalLink } from "lucide-react";
+import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save, CreditCard, Trash2, Plus, Search, Wallet, MapPin, Truck, ExternalLink, TrendingUp } from "lucide-react";
 import { WhatsappIcon } from "../../icons/WhatsappIcon";
 import { YoutubeIcon } from "../../icons/YoutubeIcon";
 import { Switch } from "@/components/ui/switch";
