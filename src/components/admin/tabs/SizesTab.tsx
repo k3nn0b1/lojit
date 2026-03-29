@@ -124,9 +124,9 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Ruler className="w-8 h-8" /> Grade
+                <Ruler className="w-8 h-8" /> Grades
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Defina os tamanhos e escalas de estoque</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Gerencie os tamanhos disponíveis na sua loja</p>
             </div>
           </div>
         </CardHeader>
@@ -134,11 +134,11 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         <CardContent className="p-10 space-y-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end p-8 rounded-[2rem] bg-muted/10 border border-primary/5 shadow-inner">
             <div className="lg:col-span-8 space-y-3">
-               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificador do Tamanho (Ex: G, 42, GG...)</Label>
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Novo Tamanho</Label>
                <div className="relative group">
                   <Ruler className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
                   <Input
-                    placeholder="DIGITE O IDENTIFICADOR..."
+                    placeholder="DIGITE O NOME (EX: G, 42, GG...)"
                     value={newGlobalSize}
                     onChange={(e) => setNewGlobalSize(e.target.value)}
                     className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-base pl-16 pr-8 shadow-2xl focus:ring-primary/20"

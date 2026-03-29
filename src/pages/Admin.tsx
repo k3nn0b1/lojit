@@ -32,7 +32,7 @@ import DeliveryTab from "@/components/admin/tabs/DeliveryTab";
 import NewOrderModal from "@/components/admin/modals/NewOrderModal";
 
 const Admin = () => {
-  const { tenantId, isReady, loading: tenantLoading } = useTenant();
+  const { tenant, tenantId, isReady, loading: tenantLoading } = useTenant();
   const [activeTab, setActiveTab] = useState("pedidos");
   const [activeCatalogTab, setActiveCatalogTab] = useState("products");
   
@@ -227,6 +227,7 @@ const Admin = () => {
                   tenantId={tenantId}
                   storedProducts={storedProducts}
                   setStoredProducts={setStoredProducts}
+                  tenant={tenant}
                   categories={categories}
                   setCategories={setCategories}
                   globalSizes={globalSizes}

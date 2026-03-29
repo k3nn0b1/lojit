@@ -16,6 +16,14 @@ interface Tenant {
   custom_domain: string | null;
   active: boolean;
   created_at: string;
+  plan: string;
+  max_products: number;
+}
+
+interface PlanConfig {
+  plan_id: string;
+  name: string;
+  max_products: number;
 }
 
 interface AdminUser {
@@ -39,7 +47,16 @@ export default function MasterPanel() {
   const [editName, setEditName] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editCustomDomain, setEditCustomDomain] = useState("");
+  const [editPlan, setEditPlan] = useState("starter");
+  const [editMaxProducts, setEditMaxProducts] = useState(30);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Global Plan Configs
+  const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
+  const [isPlanConfigsModalOpen, setIsPlanConfigsModalOpen] = useState(false);
+  const [isSavingPlanConfigs, setIsSavingPlanConfigs] = useState(false);
+  const [newTenantPlan, setNewTenantPlan] = useState("starter");
+  const [newMaxProducts, setNewMaxProducts] = useState(30);
 
   // Admin Management state
   const [managingAdminsTenant, setManagingAdminsTenant] = useState<Tenant | null>(null);
@@ -70,8 +87,19 @@ export default function MasterPanel() {
   useEffect(() => {
     document.title = "Painel Master Lojit";
     fetchTenants();
+    fetchPlanConfigs();
     document.documentElement.style.setProperty('--primary', themeColor);
   }, [themeColor]);
+
+  const fetchPlanConfigs = async () => {
+    try {
+      const { data, error } = await supabase.from("plan_configs").select("*");
+      if (error) throw error;
+      if (data) setPlanConfigs(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchTenants = async () => {
     setLoading(true);
@@ -106,9 +134,15 @@ export default function MasterPanel() {
     setIsCreating(true);
     try {
       // 1. Criar o Tenant
+      const planLimit = planConfigs.find(p => p.plan_id === newTenantPlan)?.max_products || 30;
       const { data: tenantData, error: tenantError } = await supabase
         .from("tenants")
-        .insert([{ name: newTenantName, slug: newTenantSlug }])
+        .insert([{ 
+          name: newTenantName, 
+          slug: newTenantSlug, 
+          plan: newTenantPlan, 
+          max_products: newTenantPlan === 'business' ? newMaxProducts : planLimit
+        }])
         .select()
         .single();
 
@@ -167,6 +201,8 @@ export default function MasterPanel() {
         setTenants([newTenant, ...tenants]);
         setNewTenantName("");
         setNewTenantSlug("");
+        setNewTenantPlan("starter");
+        setNewMaxProducts(30);
       } catch (innerError: any) {
         // Erro críco ao criar blueprint: deletar o tenant para não deixar lixo e liberar o slug
         await supabase.from("tenants").delete().eq("id", newTenant.id);
@@ -189,18 +225,23 @@ export default function MasterPanel() {
     setEditName(tenant.name);
     setEditSlug(tenant.slug);
     setEditCustomDomain(tenant.custom_domain || "");
+    setEditPlan(tenant.plan || "starter");
+    setEditMaxProducts(tenant.max_products || 30);
   };
 
   const handleUpdateTenant = async () => {
     if (!editingTenant) return;
     setIsUpdating(true);
     try {
+      const planLimit = planConfigs.find(p => p.plan_id === editPlan)?.max_products || 30;
       const { error } = await supabase
         .from("tenants")
         .update({
           name: editName,
           slug: editSlug,
-          custom_domain: editCustomDomain || null
+          custom_domain: editCustomDomain || null,
+          plan: editPlan,
+          max_products: editPlan === 'business' ? editMaxProducts : planLimit
         })
         .eq("id", editingTenant.id);
 
@@ -353,6 +394,26 @@ export default function MasterPanel() {
     window.location.reload();
   };
 
+  const handleUpdatePlanConfigs = async () => {
+    setIsSavingPlanConfigs(true);
+    try {
+      for (const config of planConfigs) {
+        const { error } = await supabase
+          .from("plan_configs")
+          .update({ max_products: config.max_products })
+          .eq("plan_id", config.plan_id);
+        if (error) throw error;
+      }
+      toast.success("Configurações de planos atualizadas!");
+      setIsPlanConfigsModalOpen(false);
+      fetchPlanConfigs();
+    } catch (error) {
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setIsSavingPlanConfigs(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
@@ -394,21 +455,31 @@ export default function MasterPanel() {
                </div>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            className="border-zinc-800 hover:bg-zinc-900 text-white transition-all duration-300" 
-            onClick={handleLogout}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = themeColor;
-              e.currentTarget.style.color = themeColor;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "";
-              e.currentTarget.style.color = "";
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" /> Encerrar Sessão
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="border-zinc-800 bg-zinc-900/50 hover:bg-primary hover:text-black transition-all"
+              onClick={() => setIsPlanConfigsModalOpen(true)}
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+            <Button 
+                variant="outline" 
+                className="border-zinc-800 hover:bg-zinc-900 text-white transition-all duration-300" 
+                onClick={handleLogout}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = themeColor;
+                  e.currentTarget.style.color = themeColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "";
+                  e.currentTarget.style.color = "";
+                }}
+              >
+                <LogOut className="w-4 h-4 mr-2" /> Encerrar Sessão
+              </Button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -449,6 +520,40 @@ export default function MasterPanel() {
                         .lojit.com.br
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-zinc-800">
+                    <div className="space-y-2">
+                        <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Plano da Assinatura</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {['starter', 'elite', 'business'].map((p) => (
+                                <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => {
+                                        setNewTenantPlan(p);
+                                        const limit = planConfigs.find(pc => pc.plan_id === p)?.max_products || 30;
+                                        setNewMaxProducts(limit);
+                                    }}
+                                    className={`h-10 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${newTenantPlan === p ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20' : 'bg-black/40 border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {newTenantPlan === 'business' && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Limite Customizado de Produtos</Label>
+                            <Input 
+                                type="number"
+                                value={newMaxProducts}
+                                onChange={e => setNewMaxProducts(parseInt(e.target.value) || 0)}
+                                className="bg-black border-primary/20 text-primary font-bold h-12 text-center text-xl shadow-inner"
+                            />
+                        </div>
+                    )}
                   </div>
                   <Button 
                     type="submit" 
@@ -526,19 +631,33 @@ export default function MasterPanel() {
                 <Card key={tenant.id} className={`bg-zinc-900/30 border-zinc-900 hover:border-zinc-800 transition-all group overflow-hidden ${!tenant.active ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                   <div className={`h-1 w-full transition-colors ${tenant.active ? 'bg-primary/5 group-hover:bg-primary/40' : 'bg-red-500/20'}`} />
                   <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-2">
+                      <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                         <h3 className="text-xl font-black text-white">{tenant.name}</h3>
-                         {!tenant.active && <span className="text-[8px] bg-red-500/20 text-red-500 border border-red-500/30 px-1.5 py-0.5 rounded font-bold uppercase">Inativo</span>}
+                         <h3 className="text-xl font-black text-white uppercase tracking-tighter">{tenant.name}</h3>
+                         {!tenant.active && <span className="text-[8px] bg-red-500/20 text-red-500 border border-red-500/30 px-1.5 py-0.5 rounded font-bold uppercase tracking-widest">Inativo</span>}
                       </div>
                       
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2 text-[11px] font-mono text-primary font-bold">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-[11px] font-mono text-primary font-bold opacity-80 decoration-primary/30">
                            <LinkIcon className="w-3 h-3" />
                            {tenant.slug}.lojit.com.br
                         </div>
+                        
+                        <div className="flex items-center gap-2 mt-1">
+                           <span className={`text-[9px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-lg border ${
+                             tenant.plan === 'business' ? 'bg-primary text-black border-primary' : 
+                             tenant.plan === 'elite' ? 'bg-zinc-100 text-black border-zinc-100' : 
+                             'bg-zinc-900 text-zinc-400 border-zinc-800'
+                           }`}>
+                             Plano {tenant.plan || 'starter'}
+                           </span>
+                           <span className="text-[9px] font-black uppercase tracking-[0.15em] text-zinc-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
+                             {tenant.max_products || 0} PRODUTOS MAX
+                           </span>
+                        </div>
+
                         {tenant.custom_domain && (
-                          <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium">
+                          <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium pt-1">
                             <Globe className="w-3 h-3 text-zinc-600" /> {tenant.custom_domain}
                           </div>
                         )}
@@ -741,6 +860,44 @@ export default function MasterPanel() {
                   className="bg-black border-zinc-700 h-12 focus:border-primary"
                 />
               </div>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-zinc-900">
+                <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-bold tracking-widest text-primary ml-2">Migração de Plano</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                        {['starter', 'elite', 'business'].map((p) => (
+                            <button
+                                key={p}
+                                type="button"
+                                onClick={() => {
+                                    setEditPlan(p);
+                                    if (p !== 'business') {
+                                        const config = planConfigs.find(pc => pc.plan_id === p);
+                                        if (config) setEditMaxProducts(config.max_products);
+                                    }
+                                }}
+                                className={`h-14 rounded-xl flex flex-col items-center justify-center transition-all border ${editPlan === p ? 'bg-primary text-black border-primary shadow-xl shadow-primary/30' : 'bg-black/50 border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}
+                            >
+                                <span className="text-[10px] font-black uppercase tracking-widest">{p}</span>
+                                {p !== 'business' && <span className="text-[8px] font-bold opacity-60">Limit: {planConfigs.find(pc => pc.plan_id === p)?.max_products}</span>}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {editPlan === 'business' && (
+                    <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10 animate-in zoom-in-95">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/60 block text-center mb-4">Limite Customizado Progressivo</Label>
+                        <Input 
+                            type="number"
+                            value={editMaxProducts}
+                            onChange={e => setEditMaxProducts(parseInt(e.target.value) || 0)}
+                            className="bg-transparent border-none text-3xl font-black text-primary text-center h-auto p-0 focus:ring-0"
+                            autoFocus
+                        />
+                    </div>
+                )}
             </div>
           </div>
           <DialogFooter className="border-t border-zinc-900 pt-6">
@@ -946,6 +1103,67 @@ export default function MasterPanel() {
                 className={`h-14 font-black uppercase text-[10px] rounded-2xl shadow-xl transition-all ${confirmType === "delete" ? "bg-red-500 hover:bg-red-400 text-white shadow-red-500/10" : "bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/10"}`}
               >
                 {isExecutingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Plan Configs Master Dialog */}
+      <Dialog open={isPlanConfigsModalOpen} onOpenChange={setIsPlanConfigsModalOpen}>
+        <DialogContent className="bg-[#050505] border-zinc-900 text-white max-w-md shadow-3xl overflow-hidden rounded-3xl p-0">
+          <div className="h-2 w-full bg-primary shadow-lg shadow-primary/20" />
+          <div className="p-8 space-y-8">
+            <div className="space-y-2">
+              <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Limites de Planos</DialogTitle>
+              <DialogDescription className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest opacity-60">
+                Configure a capacidade padrão de cada nível de assinatura.
+              </DialogDescription>
+            </div>
+
+            <div className="space-y-6">
+              {planConfigs.filter(p => p.plan_id !== 'business').map((config) => (
+                <div key={config.plan_id} className="space-y-3 bg-white/5 p-6 rounded-2xl border border-white/5 group hover:border-primary/20 transition-all">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-black uppercase tracking-widest text-primary">{config.name}</Label>
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase italic">Limite Atual</span>
+                  </div>
+                  <div className="relative">
+                    <RotateCw className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-20 group-hover:rotate-180 transition-transform duration-700" />
+                    <Input 
+                      type="number"
+                      value={config.max_products}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        setPlanConfigs(prev => prev.map(pc => pc.plan_id === config.plan_id ? { ...pc, max_products: val } : pc));
+                      }}
+                      className="bg-black border-zinc-800 h-14 text-xl font-black font-mono text-white pl-6 pr-12 focus:border-primary transition-all rounded-xl"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-start gap-4">
+                <Shield className="w-5 h-5 text-primary shrink-0" />
+                <p className="text-[10px] text-primary/70 font-bold uppercase leading-relaxed italic">
+                  O plano Business não possui limite fixo global. Sua capacidade deve ser configurada individualmente no cadastro de cada lojista.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsPlanConfigsModalOpen(false)}
+                className="flex-1 h-14 bg-zinc-900 text-white font-black uppercase text-[10px] tracking-widest hover:bg-zinc-800 rounded-2xl"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleUpdatePlanConfigs}
+                disabled={isSavingPlanConfigs}
+                className="flex-[2] h-14 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                {isSavingPlanConfigs ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Configurações"}
               </Button>
             </div>
           </div>

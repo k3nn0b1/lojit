@@ -117,7 +117,7 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
                 <Palette className="w-8 h-8" /> Paleta de Cores
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Gerencie as cores e variações dos seus produtos</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Personalize as variantes visuais do seu catálogo</p>
             </div>
           </div>
         </CardHeader>

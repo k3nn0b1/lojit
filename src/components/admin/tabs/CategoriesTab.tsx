@@ -121,19 +121,19 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
                 <Tag className="w-8 h-8" /> Categorias
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Organize seus produtos por grupos e tipos</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Agrupe seus produtos de forma estratégica</p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="p-10 space-y-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end p-8 rounded-[2rem] bg-muted/10 border border-primary/5 shadow-inner">
             <div className="lg:col-span-8 space-y-3">
-               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nome da Categoria (EX: CAMISAS RETRÔ)</Label>
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nova Categoria</Label>
                <div className="relative group">
                   <Tag className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
                   <Input
-                    placeholder="EX: CAMISAS RETRÔ, ACESSÓRIOS, LOTE VIP..."
+                    placeholder="EX: CAMISAS RETRÔ, ACESSÓRIOS..."
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                     className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-base pl-16 pr-8 shadow-2xl focus:ring-primary/20"

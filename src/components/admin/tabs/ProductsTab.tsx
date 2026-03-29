@@ -22,6 +22,7 @@ interface ProductsTabProps {
   tenantId: string;
   storedProducts: AdminProduct[];
   setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
+  tenant?: any;
   categories: string[];
   setCategories: React.Dispatch<React.SetStateAction<string[]>>;
   globalSizes: string[];
@@ -37,6 +38,7 @@ const ProductsTab = ({
   tenantId,
   storedProducts,
   setStoredProducts,
+  tenant,
   categories,
   setCategories,
   globalSizes,
@@ -212,6 +214,18 @@ const ProductsTab = ({
           toast.success("Produto atualizado com sucesso!");
           setEditingId(null);
         } else {
+          // Bloqueio por Limite de Plano
+          const currentCount = storedProducts.length;
+          const limit = tenant?.max_products || 30;
+
+          if (currentCount >= limit) {
+             toast.error("Limite de produtos atingido!", { 
+               description: `Seu plano atual (${tenant?.plan?.toUpperCase() || 'STARTER'}) permite até ${limit} produtos ativos. Faça o upgrade para continuar expandindo.`
+             });
+             setUploading(false);
+             return;
+          }
+
           const { data, error } = await supabase.from("products").insert([baseProductForSupabase]).select("*").single();
           if (error) throw error;
           setStoredProducts((prev) => [...prev, data]);
