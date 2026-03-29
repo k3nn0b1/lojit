@@ -79,6 +79,9 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
     const stats: Record<string, { count: number; spent: number; lastOrder: string | null }> = {};
     
     pedidos.forEach((p) => {
+      // Registrar apenas pedidos CONCLUÍDOS como venda real
+      if (p.status !== 'concluido') return;
+
       const tel = normalizePhone(p.cliente_telefone);
       if (!stats[tel]) {
         stats[tel] = { count: 0, spent: 0, lastOrder: p.data_criacao };
