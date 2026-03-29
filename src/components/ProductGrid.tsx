@@ -57,22 +57,39 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   return (
     <section id="products" className="min-h-screen pt-4 pb-16 md:pb-32" data-aos="fade-up">
       <div className="container mx-auto px-4 md:px-8">
-        {/* Category Filter */}
-        <div className="flex flex-wrap gap-2 md:gap-4 justify-center mb-16 md:mb-24">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              onClick={() => handleCategoryChange(category)}
-              variant={selectedCategory === category ? "default" : "outline"}
-              className={`text-[10px] md:text-xs h-9 md:h-11 px-6 md:px-8 transition-all duration-300 ${
-                selectedCategory === category
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground glow-soft font-black uppercase tracking-[0.2em] scale-110 mx-2"
-                  : "border-primary/10 hover:border-primary/40 hover:bg-primary/5 hover:text-foreground font-bold uppercase tracking-[0.2em] text-muted-foreground/60"
-              }`}
-            >
-              {category}
-            </Button>
-          ))}
+        {/* Category Filter - Modern Pill Slider */}
+        <div className="relative mb-12 md:mb-20">
+          <div className="flex overflow-x-auto scrollbar-hide gap-3 pb-4 -mx-4 px-4 md:-mx-8 md:px-8 justify-start md:justify-center items-center">
+            {categories.map((category) => {
+              const isActive = selectedCategory === category;
+              return (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryChange(category)}
+                  className={`
+                    relative shrink-0 h-10 md:h-12 px-6 md:px-8 
+                    rounded-full text-[10px] md:text-sm font-black uppercase tracking-[0.2em]
+                    transition-all duration-500 ease-out
+                    ${isActive 
+                      ? "bg-primary text-primary-foreground shadow-[0_0_25px_rgba(var(--primary),0.4)] scale-105 z-10" 
+                      : "bg-white/5 border border-white/10 text-muted-foreground/70 hover:bg-white/10 hover:border-primary/30 hover:text-foreground"
+                    }
+                    active:scale-95
+                  `}
+                >
+                  {/* Subtle inner glow for active pill */}
+                  {isActive && (
+                    <span className="absolute inset-0 rounded-full bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
+                  )}
+                  <span className="relative z-10">{category}</span>
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* Subtle fade edges for mobile indicating more items */}
+          <div className="md:hidden absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background/80 to-transparent pointer-events-none" />
+          <div className="md:hidden absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-background/80 to-transparent pointer-events-none" />
         </div>
 
         {/* Products Grid */}
