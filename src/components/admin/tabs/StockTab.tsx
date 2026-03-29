@@ -22,7 +22,13 @@ import {
   Palette,
   Info,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  RefreshCw,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Power,
+  Filter
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -43,6 +49,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface StockTabProps {
   tenantId: string;
@@ -88,6 +104,7 @@ const StockTab = ({
   removeFromCloudinary
 }: StockTabProps) => {
   const [stockQuery, setStockQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -96,15 +113,28 @@ const StockTab = ({
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
+  // Estado para o alerta de exclusão (ALERT DIALOG)
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Estados para cadastros rápidos dentro do modal
   const [quickAddType, setQuickAddType] = useState<"category" | "size" | "color" | null>(null);
   const [quickInput, setQuickInput] = useState("");
   const [quickHex, setQuickHex] = useState("#000000");
 
-  const filteredStock = storedProducts.filter(p => 
-    p.name.toLowerCase().includes(stockQuery.toLowerCase()) ||
-    (p.category || "").toLowerCase().includes(stockQuery.toLowerCase())
-  );
+  const filteredStock = storedProducts.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(stockQuery.toLowerCase()) ||
+      (p.category || "").toLowerCase().includes(stockQuery.toLowerCase());
+    
+    const isActive = p.active ?? true;
+    const matchesStatus = filterStatus === "all" 
+      ? true 
+      : filterStatus === "active" 
+        ? isActive === true 
+        : isActive === false;
+        
+    return matchesSearch && matchesStatus;
+  });
 
   const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
   const visibleStock = filteredStock.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -114,8 +144,13 @@ const StockTab = ({
     setCurrentPage(1);
   };
 
+  const handleStatusFilter = (status: "all" | "active" | "inactive") => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+  };
+
   const handleOpenEdit = (p: AdminProduct) => {
-    setEditingProduct({ ...p });
+    setEditingProduct({ ...p, active: p.active ?? true });
   };
 
   const handleUpdateField = (field: keyof AdminProduct, value: any) => {
@@ -213,7 +248,8 @@ const StockTab = ({
           image3: editingProduct.image3,
           publicId: editingProduct.publicId,
           publicId2: editingProduct.publicId2,
-          publicId3: editingProduct.publicId3
+          publicId3: editingProduct.publicId3,
+          active: editingProduct.active
         })
         .eq('id', editingProduct.id)
         .eq('tenant_id', tenantId);
@@ -230,16 +266,20 @@ const StockTab = ({
     }
   };
 
-  const handleRemoveProduct = async (id: number) => {
-    if (!confirm("Deseja realmente excluir este produto permanentemente?")) return;
+  const handleRemoveProduct = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
     try {
-      const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
+      const { error } = await supabase.from("products").delete().eq("id", deleteId).eq("tenant_id", tenantId);
       if (error) throw error;
-      setStoredProducts((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Produto removido");
+      setStoredProducts((prev) => prev.filter((p) => p.id !== deleteId));
+      toast.success("Produto removido permanentemente");
       setEditingProduct(null);
+      setDeleteId(null);
     } catch (e: any) {
       toast.error("Erro ao remover produto");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -276,18 +316,47 @@ const StockTab = ({
     <div className="space-y-10">
       <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
         <CardHeader className="bg-primary/5 py-6 md:py-8 border-b border-primary/10 px-6 md:px-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
                 <Box className="w-8 h-8" /> Gestão de Estoque
               </CardTitle>
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Operação logística e controle de SKUS ativos</p>
             </div>
-            <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="relative flex-1 md:w-80">
+            
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
+                {/* Status Filter */}
+                <div className="flex bg-background/50 p-1.5 rounded-2xl border border-primary/5 shadow-inner w-full md:w-auto">
+                  <Button 
+                    variant={filterStatus === 'all' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
+                    onClick={() => handleStatusFilter('all')}
+                  >
+                    Todos
+                  </Button>
+                  <Button 
+                    variant={filterStatus === 'active' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'active' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
+                    onClick={() => handleStatusFilter('active')}
+                  >
+                    Ativos
+                  </Button>
+                  <Button 
+                    variant={filterStatus === 'inactive' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    className={`flex-1 md:flex-none h-11 px-6 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'inactive' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-zinc-500 hover:bg-primary/5'}`}
+                    onClick={() => handleStatusFilter('inactive')}
+                  >
+                    Ocultos
+                  </Button>
+                </div>
+
+                <div className="relative flex-1 md:w-80 w-full">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-60" />
                    <Input 
-                     placeholder="PESQUISAR POR SKU OU NOME..." 
+                     placeholder="PESQUISAR SKU OU NOME..." 
                      value={stockQuery}
                      onChange={(e) => handleQueryChange(e.target.value)}
                      className="h-14 bg-background/50 border-primary/5 pl-14 pr-6 rounded-2xl uppercase font-black text-xs tracking-widest focus:ring-primary/20 shadow-xl"
@@ -315,10 +384,10 @@ const StockTab = ({
           <div className="p-6 md:p-10 space-y-8 md:space-y-10">
             {/* Mobile View */}
             <div className="md:hidden space-y-4">
-              {visibleStock.map((p) => (
+              {visibleStock.length > 0 ? visibleStock.map((p) => (
                 <div 
                   key={p.id} 
-                  className="bg-card/40 border border-primary/5 rounded-[2rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all"
+                  className={`bg-card/40 border border-primary/5 rounded-[2rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all ${!p.active ? 'grayscale opacity-60' : ''}`}
                   onClick={() => handleOpenEdit(p)}
                 >
                   <div className="flex items-center gap-4">
@@ -326,7 +395,10 @@ const StockTab = ({
                       {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 m-3.5 opacity-20" />}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-black uppercase truncate leading-tight">{p.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-black uppercase truncate leading-tight">{p.name}</h4>
+                        {!p.active && <Badge className="text-[6px] h-3 px-1 bg-destructive/20 text-destructive border-none font-black tracking-tighter">OFF</Badge>}
+                      </div>
                       <p className="text-[10px] font-black text-primary">{formatBRL(p.price)}</p>
                     </div>
                   </div>
@@ -334,7 +406,12 @@ const StockTab = ({
                     {p.stock} UN
                   </Badge>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-12 bg-muted/5 rounded-[2.5rem] border border-dashed border-primary/10">
+                    <Filter className="w-10 h-10 text-primary/10 mx-auto mb-4" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">Nenhum resultado para os filtros atuais</p>
+                </div>
+              )}
             </div>
 
             {/* Desktop Table */}
@@ -350,14 +427,17 @@ const StockTab = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-primary/5">
-                  {visibleStock.map((p) => (
-                    <TableRow key={p.id} className="cursor-pointer transition-all border-none hover:bg-primary/5 group" onClick={() => handleOpenEdit(p)}>
+                  {visibleStock.length > 0 ? visibleStock.map((p) => (
+                    <TableRow key={p.id} className={`cursor-pointer transition-all border-none hover:bg-primary/5 group ${!p.active ? 'opacity-40 grayscale-[0.5]' : ''}`} onClick={() => handleOpenEdit(p)}>
                       <TableCell className="px-10 py-6">
                         <div className="flex items-center gap-6">
                           <div className="w-14 h-14 rounded-[1.2rem] border border-primary/10 overflow-hidden shadow-lg shrink-0 group-hover:scale-110 transition-transform duration-500">
                             {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-primary/20" />}
                           </div>
-                          <span className="text-sm font-black uppercase tracking-tight truncate max-w-[200px]">{p.name}</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-black uppercase tracking-tight truncate max-w-[200px]">{p.name}</span>
+                            {!p.active && <span className="text-[8px] font-black text-destructive/60 uppercase tracking-widest mt-0.5">Item Oculto</span>}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="px-10 py-6">
@@ -373,22 +453,31 @@ const StockTab = ({
                         </div>
                       </TableCell>
                       <TableCell className="px-10 py-6 text-right">
-                        <Button variant="ghost" className="h-12 w-12 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-black transition-all">
+                        <Button variant="ghost" className="h-12 w-12 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-black transition-all shadow-lg border border-primary/5">
                           <Settings2 className="w-5 h-5" />
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                        <TableCell colSpan={5} className="py-24 text-center">
+                            <div className="flex flex-col items-center gap-4 opacity-20">
+                                <Box className="w-12 h-12 text-primary" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Filtro sem resultados ativos</span>
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-6 p-6 border-t border-primary/10">
-                <Button variant="ghost" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Anterior</Button>
-                <div className="bg-muted/10 rounded-2xl border border-primary/5 px-6 h-10 flex items-center font-black text-xs text-primary">{currentPage} / {totalPages}</div>
-                <Button variant="ghost" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Próxima</Button>
+              <div className="flex items-center justify-between gap-6 p-6 border-t border-primary/10 mt-4">
+                <Button variant="ghost" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl border border-primary/5 hover:bg-primary/5">Anterior</Button>
+                <div className="bg-muted/10 rounded-2xl border border-primary/5 px-6 h-10 flex items-center font-black text-xs text-primary shadow-inner">{currentPage} / {totalPages}</div>
+                <Button variant="ghost" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl border border-primary/5 hover:bg-primary/5">Próxima</Button>
               </div>
             )}
           </div>
@@ -404,18 +493,33 @@ const StockTab = ({
             <div className="p-8 md:p-12 border-b border-primary/10 bg-primary/5 flex items-center justify-between shrink-0">
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0">
+                    {editingProduct?.active === false && <div className="absolute inset-0 bg-destructive/10 backdrop-grayscale-[0.5] z-10" />}
                     {editingProduct?.image ? <img src={editingProduct.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-5 opacity-20" />}
                   </div>
                   <div className="space-y-1">
-                    <DialogTitle className="text-2xl md:text-3xl font-black uppercase tracking-tight text-primary truncate max-w-[300px] md:max-w-md">
+                    <DialogTitle className="text-2xl md:text-3xl font-black uppercase tracking-tight text-primary truncate max-w-[200px] md:max-w-md">
                       {editingProduct?.name || "Editor de Ativo"}
                     </DialogTitle>
-                    <DialogDescription className="text-[10px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
+                    <div className="flex items-center gap-3">
+                        <DialogDescription className="text-[10px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
+                        {editingProduct?.active === false && <Badge className="bg-destructive text-white border-none text-[8px] font-black h-4 px-2 tracking-widest">DESATIVADO</Badge>}
+                    </div>
                   </div>
                </div>
-               <Button variant="ghost" className="h-12 w-12 rounded-full hover:bg-destructive/10 text-destructive border border-destructive/5" onClick={() => editingProduct && handleRemoveProduct(editingProduct.id!)}>
-                  <Trash2 className="w-5 h-5" />
-               </Button>
+               
+               <div className="flex items-center gap-3 md:gap-4">
+                  <Button 
+                    variant="outline" 
+                    className={`h-12 w-12 md:h-14 md:w-auto md:px-6 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
+                    onClick={() => handleUpdateField("active", !editingProduct?.active)}
+                  >
+                    {editingProduct?.active ? <><Eye className="w-5 h-5" /> <span className="hidden md:inline">Ativo na Loja</span></> : <><EyeOff className="w-5 h-5" /> <span className="hidden md:inline">Oculto na Loja</span></>}
+                  </Button>
+                  
+                  <Button variant="ghost" className="h-12 w-12 md:h-14 md:w-14 rounded-2xl hover:bg-destructive/10 text-destructive border border-destructive/5" onClick={() => editingProduct && setDeleteId(editingProduct.id!)}>
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -655,6 +759,38 @@ const StockTab = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* CONFIRMAÇÃO DE EXCLUSÃO PERSONALIZADA */}
+      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="max-w-md bg-card border-2 border-destructive/20 rounded-[3rem] p-12 shadow-3xl text-foreground overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-destructive/20" />
+          <AlertDialogHeader className="mb-8 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4 border border-destructive/20 animate-pulse">
+                <AlertTriangle className="w-10 h-10 text-destructive" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight text-center text-primary">
+              Operação Crítica
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center font-medium text-muted-foreground px-4 leading-relaxed">
+               Você está prestes a remover este ativo permanentemente do banco de dados. Esta ação <span className="text-destructive font-black underline underline-offset-4 decoration-destructive/30">NÃO PODE SER DESFEITA.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-4 mt-4">
+            <AlertDialogCancel asChild>
+                <Button variant="ghost" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest text-xs border border-primary/5" disabled={isDeleting}>Abortar</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+                <Button 
+                    className="flex-[2] h-16 bg-destructive text-white font-black uppercase tracking-widest rounded-2xl shadow-2xl shadow-destructive/20 hover:bg-destructive/90 transition-all active:scale-95"
+                    onClick={handleRemoveProduct}
+                    disabled={isDeleting}
+                >
+                    {isDeleting ? "Excluindo..." : "Sim, Excluir Agora"}
+                </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

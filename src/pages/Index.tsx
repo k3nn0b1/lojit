@@ -90,6 +90,7 @@ const Index = () => {
             .from("products")
             .select("*")
             .eq("tenant_id", tenantId)
+            .eq("active", true)
             .order("id", { ascending: false });
           if (!error && data) {
             const normalized = (data as any[]).map(p => normalizeProductStock(p) as Product);
@@ -105,13 +106,17 @@ const Index = () => {
           .channel("products-realtime-index")
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload: any) => {
             const newRow = payload.new;
-            if (!newRow) return;
+            if (!newRow || newRow.active === false) return;
             const norm = normalizeProductStock(newRow) as Product;
             setProducts(prev => sortProducts([norm, ...prev.filter(p => p.id !== norm.id)]));
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload: any) => {
             const newRow = payload.new;
             if (!newRow) return;
+            if (newRow.active === false) {
+              setProducts(prev => prev.filter(p => p.id !== newRow.id));
+              return;
+            }
             const norm = normalizeProductStock(newRow) as Product;
             setProducts(prev => sortProducts(prev.map(p => p.id === norm.id ? norm : p)));
           })

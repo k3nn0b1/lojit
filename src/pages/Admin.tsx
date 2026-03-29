@@ -23,7 +23,6 @@ import StockTab from "@/components/admin/tabs/StockTab";
 import SizesTab from "@/components/admin/tabs/SizesTab";
 import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
 import ColorsTab from "@/components/admin/tabs/ColorsTab";
-import ImagesTab from "@/components/admin/tabs/ImagesTab";
 import CustomersTab from "@/components/admin/tabs/CustomersTab";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
 import DeliveryTab from "@/components/admin/tabs/DeliveryTab";
@@ -218,7 +217,6 @@ const Admin = () => {
                        <TabsTrigger value="sizes" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Tamanhos</TabsTrigger>
                        <TabsTrigger value="categories" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Categorias</TabsTrigger>
                        <TabsTrigger value="colors" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Cores</TabsTrigger>
-                       <TabsTrigger value="images" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Imagens</TabsTrigger>
                     </TabsList>
                  </div>
               </div>
@@ -237,7 +235,7 @@ const Admin = () => {
                   uploadToCloudinary={uploadToCloudinary}
                   IS_SUPABASE_READY={IS_SUPABASE_READY}
                   setActiveTab={(tab) => {
-                    if (['products', 'stock', 'sizes', 'categories', 'colors', 'images'].includes(tab)) {
+                    if (['products', 'stock', 'sizes', 'categories', 'colors'].includes(tab)) {
                       setActiveCatalogTab(tab);
                       setActiveTab('catalogo');
                     } else {
@@ -275,16 +273,7 @@ const Admin = () => {
                 <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
               </TabsContent>
 
-              <TabsContent value="images">
-                <ImagesTab 
-                  tenantId={tenantId}
-                  storedProducts={storedProducts} 
-                  setStoredProducts={setStoredProducts}
-                  uploadToCloudinary={uploadToCloudinary}
-                  removeFromCloudinary={removeFromCloudinary}
-                  IS_SUPABASE_READY={IS_SUPABASE_READY}
-                />
-              </TabsContent>
+
             </Tabs>
           </TabsContent>
 

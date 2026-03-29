@@ -24,6 +24,7 @@ export interface AdminProduct {
   description?: string;
   colors?: ProductColor[];
   tenant_id?: string;
+  active?: boolean;
 }
 
 export interface ProductColor {

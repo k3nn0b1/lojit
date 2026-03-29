@@ -196,6 +196,7 @@ const ProductsTab = ({
       stockBySize: finalStockBySize,
       colors: product.colors,
       tenant_id: tenantId,
+      active: (product as any).active ?? true,
     };
 
      if (IS_SUPABASE_READY && tenantId) {
