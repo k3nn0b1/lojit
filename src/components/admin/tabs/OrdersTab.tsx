@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Check, X, Wallet } from "lucide-react";
+import { RefreshCw, Check, X, Wallet, Search, Filter, Calendar, Hash, User, Phone, ShoppingBag, ArrowRight, History } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Select,
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { formatBRL, rankSize, sortPedidos, parseSupabaseError } from "@/lib/utils";
+import { formatBRL, rankSize, sortPedidos, parseSupabaseError, normalizePhone, formatPhoneMask } from "@/lib/utils";
 import { Pedido, AdminProduct } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
@@ -66,7 +66,8 @@ const OrdersTab = ({
       const matchesSearch =
         p.cliente_nome.toLowerCase().includes(term) ||
         String(p.id).toLowerCase().includes(term) ||
-        String(pedidoSeq[p.id] || "").includes(term);
+        String(pedidoSeq[p.id] || "").includes(term) ||
+        String(p.cliente_telefone || "").includes(term);
       return matchesStatus && matchesSearch;
     });
   }, [pedidos, pedidoStatusFilter, pedidoSearch, pedidoSeq]);
@@ -157,447 +158,494 @@ const OrdersTab = ({
     setDevolucaoQuantidades(pedido.itens.map(() => 0));
   };
 
+  const getStatusInfo = (status: string) => {
+    switch(status) {
+      case 'pendente': return { label: 'Pendente', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' };
+      case 'concluido': return { label: 'Concluído', color: 'bg-green-500/10 text-green-500 border-green-500/20' };
+      case 'devolvido': return { label: 'Devolvido', color: 'bg-red-500/10 text-red-500 border-red-500/20' };
+      case 'parcialmente_devolvido': return { label: 'P. Devolvido', color: 'bg-orange-500/10 text-orange-500 border-orange-500/20' };
+      case 'cancelado': return { label: 'Cancelado', color: 'bg-muted/10 text-muted-foreground border-muted-foreground/20' };
+      default: return { label: status, color: 'bg-muted/10 text-muted-foreground' };
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <Card className="bg-card/30 backdrop-blur-sm border-primary/10">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl font-black uppercase tracking-widest text-primary">Pedidos</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchPedidos}
-            disabled={refreshingOrders}
-            className="h-9 gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshingOrders ? 'animate-spin text-primary' : ''}`} />
-            {refreshingOrders ? 'Atualizando...' : 'Atualizar'}
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4 md:items-end">
-            <div className="flex-1 space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Buscar Cliente ou ID</Label>
-              <Input
-                placeholder="Ex: João ou 123..."
-                value={pedidoSearch}
-                onChange={(e) => {
-                  setPedidoSearch(e.target.value);
-                  setPedidoPage(1);
-                }}
-                className="bg-muted/20 border-primary/10"
-              />
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem]">
+        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
+                <ShoppingBag className="w-8 h-8" /> Gestão de Pedidos
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Controle operacional e fluxo de caixa em tempo real</p>
             </div>
-            <div className="w-full md:w-[240px] space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Filtrar por Status</Label>
-              <Select
-                value={pedidoStatusFilter}
-                onValueChange={(val) => {
-                  setPedidoStatusFilter(val);
-                  setPedidoPage(1);
-                }}
-              >
-                <SelectTrigger className="bg-muted/20 border-primary/10">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os Pedidos</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="concluido">Concluído</SelectItem>
-                  <SelectItem value="devolvido">Devolvido</SelectItem>
-                  <SelectItem value="parcialmente_devolvido">Parcialmente Devolvido</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-3">
+                <Badge variant="outline" className="h-10 px-4 rounded-xl border-primary/10 text-[10px] font-black uppercase text-muted-foreground flex flex-col items-center justify-center min-w-[100px] bg-background/40">
+                  <span className="opacity-50">Total</span>
+                  <span className="text-primary">{pedidos.length}</span>
+                </Badge>
+                <Button
+                  variant="ghost"
+                  onClick={fetchPedidos}
+                  disabled={refreshingOrders}
+                  className={`h-12 w-12 rounded-2xl bg-primary/5 border border-primary/10 hover:bg-primary/20 transition-all ${refreshingOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <RefreshCw className={`w-5 h-5 text-primary ${refreshingOrders ? 'animate-spin' : ''}`} />
+                </Button>
             </div>
           </div>
+        </CardHeader>
 
-          {visiblePedidos.length === 0 ? (
-            <div className="py-20 text-center space-y-4 rounded-2xl border-2 border-dashed border-primary/5">
-              <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto text-muted-foreground/30 italic font-serif">?</div>
-              <p className="text-muted-foreground font-medium italic">Nenhum pedido encontrado com estes filtros.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Cards para Mobile */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {visiblePedidos.map((p) => (
-                  <div 
-                    key={p.id} 
-                    onClick={() => setPedidoDetalhesId(p.id)}
-                    className="p-5 rounded-2xl bg-muted/10 border border-primary/10 space-y-4 relative overflow-hidden active:scale-[0.98] transition-all"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-black text-primary/40 leading-none">#{pedidoSeq[p.id] || '—'}</span>
-                          <span className="text-[10px] text-muted-foreground font-bold uppercase leading-none">{new Date(p.data_criacao).toLocaleDateString()}</span>
-                        </div>
-                        <h4 className="font-black text-sm uppercase truncate max-w-[150px]">{p.cliente_nome}</h4>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-primary leading-none text-base">{formatBRL(Number(p.valor_total || 0))}</div>
-                      </div>
-                    </div>
+        <CardContent className="p-6 md:p-10 space-y-10">
+          {/* Dashboard Superior Rápido (Opcional, mas melhora visual) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+             {[
+               { label: 'Hoje', val: pedidos.filter(p => new Date(p.data_criacao).toDateString() === new Date().toDateString()).length, color: 'text-primary' },
+               { label: 'Pendentes', val: pedidos.filter(p => p.status === 'pendente').length, color: 'text-amber-500' },
+               { label: 'Finalizados', val: pedidos.filter(p => p.status === 'concluido').length, color: 'text-green-500' },
+               { label: 'Cancelados', val: pedidos.filter(p => p.status === 'cancelado').length, color: 'text-muted-foreground' }
+             ].map((stat, i) => (
+                <div key={i} className="bg-muted/10 p-5 rounded-3xl border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all">
+                   <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 group-hover:text-primary transition-colors">{stat.label}</span>
+                   <span className={`text-2xl font-black ${stat.color}`}>{stat.val}</span>
+                </div>
+             ))}
+          </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-primary/5">
-                      <div className="flex items-center gap-2">
-                        {p.status === 'pendente' && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black uppercase text-[9px]">Pendente</Badge>}
-                        {p.status === 'concluido' && <Badge className="bg-green-500/10 text-green-500 border-green-500/20 font-black uppercase text-[9px]">Concluído</Badge>}
-                        {p.status === 'devolvido' && <Badge className="bg-red-500/10 text-red-500 border-red-500/20 font-black uppercase text-[9px]">Devolvido</Badge>}
-                        {p.status === 'parcialmente_devolvido' && <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 font-black uppercase text-[9px]">P. Devolvido</Badge>}
-                        {p.status === 'cancelado' && <Badge variant="outline" className="font-black uppercase text-[9px]">Cancelado</Badge>}
-                      </div>
-                      
-                      {p.status === 'pendente' && (
-                        <div className="flex gap-2">
-                          <Button 
-                            className="h-8 w-8 bg-green-600 rounded-full p-0"
-                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
-                          >
-                             <Check className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="destructive"
-                            className="h-8 w-8 rounded-full p-0"
-                            onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
-                          >
-                             <X className="w-4 h-4" />
-                          </Button>
+          {/* Filtros Premium */}
+          <div className="relative group overflow-hidden">
+             <div className="absolute inset-0 bg-primary/10 blur-[50px] opacity-10 -z-10" />
+             <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 bg-muted/10 rounded-[2.5rem] border border-primary/5">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-60" />
+                   <Input 
+                     placeholder="BUSCAR CLIENTE, TELEFONE OU ID..." 
+                     value={pedidoSearch}
+                     onChange={(e) => { setPedidoSearch(e.target.value); setPedidoPage(1); }}
+                     className="h-14 bg-background/50 border-primary/5 pl-14 pr-6 rounded-2xl uppercase font-black text-xs tracking-widest focus:ring-primary/20"
+                   />
+                </div>
+                <div className="w-full md:w-[280px]">
+                   <Select value={pedidoStatusFilter} onValueChange={(val) => { setPedidoStatusFilter(val); setPedidoPage(1); }}>
+                     <SelectTrigger className="h-14 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-[10px] tracking-widest text-primary px-6">
+                        <div className="flex items-center gap-3">
+                           <Filter className="w-3 h-3 opacity-60" />
+                           <SelectValue placeholder="STATUS DO PEDIDO" />
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                     </SelectTrigger>
+                     <SelectContent className="bg-card border-primary/20 rounded-xl">
+                        <SelectItem value="todos" className="text-[10px] font-black uppercase">Todos os Pedidos</SelectItem>
+                        <SelectItem value="pendente" className="text-[10px] font-black uppercase">⏳ Pedidos Pendentes</SelectItem>
+                        <SelectItem value="concluido" className="text-[10px] font-black uppercase">✅ Pedidos Concluídos</SelectItem>
+                        <SelectItem value="cancelado" className="text-[10px] font-black uppercase">❌ Pedidos Cancelados</SelectItem>
+                        <SelectItem value="devolvido" className="text-[10px] font-black uppercase">🔄 Pedidos Devolvidos</SelectItem>
+                     </SelectContent>
+                   </Select>
+                </div>
+             </div>
+          </div>
+
+          {/* Listagem / Tabela */}
+          <div className="space-y-6">
+            {visiblePedidos.length === 0 ? (
+              <div className="py-32 flex flex-col items-center justify-center text-center space-y-4 opacity-20">
+                 <ShoppingBag className="w-16 h-16" />
+                 <p className="text-xs font-black uppercase tracking-[0.3em]">Nenhum pedido encontrado nos registros.</p>
               </div>
-
-              {/* Tabela para Desktop */}
-              <div className="hidden md:block overflow-x-auto rounded-xl border border-primary/10 bg-muted/5">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/40 border-b border-primary/10">
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Data</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">ID</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Cliente</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Telefone</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                      <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-primary/5">
-                    {visiblePedidos.map((p) => (
-                      <tr 
+            ) : (
+              <>
+                {/* Cards para Mobile */}
+                <div className="grid grid-cols-1 gap-6 md:hidden">
+                  {visiblePedidos.map((p) => {
+                    const status = getStatusInfo(p.status);
+                    return (
+                      <div 
                         key={p.id} 
-                        onClick={() => setPedidoDetalhesId(p.id)} 
-                        className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                        onClick={() => setPedidoDetalhesId(p.id)}
+                        className="p-8 rounded-[2.5rem] bg-muted/5 border border-primary/10 space-y-6 relative overflow-hidden active:scale-[0.98] transition-all hover:border-primary/40 shadow-xl"
                       >
-                        <td className="px-4 py-4 whitespace-nowrap text-xs font-medium">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span>{new Date(p.data_criacao).toLocaleDateString()}</span>
-                              </TooltipTrigger>
-                              <TooltipContent>{new Date(p.data_criacao).toLocaleTimeString()}</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap font-mono text-[10px] font-bold text-primary/70">{pedidoSeq[p.id] ?? '—'}</td>
-                        <td className="px-4 py-4 whitespace-nowrap font-bold text-foreground max-w-[180px] truncate">{p.cliente_nome}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-xs font-medium text-muted-foreground">{p.cliente_telefone}</td>
-                        <td className="px-4 py-4 whitespace-nowrap font-black text-primary">{formatBRL(Number(p.valor_total || 0))}</td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {p.status === 'pendente' && <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black uppercase tracking-tighter text-[9px]">Pendente</Badge>}
-                          {p.status === 'concluido' && <Badge className="bg-green-500/10 text-green-500 border-green-500/20 font-black uppercase tracking-tighter text-[9px]">Concluído</Badge>}
-                          {p.status === 'devolvido' && <Badge className="bg-red-500/10 text-red-500 border-red-500/20 font-black uppercase tracking-tighter text-[9px]">Devolvido</Badge>}
-                          {p.status === 'parcialmente_devolvido' && <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 font-black uppercase tracking-tighter text-[9px]">P. Devolvido</Badge>}
-                          {p.status === 'cancelado' && <Badge variant="outline" className="font-black uppercase tracking-tighter text-[9px]">Cancelado</Badge>}
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 text-[10px] font-black">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-[30px] -z-10" />
+                        
+                        <div className="flex justify-between items-start">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex flex-col items-center justify-center">
+                                 <span className="text-[10px] font-black text-primary leading-none">#{pedidoSeq[p.id] || '—'}</span>
+                              </div>
+                              <div className="space-y-0.5">
+                                 <h4 className="font-black text-sm uppercase truncate max-w-[140px] leading-tight">{p.cliente_nome}</h4>
+                                 <p className="text-[10px] font-black text-muted-foreground opacity-60 tracking-widest">{formatPhoneMask(p.cliente_telefone)}</p>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <div className="text-lg font-black text-primary">{formatBRL(Number(p.valor_total || 0))}</div>
+                              <div className="text-[8px] font-black opacity-30 uppercase">{new Date(p.data_criacao).toLocaleDateString()}</div>
+                           </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-primary/5">
+                           <Badge className={`${status.color} px-3 py-1 text-[8px] font-black uppercase rounded-lg border`}>{status.label}</Badge>
+                           
+                           <div className="flex gap-2">
                              {p.status === 'pendente' ? (
                                <>
                                  <Button 
-                                   size="sm" 
-                                   className="h-8 bg-green-600 hover:bg-green-700 text-white font-bold text-[10px]"
+                                   className="h-10 w-10 bg-green-500 rounded-xl p-0 hover:bg-green-600 transition-all text-black"
                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
                                  >
-                                   Concluir
+                                    <Check className="w-5 h-5" />
                                  </Button>
                                  <Button 
-                                   size="sm" 
-                                   variant="destructive"
-                                   className="h-8 font-bold text-[10px]"
+                                   className="h-10 w-10 bg-destructive rounded-xl p-0 hover:bg-destructive/80 transition-all"
                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
                                  >
-                                   Cancelar
+                                    <X className="w-5 h-5" />
                                  </Button>
                                </>
                              ) : (
-                               <Button 
-                                 variant="outline" 
-                                 size="sm" 
-                                 className="h-8 border-primary/20 font-bold text-[10px] group-hover:bg-primary/10 group-hover:text-primary transition-all"
-                               >
-                                 Detalhes
-                               </Button>
+                               <Button variant="ghost" className="h-10 px-4 rounded-xl bg-primary/5 text-[9px] font-black uppercase text-primary border border-primary/10">Ver Mais</Button>
                              )}
-                          </div>
-                        </td>
+                           </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tabela para Desktop */}
+                <div className="hidden md:block overflow-hidden rounded-[2.5rem] border border-primary/10 bg-muted/5 shadow-2xl">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-primary/5 border-b border-primary/10">
+                        <th className="px-8 py-6 text-left text-[9px] font-black uppercase tracking-[0.2em] text-primary">Sequencial</th>
+                        <th className="px-8 py-6 text-left text-[9px] font-black uppercase tracking-[0.2em] text-primary">Data / Hora</th>
+                        <th className="px-8 py-6 text-left text-[9px] font-black uppercase tracking-[0.2em] text-primary">Cliente</th>
+                        <th className="px-8 py-6 text-left text-[9px] font-black uppercase tracking-[0.2em] text-primary">Total Pago</th>
+                        <th className="px-8 py-6 text-left text-[9px] font-black uppercase tracking-[0.2em] text-primary">Status</th>
+                        <th className="px-8 py-6 text-right text-[9px] font-black uppercase tracking-[0.2em] text-primary">Ações Operacionais</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Paginação */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Itens por página:</span>
-                  <Select
-                    value={String(pageSize)}
-                    onValueChange={(val) => {
-                      setPageSize(Number(val));
-                      setPedidoPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-16 bg-muted/20 border-primary/10 text-[10px] font-bold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[15, 30, 50].map((size) => (
-                        <SelectItem key={size} value={String(size)} className="text-[10px] font-bold">
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    </thead>
+                    <tbody className="divide-y divide-primary/5">
+                      {visiblePedidos.map((p) => {
+                        const status = getStatusInfo(p.status);
+                        return (
+                          <tr 
+                            key={p.id} 
+                            onClick={() => setPedidoDetalhesId(p.id)} 
+                            className="hover:bg-primary/5 transition-all cursor-pointer group"
+                          >
+                            <td className="px-8 py-6 whitespace-nowrap">
+                               <div className="w-10 h-10 rounded-xl bg-background/50 border border-primary/5 flex items-center justify-center font-black text-primary/40 text-xs">
+                                  #{pedidoSeq[p.id] ?? '—'}
+                               </div>
+                            </td>
+                            <td className="px-8 py-6 whitespace-nowrap">
+                               <div className="flex flex-col">
+                                  <span className="text-[11px] font-black uppercase">{new Date(p.data_criacao).toLocaleDateString()}</span>
+                                  <span className="text-[9px] text-muted-foreground opacity-50 font-medium">{new Date(p.data_criacao).toLocaleTimeString()}</span>
+                               </div>
+                            </td>
+                            <td className="px-8 py-6 whitespace-nowrap">
+                               <div className="flex flex-col min-w-[200px]">
+                                  <span className="font-black text-xs uppercase group-hover:text-primary transition-colors underline decoration-primary/0 group-hover:decoration-primary/30 transition-all">{p.cliente_nome}</span>
+                                  <span className="text-[10px] text-muted-foreground font-medium">{formatPhoneMask(p.cliente_telefone)}</span>
+                               </div>
+                            </td>
+                            <td className="px-8 py-6 whitespace-nowrap">
+                               <span className="text-base font-black text-primary">{formatBRL(Number(p.valor_total || 0))}</span>
+                            </td>
+                            <td className="px-8 py-6 whitespace-nowrap">
+                               <Badge className={`${status.color} border font-black uppercase text-[8px] tracking-widest px-3 py-1 rounded-lg shadow-sm`}>
+                                  {status.label}
+                               </Badge>
+                            </td>
+                            <td className="px-8 py-6 text-right">
+                              <div className="flex items-center justify-end gap-3">
+                                 {p.status === 'pendente' ? (
+                                   <>
+                                     <Button 
+                                       className="h-10 bg-green-500 hover:bg-green-600 text-black font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-lg shadow-green-500/10"
+                                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
+                                     >
+                                       Concluir
+                                     </Button>
+                                     <Button 
+                                       variant="destructive"
+                                       className="h-10 font-black uppercase text-[9px] tracking-widest px-6 rounded-xl shadow-lg shadow-red-500/10"
+                                       onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
+                                     >
+                                       Cancelar
+                                     </Button>
+                                   </>
+                                 ) : (
+                                   <Button 
+                                     variant="outline" 
+                                     className="h-10 rounded-xl bg-primary/5 hover:bg-primary/20 text-primary border-primary/10 font-black uppercase text-[9px] tracking-widest px-6"
+                                   >
+                                     <History className="w-3.5 h-3.5 mr-2" />
+                                     Detalhes
+                                   </Button>
+                                 )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    disabled={pedidoPage <= 1} 
-                    onClick={() => setPedidoPage((p) => Math.max(1, p - 1))}
-                    className="h-8 font-bold text-[10px] border-primary/10"
-                  >
-                    Anterior
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum = i + 1;
-                      if (totalPages > 5 && pedidoPage > 3) {
-                         pageNum = Math.min(pedidoPage - 2 + i, totalPages - 4 + i);
-                      }
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={pedidoPage === pageNum ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setPedidoPage(pageNum)}
-                          className={`h-8 w-8 font-black text-[10px] ${pedidoPage === pageNum ? 'shadow-lg shadow-primary/20' : 'border-primary/10'}`}
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    disabled={pedidoPage >= totalPages} 
-                    onClick={() => setPedidoPage((p) => Math.min(totalPages, p + 1))}
-                    className="h-8 font-bold text-[10px] border-primary/10"
-                  >
-                    Próxima
-                  </Button>
+                {/* Paginação Premium */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6">
+                   <div className="flex items-center gap-4 bg-muted/10 px-6 py-2 rounded-2xl border border-primary/5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exibir</span>
+                      <Select value={String(pageSize)} onValueChange={(val) => { setPageSize(Number(val)); setPedidoPage(1); }}>
+                        <SelectTrigger className="h-8 w-20 bg-background/50 border-none font-black text-[10px] focus:ring-0">
+                           <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-primary/10">
+                           {[15, 30, 50].map(s => <SelectItem key={s} value={String(s)} className="text-[10px] font-black uppercase">{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                   </div>
+
+                   <div className="flex items-center gap-3">
+                      <Button 
+                        variant="ghost" 
+                        disabled={pedidoPage <= 1} 
+                        onClick={() => setPedidoPage(p => Math.max(1, p - 1))}
+                        className="h-12 px-6 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-primary/10"
+                      >
+                        Anterior
+                      </Button>
+                      <div className="flex items-center gap-1.5 p-1 bg-muted/20 rounded-2xl border border-primary/5">
+                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum = i + 1;
+                            if (totalPages > 5 && pedidoPage > 3) pageNum = Math.min(pedidoPage - 2 + i, totalPages - 4 + i);
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={pedidoPage === pageNum ? "default" : "ghost"}
+                                size="icon"
+                                onClick={() => setPedidoPage(pageNum)}
+                                className={`h-10 w-10 rounded-xl font-black text-xs ${pedidoPage === pageNum ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-muted-foreground/40 hover:text-primary'}`}
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                         })}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        disabled={pedidoPage >= totalPages} 
+                        onClick={() => setPedidoPage(p => Math.min(totalPages, p + 1))}
+                        className="h-12 px-6 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-primary/10"
+                      >
+                        Próxima
+                      </Button>
+                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Dialog: Confirmar Ação (Concluir/Cancelar) */}
       <Dialog open={!!confirmAction} onOpenChange={(open) => setConfirmAction(open ? confirmAction : null)}>
-        <DialogContent className="bg-card text-foreground border-primary/30 max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-widest text-primary">
-              Confirmar {confirmAction?.action === 'concluir' ? 'Conclusão' : 'Cancelamento'}
+        <DialogContent className="bg-card text-foreground border-primary/30 max-w-lg rounded-[3rem] p-10 overflow-hidden shadow-3xl">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
+          <DialogHeader className="mb-8">
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
+              <Check className="w-6 h-6" /> Requisitar {confirmAction?.action === 'concluir' ? 'Baixa' : 'Estorno'}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium italic">
-              Revise os itens e o impacto no estoque antes de prosseguir.
+            <DialogDescription className="text-base font-medium opacity-60">
+              Revise a movimentação de estoque antes de confirmar esta operação de caixa.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-3">
+          <div className="space-y-4 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
             {(pedidos.find(p => p.id === confirmAction?.id)?.itens || []).map((it, idx) => {
               const prod = storedProducts.find(sp => sp.id === it.product_id);
               const estoqueAtual = Math.max(0, Number((prod?.stockBySize || {})[it.tamanho] || 0));
               const apos = confirmAction?.action === 'concluir' ? Math.max(0, estoqueAtual - Number(it.quantidade || 0)) : estoqueAtual;
               return (
-                <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-primary/10">
+                <div key={idx} className="flex items-center justify-between p-6 rounded-[1.5rem] bg-muted/10 border border-primary/5">
                   <div className="space-y-1">
-                    <div className="text-sm font-bold flex items-center gap-2">
-                       {it.produto}
-                       <Badge variant="outline" className="h-5 text-[9px] font-black">{it.tamanho}</Badge>
+                    <div className="text-sm font-black uppercase">{it.produto}</div>
+                    <div className="flex items-center gap-2">
+                       <Badge variant="outline" className="h-5 text-[8px] font-black border-primary/10">TAM {it.tamanho}</Badge>
+                       <span className="text-[10px] font-black text-muted-foreground opacity-50 uppercase">Qtd: {it.quantidade}</span>
                     </div>
-                    <div className="text-[10px] text-muted-foreground font-medium">Quantidade: {it.quantidade} unidade(s)</div>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">
-                    <div className="text-[9px] text-muted-foreground uppercase font-black">Estoque</div>
-                    <div className="flex items-center gap-2 font-black text-xs">
-                      <span>{estoqueAtual}</span>
-                      <span className="text-primary/40">→</span>
-                      <span className={confirmAction?.action === 'concluir' ? 'text-primary' : ''}>{apos}</span>
+                    <div className="text-[8px] font-black uppercase tracking-widest opacity-30">Movimentação</div>
+                    <div className="flex items-center gap-2 font-black text-sm">
+                      <span className="opacity-40">{estoqueAtual}</span>
+                      <ArrowRight className="w-3 h-3 text-primary" />
+                      <span className={confirmAction?.action === 'concluir' ? 'text-primary' : 'text-green-500'}>{apos}</span>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" onClick={() => setConfirmAction(null)} className="font-bold">Voltar</Button>
+          <DialogFooter className="mt-10 gap-3">
+            <Button variant="ghost" onClick={() => setConfirmAction(null)} className="h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest">Voltar</Button>
             <Button 
-              className={confirmAction?.action === 'concluir' ? "bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest" : "bg-destructive hover:bg-destructive/90 text-white font-black uppercase tracking-widest"} 
+              className={`h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95 ${confirmAction?.action === 'concluir' ? "bg-green-500 text-black hover:bg-green-600 shadow-green-500/20" : "bg-destructive text-white hover:bg-destructive shadow-red-500/20"}`}
               onClick={() => { if (confirmAction) handleConfirmAction(confirmAction.id, confirmAction.action); setConfirmAction(null); }}
             >
-              Confirmar
+              {confirmAction?.action === 'concluir' ? 'Concluir Venda' : 'Cancelar Pedido'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Detalhes do Pedido */}
+      {/* Dialog: Detalhes do Pedido Premium (Estilo Sheet de CRM) */}
       <Dialog open={pedidoDetalhesId != null} onOpenChange={(open) => setPedidoDetalhesId(open ? pedidoDetalhesId : null)}>
-        <DialogContent className="bg-card text-foreground border-primary/20 max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar border">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-2xl font-black uppercase tracking-widest flex items-center gap-3">
-              Pedido <span className="text-primary">#{pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}</span>
-            </DialogTitle>
-            <DialogDescription className="font-mono text-[10px] opacity-40">{pedidoDetalhesId}</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="bg-card text-foreground border-primary/30 max-w-2xl max-h-[90vh] overflow-hidden rounded-[3rem] p-0 shadow-[0_0_100px_-20px_rgba(var(--primary),0.2)]">
           {(() => {
             const pedido = pedidos.find(p => p.id === pedidoDetalhesId);
             if (!pedido) return null;
+            const status = getStatusInfo(pedido.status);
             return (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-muted/10 border border-primary/10 space-y-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-primary/60">Informações do Cliente</div>
-                    <div className="space-y-1.5">
-                      <div className="text-lg font-black">{pedido.cliente_nome}</div>
-                      <div className="text-sm font-bold text-muted-foreground flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        {pedido.cliente_telefone}
-                      </div>
-                      <div className="text-[11px] font-medium text-muted-foreground pt-2">Registrado em: {new Date(pedido.data_criacao).toLocaleString()}</div>
+              <div className="flex flex-col h-full">
+                <div className="bg-primary/5 p-10 border-b border-primary/10 relative">
+                  <div className="absolute top-0 right-0 w-40 h-full bg-primary/5 blur-[50px] -z-10" />
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 rounded-[2rem] bg-background/50 border border-primary/10 flex items-center justify-center font-black text-primary text-2xl shadow-xl shadow-black/20 italic">
+                      #{pedidoSeq[String(pedidoDetalhesId ?? '')] ?? '—'}
                     </div>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-muted/10 border border-primary/10 space-y-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-primary/60">Resumo da Venda</div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-muted-foreground">Status</span>
-                        <Badge className={`${pedido.status === 'concluido' ? 'bg-green-500' : 'bg-amber-500'} font-black text-[10px] uppercase text-white`}>{pedido.status}</Badge>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                         <h2 className="text-2xl font-black uppercase tracking-tight">{pedido.cliente_nome}</h2>
+                         <Badge className={`${status.color} uppercase text-[8px] font-black border`}>{status.label}</Badge>
                       </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-primary/5">
-                        <span className="text-sm font-bold text-muted-foreground">Pagamento</span>
-                        <div className="flex items-center gap-1.5 font-black text-[10px] uppercase text-primary">
-                           <Wallet className="w-3 h-3" />
-                           {pedido.forma_pagamento || 'Não Informado'}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-primary/5">
-                        <span className="text-sm font-bold text-muted-foreground">Total Pago</span>
-                        <span className="text-xl font-black text-primary">{formatBRL(pedido.valor_total)}</span>
-                      </div>
+                      <p className="text-sm font-black text-muted-foreground opacity-60 flex items-center gap-2 uppercase tracking-widest">
+                        <Phone className="w-3.5 h-3.5 text-primary" /> {formatPhoneMask(pedido.cliente_telefone)}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">Itens Adquiridos</div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {pedido.itens.map((it, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-primary/5 group hover:border-primary/20 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs italic">{it.tamanho}</div>
-                          <div className="space-y-0.5">
-                            <div className="text-sm font-bold">{it.produto}</div>
-                            {it.cor && <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">Cor: {it.cor}</div>}
+                <div className="p-10 space-y-10 overflow-y-auto custom-scrollbar flex-1">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-muted/10 p-6 rounded-[2rem] border border-primary/5 space-y-6">
+                       <div className="flex flex-col gap-1 items-center justify-center text-center">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-primary opacity-50 mb-2">Total do Pedido</span>
+                          <span className="text-3xl font-black text-primary">{formatBRL(pedido.valor_total)}</span>
+                       </div>
+                    </div>
+                    <div className="bg-muted/10 p-6 rounded-[2rem] border border-primary/5 space-y-6">
+                       <div className="flex flex-col gap-1 items-center justify-center text-center">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-primary opacity-50 mb-2">Pagamento Via</span>
+                           <div className="flex items-center gap-2 font-black uppercase text-sm">
+                             <Wallet className="w-4 h-4 text-primary" />
+                             {pedido.forma_pagamento || 'Não Inf.'}
+                           </div>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-3">
+                       <ShoppingBag className="w-4 h-4" /> Composição do Carrinho
+                    </h5>
+                    <div className="grid grid-cols-1 gap-4">
+                      {pedido.itens.map((it, i) => (
+                        <div key={i} className="flex items-center justify-between p-6 rounded-3xl bg-muted/5 border border-primary/5 hover:border-primary/20 transition-all group">
+                          <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center font-black text-primary text-xs italic group-hover:scale-110 transition-transform">
+                              {it.tamanho}
+                            </div>
+                            <div className="space-y-0.5">
+                              <h4 className="text-sm font-black uppercase leading-tight">{it.produto}</h4>
+                              {it.cor && <p className="text-[9px] text-muted-foreground font-black uppercase opacity-60">Variante: {it.cor}</p>}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                             <div className="text-xs font-black uppercase opacity-40">x{it.quantidade}</div>
+                             <div className="text-sm font-black text-primary">{formatBRL(it.preco_unitario * it.quantidade)}</div>
+                             {Number(it.devolvido || 0) > 0 && (
+                               <Badge variant="outline" className="text-[8px] bg-red-500/10 text-red-500 border-red-500/20 px-2 mt-1 font-black">ESTORNADO: {it.devolvido}</Badge>
+                             )}
                           </div>
                         </div>
-                        <div className="text-right space-y-0.5">
-                          <div className="text-xs font-black">x{it.quantidade}</div>
-                          <div className="text-[10px] text-primary font-bold">{formatBRL(it.preco_unitario * it.quantidade)}</div>
-                          {Number(it.devolvido || 0) > 0 && (
-                            <Badge variant="outline" className="text-[8px] bg-red-500/10 text-red-500 border-red-500/20 px-1.5 h-4">Devolvido: {it.devolvido}</Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
+
+                  {pedido.status === 'concluido' && (
+                    <div className="pt-6 border-t border-primary/10">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full h-14 rounded-2xl bg-destructive/5 text-destructive hover:bg-destructive hover:text-white font-black uppercase tracking-widest text-[10px] transition-all border border-destructive/10"
+                        onClick={() => handleOpenDevolucao(pedido)}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" /> Iniciar Protocolo de Devolução
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
-                {pedido.status === 'concluido' && (
-                  <div className="pt-4 border-t border-primary/10">
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 border-red-500/20 text-red-500 hover:bg-red-500/10 font-bold uppercase tracking-widest text-xs"
-                      onClick={() => handleOpenDevolucao(pedido)}
-                    >
-                      Solicitar Devolução
-                    </Button>
-                  </div>
-                )}
+                <div className="p-8 border-t border-primary/5 bg-muted/5">
+                   <p className="text-center text-[9px] font-black uppercase tracking-[0.3em] opacity-30">Registrado em {new Date(pedido.data_criacao).toLocaleString('pt-BR')}</p>
+                </div>
               </div>
             );
           })()}
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Devolução de Pedido */}
+      {/* Dialog: Devolução de Pedido Premium */}
       {devolucaoPedidoId && (
         <Dialog open={!!devolucaoPedidoId} onOpenChange={(o) => { if (!o) { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); } }}>
-          <DialogContent className="bg-card text-foreground border-primary/20 max-w-lg border">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black uppercase tracking-widest text-amber-500">Devolução de Pedido</DialogTitle>
-              <DialogDescription className="font-medium italic">Selecione os itens e quantidades a serem retornados ao estoque.</DialogDescription>
+          <DialogContent className="bg-card text-foreground border-primary/30 max-w-lg rounded-[3rem] p-10 shadow-3xl">
+            <DialogHeader className="mb-8">
+              <DialogTitle className="text-2xl font-black uppercase tracking-tight text-amber-500 flex items-center gap-3">
+                 <RefreshCw className="w-6 h-6" /> Devolução de Estoque
+              </DialogTitle>
+              <DialogDescription className="text-base font-medium opacity-60">
+                 Selecione os itens que estão retornando fisicamente para a sua prateleira.
+              </DialogDescription>
             </DialogHeader>
-            <div className="py-6 space-y-6">
-              <div className="grid grid-cols-2 gap-2 p-1 bg-muted/20 rounded-xl">
+            <div className="space-y-8">
+              <div className="flex p-1.5 bg-muted/10 rounded-2xl border border-primary/5">
                 <Button 
-                  variant={!devolucaoParcial ? "default" : "ghost"} 
+                  variant="ghost"
                   onClick={() => setConfirmTotalOpen(true)}
-                  className={`h-11 font-black text-xs uppercase ${!devolucaoParcial ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : ''}`}
+                  className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest ${!devolucaoParcial ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'opacity-40'}`}
                 >
-                  Total
+                  Devolução Total
                 </Button>
                 <Button 
-                  variant={devolucaoParcial ? "default" : "ghost"} 
+                  variant="ghost"
                   onClick={() => setDevolucaoParcial(true)}
-                  className={`h-11 font-black text-xs uppercase ${devolucaoParcial ? 'bg-primary text-black shadow-lg shadow-primary/20' : ''}`}
+                  className={`flex-1 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest ${devolucaoParcial ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'opacity-40'}`}
                 >
-                  Parcial
+                  Devolução Parcial
                 </Button>
               </div>
 
               {devolucaoParcial && (
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-4 max-h-[35vh] overflow-y-auto custom-scrollbar pr-2">
                   {(pedidos.find(p => p.id === devolucaoPedidoId)?.itens || []).map((it, idx) => {
                     const max = Math.max(0, Number(it.quantidade || 0) - Number(it.devolvido || 0));
                     return (
-                      <div key={idx} className="flex items-center gap-4 p-3 rounded-xl bg-muted/10 border border-primary/5">
-                        <div className="flex-1 space-y-0.5">
-                          <div className="text-xs font-bold">{it.produto}</div>
-                          <div className="text-[10px] text-muted-foreground font-black uppercase">Tam {it.tamanho} <span className="opacity-40 px-1">|</span> Máx: {max}</div>
+                      <div key={idx} className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-muted/10 border border-primary/5">
+                        <div className="flex-1 space-y-1">
+                          <h4 className="text-xs font-black uppercase leading-tight">{it.produto}</h4>
+                          <div className="flex items-center gap-2">
+                             <Badge variant="outline" className="h-4 text-[7px] font-black border-primary/10">TAM {it.tamanho}</Badge>
+                             <span className="text-[9px] font-black text-muted-foreground opacity-50 uppercase">Restante: {max}</span>
+                          </div>
                         </div>
                         <Input 
                           type="number" 
                           min={0} 
                           max={max} 
                           value={devolucaoQuantidades[idx] ?? 0} 
-                          className="w-20 h-9 bg-background border-primary/10 text-center font-bold"
+                          className="w-20 h-10 bg-background/50 border-primary/10 text-center font-black rounded-xl"
                           onChange={(e) => {
                             const v = Math.max(0, Math.min(max, Number(e.target.value || 0)));
                             setDevolucaoQuantidades(prev => {
@@ -613,10 +661,10 @@ const OrdersTab = ({
                 </div>
               )}
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="ghost" onClick={() => { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); }} className="font-bold">Cancelar</Button>
+            <DialogFooter className="mt-10 gap-3">
+              <Button variant="ghost" onClick={() => { setDevolucaoPedidoId(null); setDevolucaoParcial(false); setDevolucaoQuantidades([]); }} className="h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest">Desistir</Button>
               <Button 
-                className="bg-amber-500 hover:bg-amber-600 text-black font-black uppercase tracking-widest"
+                className="h-14 px-8 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-black uppercase text-[10px] tracking-widest shadow-xl shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
                 onClick={() => {
                   const pedido = pedidos.find(p => p.id === devolucaoPedidoId);
                   if (!pedido) return;
@@ -635,26 +683,26 @@ const OrdersTab = ({
                   setDevolucaoQuantidades([]);
                 }}
               >
-                Concluir Devolução
+                Confirmar Devolução
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* AlertDialog: Confirmar Devolução Total */}
+      {/* AlertDialog: Confirmar Devolução Total Premium */}
       <AlertDialog open={confirmTotalOpen} onOpenChange={setConfirmTotalOpen}>
-        <AlertDialogContent className="bg-card border-primary/30 border">
+        <AlertDialogContent className="bg-card border-primary/30 rounded-[3rem] p-10 shadow-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-black uppercase tracking-widest text-amber-500">Confirmar Devolução Total</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-medium italic">
-              Esta ação devolverá TODOS os itens restantes do pedido ao estoque. Você tem certeza?
+            <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight text-amber-500">Protocolo de Devolução Total</AlertDialogTitle>
+            <AlertDialogDescription className="text-base font-medium opacity-60 py-4">
+              Esta ação devolverá **TODOS** os itens desta venda para o estoque e atualizará o status do pedido para **"Devolvido"**. Deseja prosseguir com o estorno físico?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmTotalOpen(false)} className="font-bold">Voltar</AlertDialogCancel>
+          <AlertDialogFooter className="mt-8 gap-3">
+            <AlertDialogCancel onClick={() => setConfirmTotalOpen(false)} className="h-14 px-8 rounded-2xl font-black uppercase text-[10px] tracking-widest border-primary/10">Abortar</AlertDialogCancel>
             <AlertDialogAction 
-              className="bg-amber-500 hover:bg-amber-600 text-black font-black uppercase tracking-widest"
+              className="h-14 px-8 rounded-2xl bg-amber-500 hover:bg-amber-600 text-black font-black uppercase text-[10px] tracking-widest shadow-xl shadow-amber-500/20"
               onClick={() => {
                 const pedido = pedidos.find(p => p.id === devolucaoPedidoId);
                 if (pedido) {
@@ -667,7 +715,7 @@ const OrdersTab = ({
                 setDevolucaoQuantidades([]);
               }}
             >
-              Sim, Devolver Tudo
+              Sim, Estornar Tudo
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
