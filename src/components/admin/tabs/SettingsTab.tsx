@@ -132,7 +132,6 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
            </div>
         </div>
 
-        {/* Seção de Adição Slim Mobile */}
         <div className="grid grid-cols-1 gap-4 p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-muted/10 border border-primary/5 shadow-2xl">
            <div className="space-y-2">
              <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">
@@ -319,9 +318,9 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
   };
 
   return (
-    <div className="space-y-10 pb-32">
+    <div className="space-y-6 md:space-y-10 pb-32">
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="bg-muted/10 p-2 rounded-[2.5rem] border border-primary/10 mb-10 h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 w-full lg:w-fit lg:mx-auto gap-2 shadow-2xl backdrop-blur-md">
+        <TabsList className="bg-muted/10 p-2 rounded-2xl md:rounded-[2.5rem] border border-primary/10 mb-6 md:mb-10 h-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 w-full lg:w-fit lg:mx-auto gap-2 shadow-2xl backdrop-blur-md">
           {[
             { id: "geral", label: "Geral", icon: Globe },
             { id: "contato", label: "Contatos", icon: Phone },
@@ -331,110 +330,110 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             { id: "entrega", label: "Entrega", icon: Truck },
             { id: "outros", label: "Avançado", icon: Settings }
           ].map(t => (
-            <TabsTrigger key={t.id} value={t.id} className="rounded-2xl px-4 md:px-8 h-12 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px] transition-all flex items-center gap-2">
+            <TabsTrigger key={t.id} value={t.id} className="rounded-xl md:rounded-2xl px-3 md:px-8 h-10 md:h-12 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[8px] md:text-[10px] transition-all flex items-center gap-2">
               <t.icon className="w-3.5 h-3.5 hidden sm:block" /> {t.label}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-3xl overflow-hidden rounded-[3rem]">
+        <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-3xl overflow-hidden rounded-2xl md:rounded-[3rem]">
           <CardContent className="p-0">
             {/* Aba Geral Elite */}
-            <TabsContent value="geral" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-primary/5">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                      <Globe className="w-7 h-7" />
+            <TabsContent value="geral" className="p-6 md:p-10 m-0 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 md:pb-8 border-b border-primary/5">
+                  <div className="flex items-center gap-4 md:gap-5">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                      <Globe className="w-6 h-6 md:w-7 md:h-7" />
                     </div>
                     <div>
-                      <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Geral & Localização</h3>
-                      <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Base de dados institucionais do empreendimento</p>
+                      <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Geral & Localização</h3>
+                      <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Base de dados institucionais</p>
                     </div>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Título Comercial da Loja</Label>
-                        <Input value={formData.store_name} onChange={e => setFormData({...formData, store_name: e.target.value})} className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black text-xl px-8 shadow-2xl focus:ring-primary/20" />
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                  <div className="space-y-6 md:space-y-8">
+                    <div className="space-y-2 md:space-y-3">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Título Comercial da Loja</Label>
+                        <Input value={formData.store_name} onChange={e => setFormData({...formData, store_name: e.target.value})} className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-base md:text-xl px-6 md:px-8 shadow-2xl focus:ring-primary/20" />
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Logotipo Master</Label>
-                        <div className="p-8 rounded-[3rem] border border-primary/5 bg-background/40 flex flex-col items-center gap-8 group hover:bg-background/60 transition-all shadow-3xl">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Logotipo Master</Label>
+                        <div className="p-6 md:p-8 rounded-2xl md:rounded-[3rem] border border-primary/5 bg-background/40 flex flex-col items-center gap-6 md:gap-8 group hover:bg-background/60 transition-all shadow-3xl">
                              {formData.logo_url ? (
-                                <div className="relative group p-6 bg-white/5 rounded-3xl shadow-inner border border-white/5">
-                                     <img src={formData.logo_url} className="h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(var(--primary),0.3)] group-hover:scale-105 transition-transform duration-500" />
+                                <div className="relative group p-4 md:p-6 bg-white/5 rounded-2xl md:rounded-3xl shadow-inner border border-white/5">
+                                     <img src={formData.logo_url} className="h-20 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(var(--primary),0.3)] group-hover:scale-105 transition-transform duration-500" />
                                 </div>
                              ) : (
-                                <div className="h-28 w-28 rounded-3xl border-2 border-dashed border-primary/20 flex items-center justify-center text-primary/20 italic font-black">NO_LOGO</div>
+                                <div className="h-20 w-20 md:h-28 md:w-28 rounded-2xl md:rounded-3xl border-2 border-dashed border-primary/20 flex items-center justify-center text-primary/20 italic font-black text-xs">NO_LOGO</div>
                              )}
-                             <Label htmlFor="logo-up" className="w-full flex items-center justify-center h-14 rounded-2xl bg-primary text-black hover:bg-primary/90 cursor-pointer transition-all gap-3 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95">
-                                <Upload className="w-5 h-5" /> {uploading ? "SINCRONIZANDO..." : "ATUALIZAR MARCA"}
+                             <Label htmlFor="logo-up" className="w-full flex items-center justify-center h-12 md:h-14 rounded-xl md:rounded-2xl bg-primary text-black hover:bg-primary/90 cursor-pointer transition-all gap-3 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95">
+                                <Upload className="w-4 h-4 md:w-5 md:h-5" /> {uploading ? "SINCRONIZANDO..." : "ATUALIZAR MARCA"}
                                 <input id="logo-up" type="file" className="hidden" accept="image/*" onChange={e => handleUpload(e, 'logo_url', 'store/logo')} />
                              </Label>
                         </div>
                     </div>
                   </div>
 
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Endereço de Operação</Label>
-                        <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black text-sm px-8 shadow-2xl" placeholder="EX: RUA DAS PALMEIRAS, 150 - CENTRO" />
+                  <div className="space-y-6 md:space-y-8">
+                    <div className="space-y-2 md:space-y-3">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Endereço de Operação</Label>
+                        <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-xs md:text-sm px-6 md:px-8 shadow-2xl" placeholder="EX: RUA DAS PALMEIRAS, 150 - CENTRO" />
                     </div>
-                    <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Horários de Atendimento Comercial</Label>
-                        <Textarea value={formData.opening_hours} onChange={e => setFormData({...formData, opening_hours: e.target.value})} className="min-h-[200px] bg-background/50 border-primary/5 rounded-[2.5rem] p-8 text-sm font-medium resize-none shadow-2xl leading-relaxed focus:ring-primary/20" />
+                    <div className="space-y-2 md:space-y-3">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Horários de Atendimento</Label>
+                        <Textarea value={formData.opening_hours} onChange={e => setFormData({...formData, opening_hours: e.target.value})} className="min-h-[150px] md:min-h-[200px] bg-background/50 border-primary/5 rounded-2xl md:rounded-[2.5rem] p-6 md:p-8 text-xs md:text-sm font-medium resize-none shadow-2xl leading-relaxed focus:ring-primary/20" />
                     </div>
                   </div>
                </div>
             </TabsContent>
 
             {/* Aba Contato Elite */}
-            <TabsContent value="contato" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
-               <div className="flex items-center gap-5 pb-8 border-b border-primary/5">
-                  <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <Phone className="w-7 h-7" />
+            <TabsContent value="contato" className="p-6 md:p-10 m-0 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
+               <div className="flex items-center gap-5 pb-6 md:pb-8 border-b border-primary/5">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Phone className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Canais de Contato</h3>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Configuração de presença digital e suporte</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Canais de Contato</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Presença digital e suporte</p>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                   {[
-                    { icon: <WhatsappIcon className="w-6 h-6" />, label: "WhatsApp", field: 'whatsapp', showField: 'show_whatsapp', placeholder: "EX: 5511999999999" },
-                    { icon: <Instagram className="w-6 h-6" />, label: "Instagram", field: 'instagram_url', showField: 'show_instagram', placeholder: "@SUALOJA" },
-                    { icon: <YoutubeIcon className="w-6 h-6" />, label: "YouTube", field: 'youtube_url', showField: 'show_youtube', placeholder: "CANAL OFICIAL" }
+                    { icon: <WhatsappIcon className="w-5 h-5 md:w-6 md:h-6" />, label: "WhatsApp", field: 'whatsapp', showField: 'show_whatsapp', placeholder: "EX: 5511999999999" },
+                    { icon: <Instagram className="w-5 h-5 md:w-6 md:h-6" />, label: "Instagram", field: 'instagram_url', showField: 'show_instagram', placeholder: "@SUALOJA" },
+                    { icon: <YoutubeIcon className="w-5 h-5 md:w-6 md:h-6" />, label: "YouTube", field: 'youtube_url', showField: 'show_youtube', placeholder: "CANAL OFICIAL" }
                   ].map(item => (
-                    <div key={item.field} className="p-10 rounded-[3rem] bg-muted/10 border border-primary/5 space-y-8 hover:shadow-[0_0_40px_rgba(var(--primary),0.05)] transition-all shadow-xl group">
+                    <div key={item.field} className="p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 space-y-6 md:space-y-8 hover:shadow-[0_0_40px_rgba(var(--primary),0.05)] transition-all shadow-xl group">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-primary group-hover:scale-110 transition-transform">
-                                <div className="p-3 rounded-2xl bg-primary/10">{item.icon}</div>
-                                <span className="text-sm font-black uppercase tracking-[0.2em]">{item.label}</span>
+                            <div className="flex items-center gap-3 md:gap-4 text-primary group-hover:scale-110 transition-transform">
+                                <div className="p-2 md:p-3 rounded-xl md:rounded-2xl bg-primary/10">{item.icon}</div>
+                                <span className="text-xs md:text-sm font-black uppercase tracking-[0.2em]">{item.label}</span>
                             </div>
-                            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-background/50 border border-primary/5 shadow-inner">
-                                <span className="text-[8px] font-black uppercase text-muted-foreground">ATIVO</span>
-                                <Switch checked={formData[item.showField]} onCheckedChange={v => setFormData({...formData, [item.showField]: v})} className="scale-90" />
+                            <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-background/50 border border-primary/5 shadow-inner">
+                                <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground">ATIVO</span>
+                                <Switch checked={formData[item.showField]} onCheckedChange={v => setFormData({...formData, [item.showField]: v})} className="scale-75 md:scale-90" />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                           <Label className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest ml-1">Protocolo de Link</Label>
+                        <div className="space-y-1.5">
+                           <Label className="text-[7px] md:text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest ml-1">Protocolo de Link</Label>
                            {item.field === 'whatsapp' ? (
                              <Input 
                                   value={formatPhoneMask(formData[item.field] || "")} 
                                   onChange={e => setFormData({...formData, [item.field]: e.target.value.replace(/\D/g, "")})} 
                                   placeholder="(00) 00000-0000"
-                                  className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-2xl focus:ring-primary/20"
+                                  className="h-12 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-5 md:px-6 shadow-2xl focus:ring-primary/20"
                               />
                            ) : (
                              <Input 
                                   value={formData[item.field]} 
                                   onChange={e => setFormData({...formData, [item.field]: e.target.value})} 
                                   placeholder={item.placeholder}
-                                  className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-2xl focus:ring-primary/20"
+                                  className="h-12 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-5 md:px-6 shadow-2xl focus:ring-primary/20"
                               />
                            )}
                         </div>
@@ -444,80 +443,80 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Identidade Visual Elite */}
-            <TabsContent value="identidade" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
-               <div className="flex items-center gap-5 pb-8 border-b border-primary/5">
-                  <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <Palette className="w-7 h-7" />
+            <TabsContent value="identidade" className="p-6 md:p-10 m-0 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
+               <div className="flex items-center gap-5 pb-6 md:pb-8 border-b border-primary/5">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Palette className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Branding & Estética</h3>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Cromatismo e algoritmos visuais do painel</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Branding & Estética</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Cromatismo e algoritmos visuais</p>
                   </div>
                </div>
 
-               <div className="space-y-12">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+               <div className="space-y-8 md:space-y-12">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
                     {[
                         { label: "Cor Primária", field: 'primary_hex', desc: "Botões e Destaques" },
                         { label: "Cor Secundária", field: 'secondary_hex', desc: "Suporte e Hover" },
                         { label: "Fundo Base", field: 'background_hex', desc: "Estrutura do Site" }
                     ].map(c => (
-                        <div key={c.field} className="p-8 rounded-[2.5rem] bg-muted/10 border border-primary/5 flex items-center gap-8 group hover:bg-muted/20 transition-all shadow-2xl relative overflow-hidden">
+                        <div key={c.field} className="p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-muted/10 border border-primary/5 flex items-center gap-6 md:gap-8 group hover:bg-muted/20 transition-all shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
                             <div className="relative shrink-0">
-                                <div className="w-16 h-16 rounded-2xl border-4 border-white/5 shadow-2xl transition-transform group-hover:rotate-12 group-hover:scale-110" style={{ backgroundColor: formData[c.field] }} />
+                                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl border-4 border-white/5 shadow-2xl transition-transform group-hover:rotate-12 group-hover:scale-110" style={{ backgroundColor: formData[c.field] }} />
                                 <input type="color" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" value={formData[c.field]} onChange={e => setFormData({...formData, [c.field]: e.target.value})} />
                             </div>
                             <div className="space-y-1">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-1">{c.label}</h4>
-                                <code className="text-xl font-black text-foreground uppercase block italic">{formData[c.field]}</code>
-                                <span className="text-[8px] font-black text-muted-foreground opacity-40 uppercase tracking-widest">{c.desc}</span>
+                                <h4 className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-1">{c.label}</h4>
+                                <code className="text-base md:text-xl font-black text-foreground uppercase block italic">{formData[c.field]}</code>
+                                <span className="text-[7px] md:text-[8px] font-black text-muted-foreground opacity-40 uppercase tracking-widest">{c.desc}</span>
                             </div>
                         </div>
                     ))}
                   </div>
 
                   {suggestedColors.length > 0 && (
-                    <div className="flex items-center gap-8 p-8 rounded-[2rem] bg-primary/5 border border-primary/10 max-w-fit mx-auto shadow-3xl animate-pulse-subtle">
-                        <div className="flex items-center gap-3">
-                           <TrendingUp className="w-5 h-5 text-primary" />
-                           <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">SUGESTÃO DA IA (BASEADO NO LOGO):</span>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-8 p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-primary/5 border border-primary/10 max-w-fit mx-auto shadow-3xl animate-pulse-subtle">
+                        <div className="flex items-center gap-2 md:gap-3">
+                           <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                           <span className="text-[8px] md:text-[10px] font-black uppercase text-primary tracking-[0.2em] md:tracking-[0.3em]">IA SUGGESTION:</span>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex gap-3 md:gap-4">
                             {suggestedColors.map(color => (
-                                <button key={color} onClick={() => setFormData({...formData, primary_hex: color})} className="w-10 h-10 rounded-2xl border-2 border-white/10 hover:scale-125 transition-all shadow-2xl hover:rotate-12" style={{ backgroundColor: color }} />
+                                <button key={color} onClick={() => setFormData({...formData, primary_hex: color})} className="w-8 h-8 md:w-10 md:h-10 rounded-xl md:rounded-2xl border-2 border-white/10 hover:scale-125 transition-all shadow-2xl hover:rotate-12" style={{ backgroundColor: color }} />
                             ))}
                         </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-6">
-                    <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Algoritmo de Fundo (Background FX)</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 pt-4 md:pt-6">
+                    <div className="space-y-3 md:space-y-4">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Algoritmo de Fundo</Label>
                         <Select value={formData.background_type || "solid"} onValueChange={v => setFormData({...formData, background_type: v})}>
-                          <SelectTrigger className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black text-xs px-8 uppercase tracking-[0.3em] shadow-2xl focus:ring-primary/20">
+                          <SelectTrigger className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-6 md:px-8 uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl focus:ring-primary/20">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-primary/20 rounded-[2rem] p-4 shadow-3xl">
-                             <SelectItem value="solid" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Clássico Sólido</SelectItem>
-                             <SelectItem value="bg1" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Mesh Gradient Profissional</SelectItem>
-                             <SelectItem value="bg2" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Topographic Map Elite</SelectItem>
-                             <SelectItem value="bg4" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Efeitos Etéreos</SelectItem>
-                             <SelectItem value="bg5" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Movimento de Fumaça</SelectItem>
-                             <SelectItem value="bg7" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest">Ambiente Neon</SelectItem>
+                          <SelectContent className="bg-card border-primary/20 rounded-2xl md:rounded-[2rem] p-3 md:p-4 shadow-3xl">
+                             <SelectItem value="solid" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest mb-1">Clássico Sólido</SelectItem>
+                             <SelectItem value="bg1" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest mb-1">Mesh Gradient</SelectItem>
+                             <SelectItem value="bg2" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest mb-1">Topographic Map</SelectItem>
+                             <SelectItem value="bg4" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest mb-1">Efeitos Etéreos</SelectItem>
+                             <SelectItem value="bg5" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest mb-1">Movimento Fumaça</SelectItem>
+                             <SelectItem value="bg7" className="rounded-lg md:rounded-xl py-3 md:py-4 font-black text-[9px] md:text-[10px] uppercase tracking-widest">Ambiente Neon</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Background Personalizado (Wallpaper)</Label>
-                        <div className="flex gap-6">
+                    <div className="space-y-3 md:space-y-4">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Wallpaper Customizado</Label>
+                        <div className="flex gap-4 md:gap-6">
                              {formData.background_url && (
-                                <div className="h-16 w-16 rounded-2xl border-2 border-primary/10 overflow-hidden shrink-0 shadow-2xl group relative">
+                                <div className="h-12 w-12 md:h-16 md:w-16 rounded-xl md:rounded-2xl border-2 border-primary/10 overflow-hidden shrink-0 shadow-2xl group relative">
                                     <img src={formData.background_url} className="w-full h-full object-cover group-hover:scale-125 transition-transform" />
                                 </div>
                              )}
-                             <Label htmlFor="bg-up" className="flex-1 flex items-center justify-center h-16 rounded-2xl border-2 border-dashed border-primary/10 hover:border-primary/40 cursor-pointer transition-all text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 bg-background/30 shadow-xl group">
-                                <Upload className="w-5 h-5 mr-3 group-hover:text-primary transition-colors" /> {formData.background_url ? "TROCAR WALLPAPER" : "SUBIR PAPEL DE PAREDE"}
+                             <Label htmlFor="bg-up" className="flex-1 flex items-center justify-center h-12 md:h-16 rounded-xl md:rounded-2xl border-2 border-dashed border-primary/10 hover:border-primary/40 cursor-pointer transition-all text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/40 bg-background/30 shadow-xl group">
+                                <Upload className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3 group-hover:text-primary transition-colors" /> {formData.background_url ? "TROCAR WALL" : "SUBIR WALLPAPER"}
                              </Label>
                              <input id="bg-up" type="file" className="hidden" accept="image/*" onChange={e => handleUpload(e, 'background_url', 'store/background')} />
                         </div>
@@ -527,41 +526,41 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Layout Elite */}
-            <TabsContent value="secoes" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
-               <div className="flex items-center gap-5 pb-8 border-b border-primary/5">
-                  <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <Layout className="w-7 h-7" />
+            <TabsContent value="secoes" className="p-6 md:p-10 m-0 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
+               <div className="flex items-center gap-5 pb-6 md:pb-8 border-b border-primary/5">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Layout className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Layout & Copys</h3>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Textos de impacto e organização de vitrines</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Layout & Copys</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Textos de impacto e vitrines</p>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="space-y-8 p-10 rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                  <div className="space-y-6 md:space-y-8 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10" />
-                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.4em] mb-6 flex items-center gap-3">Seção de Destaque <ExternalLink className="w-3.5 h-3.5 opacity-30" /></h4>
-                    <div className="space-y-4">
-                        <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} placeholder="ENTRADA..." className="h-14 bg-background border-none rounded-2xl font-black px-6 shadow-xl" />
-                        <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} placeholder="FOCO PRINCIPAL..." className="h-16 bg-background border-none rounded-2xl font-black text-primary text-xl px-8 shadow-2xl" />
-                        <Input value={formData.hero_title_l3} onChange={e => setFormData({...formData, hero_title_l3: e.target.value})} placeholder="COMPLEMENTO..." className="h-14 bg-background border-none rounded-2xl font-black px-6 shadow-xl" />
-                        <div className="pt-6">
-                             <Label className="text-[9px] font-black uppercase text-muted-foreground opacity-40 ml-2 tracking-widest">Slogan de Assinatura</Label>
-                             <Input value={formData.hero_phrase} onChange={e => setFormData({...formData, hero_phrase: e.target.value})} placeholder="SEU SLOGAN..." className="h-14 bg-background/50 border-primary/5 rounded-2xl px-6 text-sm italic font-medium shadow-inner" />
+                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Header Hero <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
+                    <div className="space-y-3 md:space-y-4">
+                        <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} placeholder="ENTRADA..." className="h-10 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black px-5 md:px-6 shadow-xl text-xs" />
+                        <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} placeholder="FOCO PRINCIPAL..." className="h-12 md:h-16 bg-background border-none rounded-xl md:rounded-2xl font-black text-primary text-base md:text-xl px-6 md:px-8 shadow-2xl" />
+                        <Input value={formData.hero_title_l3} onChange={e => setFormData({...formData, hero_title_l3: e.target.value})} placeholder="COMPLEMENTO..." className="h-10 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black px-5 md:px-6 shadow-xl text-xs" />
+                        <div className="pt-4 md:pt-6">
+                             <Label className="text-[8px] font-black uppercase text-muted-foreground opacity-40 ml-2 tracking-widest">Assinatura</Label>
+                             <Input value={formData.hero_phrase} onChange={e => setFormData({...formData, hero_phrase: e.target.value})} placeholder="SEU SLOGAN..." className="h-10 md:h-14 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl px-5 md:px-6 text-xs italic font-medium shadow-inner" />
                         </div>
                     </div>
                   </div>
 
-                  <div className="space-y-8 p-10 rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
+                  <div className="space-y-6 md:space-y-8 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 blur-3xl -z-10" />
-                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.4em] mb-6 flex items-center gap-3">Vitrine de Coleção <ExternalLink className="w-3.5 h-3.5 opacity-30" /></h4>
-                    <div className="space-y-4">
-                        <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="CHAMADA (EX: EXPLORE)..." className="h-14 bg-background border-none rounded-2xl font-black px-6 shadow-xl" />
-                        <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="TÍTULO (EX: ACERVO)..." className="h-16 bg-background border-none rounded-2xl font-black text-primary text-xl px-8 shadow-2xl" />
-                        <div className="pt-6">
-                             <Label className="text-[9px] font-black uppercase text-muted-foreground opacity-40 ml-2 tracking-widest">Sub-chamada de Vitrine</Label>
-                             <Input value={formData.collection_subtitle} onChange={e => setFormData({...formData, collection_subtitle: e.target.value})} className="h-14 bg-background/50 border-primary/5 rounded-2xl px-6 text-sm shadow-inner" />
+                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Vitrine <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
+                    <div className="space-y-3 md:space-y-4">
+                        <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="CHAMADA..." className="h-10 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black px-5 md:px-6 shadow-xl text-xs" />
+                        <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="TÍTULO..." className="h-12 md:h-16 bg-background border-none rounded-xl md:rounded-2xl font-black text-primary text-base md:text-xl px-6 md:px-8 shadow-2xl" />
+                        <div className="pt-4 md:pt-6">
+                             <Label className="text-[8px] font-black uppercase text-muted-foreground opacity-40 ml-2 tracking-widest">Sub-vitrine</Label>
+                             <Input value={formData.collection_subtitle} onChange={e => setFormData({...formData, collection_subtitle: e.target.value})} className="h-10 md:h-14 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl px-5 md:px-6 text-xs shadow-inner" />
                         </div>
                     </div>
                   </div>
@@ -569,7 +568,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Pagamentos Elite */}
-            <TabsContent value="pagamento" className="p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
+            <TabsContent value="pagamento" className="p-6 md:p-10 m-0 space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
                <PaymentManagement tenantId={tenantId} />
             </TabsContent>
 
@@ -583,30 +582,30 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
             </TabsContent>
 
             {/* Aba Avançado Elite */}
-            <TabsContent value="outros" className="p-10 m-0 space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
-               <div className="flex items-center gap-5 pb-8 border-b border-primary/5">
-                  <div className="w-14 h-14 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                    <Settings className="w-7 h-7" />
+            <TabsContent value="outros" className="p-6 md:p-10 m-0 space-y-8 md:space-y-12 animate-in fade-in slide-in-from-top-6 duration-700">
+               <div className="flex items-center gap-5 pb-6 md:pb-8 border-b border-primary/5">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl md:rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                    <Settings className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Configurações Avançadas</h3>
-                    <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Institucional, Legendas e SEO Profundo</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Avançado</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Institucional & SEO</p>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                  <div className="space-y-4">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">História da Marca (Manifesto)</Label>
-                    <Textarea value={formData.about_us} onChange={e => setFormData({...formData, about_us: e.target.value})} className="min-h-[300px] bg-background/50 border-primary/5 rounded-[3rem] p-10 text-base leading-relaxed shadow-3xl focus:ring-primary/20" placeholder="A jornada épica da sua loja começa aqui..." />
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                  <div className="space-y-3 md:space-y-4">
+                    <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Manifesto da Marca</Label>
+                    <Textarea value={formData.about_us} onChange={e => setFormData({...formData, about_us: e.target.value})} className="min-h-[200px] md:min-h-[300px] bg-background/50 border-primary/5 rounded-2xl md:rounded-[3rem] p-6 md:p-10 text-xs md:text-base leading-relaxed shadow-3xl focus:ring-primary/20" placeholder="A jornada..." />
                   </div>
-                  <div className="space-y-10">
-                    <div className="space-y-4 p-10 rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Copyright & Rodapé Master</Label>
-                        <Input value={formData.footer_info} onChange={e => setFormData({...formData, footer_info: e.target.value})} className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-inner focus:ring-primary/20" />
+                  <div className="space-y-6 md:space-y-10">
+                    <div className="space-y-3 md:space-y-4 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Copyright Rodapé</Label>
+                        <Input value={formData.footer_info} onChange={e => setFormData({...formData, footer_info: e.target.value})} className="h-12 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-5 md:px-6 shadow-inner focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-4 p-10 rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Legenda Visual de Grade (Tamanhos)</Label>
-                        <Input value={formData.product_size_label} onChange={e => setFormData({...formData, product_size_label: e.target.value})} className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-inner focus:ring-primary/20" />
+                    <div className="space-y-3 md:space-y-4 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Legenda de Grade (Tamanhos)</Label>
+                        <Input value={formData.product_size_label} onChange={e => setFormData({...formData, product_size_label: e.target.value})} className="h-12 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-5 md:px-6 shadow-inner focus:ring-primary/20" />
                     </div>
                   </div>
                </div>
@@ -616,11 +615,11 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
       </Tabs>
 
       {/* Floating Save Button Bar Premium */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] p-6 bg-gradient-to-t from-black/95 to-transparent backdrop-blur-md pointer-events-none pb-8">
+      <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black/95 to-transparent backdrop-blur-md pointer-events-none pb-6 md:pb-8">
           <div className="container mx-auto max-w-7xl flex justify-center md:justify-end pointer-events-auto">
               <Button 
                 onClick={handleSave} 
-                className="h-16 md:h-20 px-10 md:px-20 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.3em] md:tracking-[0.4em] rounded-[1.5rem] md:rounded-[2rem] shadow-[0_0_50px_rgba(var(--primary),0.5)] animate-pulse-subtle flex items-center gap-3 md:gap-5 active:scale-95 transition-all text-xs md:text-base border-4 border-black/10"
+                className="h-14 md:h-20 px-10 md:px-20 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] md:tracking-[0.4em] rounded-xl md:rounded-[2rem] shadow-[0_0_50px_rgba(var(--primary),0.5)] animate-pulse-subtle flex items-center gap-3 md:gap-5 active:scale-95 transition-all text-xs md:text-base border-2 md:border-4 border-black/10"
               >
                   <Save className="w-5 h-5 md:w-8 md:h-8" /> Sincronizar Tudo
               </Button>
