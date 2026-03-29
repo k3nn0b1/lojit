@@ -119,9 +119,9 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Tag className="w-8 h-8" /> Categorias Master
+                <Tag className="w-8 h-8" /> Categorias
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Arquitetura de taxonomia do catálogo comercial</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Organize seus produtos por grupos e tipos</p>
             </div>
           </div>
         </CardHeader>
@@ -129,7 +129,7 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
         <CardContent className="p-10 space-y-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
             <div className="lg:col-span-8 space-y-3">
-               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificador de Categoria (Marketing Name)</Label>
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nome da Categoria (EX: CAMISAS RETRÔ)</Label>
                <div className="relative group">
                   <Tag className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
                   <Input
@@ -147,14 +147,14 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                   disabled={saving || !newCategory.trim()}
                   className="w-full h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> Cadastrar Categoria</>}
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ADICIONAR CATEGORIA</>}
                 </Button>
             </div>
           </div>
 
           <div className="pt-10 border-t border-primary/5 space-y-8">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Inventário de Taxonomias ({categories.length})</h4>
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Categorias cadastradas ({categories.length})</h4>
                 <div className="relative w-full md:w-80">
                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                    <Input 
@@ -203,8 +203,8 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
         <DialogContent className="bg-card border-primary/30 rounded-[3rem] p-12 max-w-md border shadow-3xl overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
           <DialogHeader className="mb-10 text-center">
-            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary">Editar Taxonomia</DialogTitle>
-            <DialogDescription className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40 pt-4">Protocolo de Redefinição Global</DialogDescription>
+            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary">Editar Categoria</DialogTitle>
+            <DialogDescription className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40 pt-4">Atualize o nome da sua categoria</DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 mb-4 block text-center">Nova Etiqueta de Categoria</Label>
@@ -234,11 +234,11 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
                    <div className="w-20 h-20 rounded-[2rem] bg-destructive/10 flex items-center justify-center text-destructive">
                       <Trash2 className="w-10 h-10" />
                    </div>
-                   EXTINGUIR CATEGORIA
+                   EXCLUIR CATEGORIA
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-sm font-medium text-muted-foreground leading-relaxed">
                    Você está prestes a remover <span className="text-foreground font-black">"{catToRemove}"</span>. 
-                   Produtos vinculados perderão sua classificação sistemática.
+                   Produtos vinculados perderão sua classificação.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-10 gap-4 justify-center">

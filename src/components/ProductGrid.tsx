@@ -8,6 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetDescription
+} from "@/components/ui/sheet";
+import { Filter, Check } from "lucide-react";
 
 interface ProductGridProps {
   products: Product[];
@@ -18,6 +27,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const categories = ["Todos", ...Array.from(new Set(products.map(p => p.category)))];
   
@@ -32,7 +42,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   const scrollToProducts = () => {
     const element = document.getElementById("products");
     if (element) {
-      const offset = 100; // Ajuste para não ficar colado no topo
+      const offset = 100;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
 
@@ -45,51 +55,70 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Pequeno delay para garantir que o estado do React atualizou a renderização antes do scroll
     setTimeout(scrollToProducts, 50);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setCurrentPage(1);
+    setIsFilterOpen(false);
   };
 
   return (
     <section id="products" className="min-h-screen pt-4 pb-16 md:pb-32" data-aos="fade-up">
       <div className="container mx-auto px-4 md:px-8">
-        {/* Category Filter - Modern Pill Slider */}
-        <div className="relative mb-12 md:mb-20">
-          <div className="flex overflow-x-auto scrollbar-hide gap-3 pb-4 -mx-4 px-4 md:-mx-8 md:px-8 justify-start md:justify-center items-center">
-            {categories.map((category) => {
-              const isActive = selectedCategory === category;
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryChange(category)}
-                  className={`
-                    relative shrink-0 h-10 md:h-12 px-6 md:px-8 
-                    rounded-full text-[10px] md:text-sm font-black uppercase tracking-[0.2em]
-                    transition-all duration-500 ease-out
-                    ${isActive 
-                      ? "bg-primary text-primary-foreground shadow-[0_0_25px_rgba(var(--primary),0.4)] scale-105 z-10" 
-                      : "bg-white/5 border border-white/10 text-muted-foreground/70 hover:bg-white/10 hover:border-primary/30 hover:text-foreground"
-                    }
-                    active:scale-95
-                  `}
-                >
-                  {/* Subtle inner glow for active pill */}
-                  {isActive && (
-                    <span className="absolute inset-0 rounded-full bg-gradient-to-t from-white/20 to-transparent pointer-events-none" />
-                  )}
-                  <span className="relative z-10">{category}</span>
-                </button>
-              );
-            })}
+        {/* Category Filter - Modal Version */}
+        <div className="flex justify-between items-center mb-10 md:mb-16">
+          <div className="flex flex-col">
+            <h3 className="text-[10px] md:text-sm font-black uppercase tracking-[0.3em] text-primary/60 mb-1">Explore a</h3>
+            <h2 className="text-2xl md:text-4xl font-black uppercase tracking-[0.1em]">Coleção Ativa</h2>
           </div>
-          
-          {/* Subtle fade edges for mobile indicating more items */}
-          <div className="md:hidden absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-background/80 to-transparent pointer-events-none" />
-          <div className="md:hidden absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-background/80 to-transparent pointer-events-none" />
+
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={`
+                  h-12 md:h-14 px-6 md:px-8 rounded-full border border-primary/20 
+                  bg-card/20 backdrop-blur-md transition-all duration-300
+                  ${selectedCategory !== "Todos" ? "bg-primary text-black border-none" : "hover:border-primary hover:bg-primary/10"}
+                  flex items-center gap-3 font-black uppercase tracking-widest text-[10px] md:text-xs
+                `}
+              >
+                <Filter className={`w-4 h-4 ${selectedCategory !== "Todos" ? "text-black" : "text-primary"}`} />
+                {selectedCategory === "Todos" ? "Filtrar" : selectedCategory}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-card/95 backdrop-blur-xl border-primary/20 w-[300px] md:w-[400px]">
+              <SheetHeader className="mb-12 border-b border-primary/10 pb-6 text-left">
+                <SheetTitle className="text-2xl font-black uppercase tracking-widest text-primary">Categorias</SheetTitle>
+                <SheetDescription className="text-[10px] font-bold uppercase tracking-widest opacity-40">Selecione uma categoria para descobrir novos produtos</SheetDescription>
+              </SheetHeader>
+              
+              <div className="flex flex-col gap-3">
+                {categories.map((category) => {
+                  const isActive = selectedCategory === category;
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryChange(category)}
+                      className={`
+                        w-full h-16 px-6 rounded-2xl flex items-center justify-between
+                        transition-all duration-300 font-black uppercase tracking-widest text-xs
+                        ${isActive 
+                          ? "bg-primary text-black" 
+                          : "bg-white/5 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                        }
+                      `}
+                    >
+                      {category}
+                      {isActive && <Check className="w-5 h-5" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Products Grid */}

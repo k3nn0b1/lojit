@@ -115,9 +115,9 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Droplets className="w-8 h-8" /> Paleta de SKUS
+                <Palette className="w-8 h-8" /> Paleta de Cores
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Protocolação cromática oficial dos lotes comerciais</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Gerencie as cores e variações dos seus produtos</p>
             </div>
           </div>
         </CardHeader>
@@ -136,7 +136,7 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                </div>
             </div>
             <div className="lg:col-span-7 space-y-3">
-               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Label Cromática (EX: AZUL MARINHO)</Label>
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nome da Cor (EX: AZUL MARINHO)</Label>
                <Input
                   placeholder="DIGITE O NOME DA COR..."
                   value={newColorName}
@@ -151,18 +151,18 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                   disabled={saving || !newColorName.trim()}
                   className="w-full h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ACOPLAR COR</>}
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ADICIONAR COR</>}
                 </Button>
             </div>
           </div>
 
           <div className="pt-10 border-t border-primary/5 space-y-8">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Inventário de Matizes ({globalColors.length})</h4>
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Cores cadastradas ({globalColors.length})</h4>
                 <div className="relative w-full md:w-80">
                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                    <Input 
-                      placeholder="FILTRAR PALETA..." 
+                      placeholder="BUSCAR COR..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="h-12 bg-background/50 border-primary/5 pl-12 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-inner"

@@ -124,9 +124,9 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Ruler className="w-8 h-8" /> Engenharia de Grade
+                <Ruler className="w-8 h-8" /> Grade
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Matriz sistemática de dimensões e escalas</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Defina os tamanhos e escalas de estoque</p>
             </div>
           </div>
         </CardHeader>
@@ -134,7 +134,7 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         <CardContent className="p-10 space-y-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end p-8 rounded-[2rem] bg-muted/10 border border-primary/5 shadow-inner">
             <div className="lg:col-span-8 space-y-3">
-               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificador de Grade (Ex: XXL, 42, 1TB...)</Label>
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificador do Tamanho (Ex: G, 42, GG...)</Label>
                <div className="relative group">
                   <Ruler className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
                   <Input
@@ -152,14 +152,14 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                   disabled={saving || !newGlobalSize.trim()}
                   className="w-full h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ADICIONAR GRADE</>}
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ADICIONAR TAMANHO</>}
                 </Button>
             </div>
           </div>
 
           <div className="pt-10 border-t border-primary/5 space-y-8">
              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Inventário de Grades ({globalSizes.length})</h4>
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Grades cadastradas ({globalSizes.length})</h4>
                 <div className="relative w-full md:w-80">
                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
                    <Input 
@@ -227,8 +227,8 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
         <DialogContent className="bg-card border-primary/30 rounded-[3rem] p-12 max-w-md border shadow-3xl overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
           <DialogHeader className="mb-10 text-center">
-            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary">Protocolo de Rescala</DialogTitle>
-            <DialogDescription className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40 pt-4">Alteração de Identificador Global</DialogDescription>
+            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary">Editar Tamanho</DialogTitle>
+            <DialogDescription className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40 pt-4">Atualize o identificador do tamanho</DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <Input
@@ -257,11 +257,11 @@ const SizesTab = ({ tenantId, globalSizes, setGlobalSizes, IS_SUPABASE_READY }: 
                    <div className="w-20 h-20 rounded-[2rem] bg-destructive/10 flex items-center justify-center text-destructive">
                       <Trash2 className="w-10 h-10" />
                    </div>
-                   EXTINGUIR GRADE
+                   EXCLUIR TAMANHO
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-sm font-medium text-muted-foreground leading-relaxed">
                    Você está prestes a remover <span className="text-foreground font-black">"{sizeToRemove}"</span>. 
-                   Esta ação é irreversível e afetará todos os produtos vinculados a esta grade global.
+                   Esta ação é irreversível e afetará todos os produtos vinculados a este tamanho.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-10 gap-4 justify-center">

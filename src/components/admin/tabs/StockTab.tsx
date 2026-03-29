@@ -42,6 +42,14 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -59,6 +67,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Check } from "lucide-react";
 
 interface StockTabProps {
   tenantId: string;
@@ -344,49 +353,84 @@ const StockTab = ({
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Box className="w-8 h-8" /> Gestão de Estoque
+                <Box className="w-8 h-8" /> Controle de Estoque
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Operação logística e controle de SKUS ativos</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Gerencie as quantidades e a grade dos seus produtos</p>
             </div>
             
-            <div className="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
-                {/* Status Filter */}
-                <div className="flex bg-background/50 p-1.5 rounded-xl border border-primary/5 shadow-inner w-full md:w-auto">
-                  <Button 
-                    variant={filterStatus === 'all' ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'all' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
-                    onClick={() => handleStatusFilter('all')}
-                  >
-                    Todos
-                  </Button>
-                  <Button 
-                    variant={filterStatus === 'active' ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'active' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-muted-foreground hover:bg-primary/5'}`}
-                    onClick={() => handleStatusFilter('active')}
-                  >
-                    Ativos
-                  </Button>
-                  <Button 
-                    variant={filterStatus === 'inactive' ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className={`flex-1 md:flex-none h-11 px-6 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'inactive' ? 'bg-primary text-black hover:bg-primary/90 shadow-lg' : 'text-zinc-500 hover:bg-primary/5'}`}
-                    onClick={() => handleStatusFilter('inactive')}
-                  >
-                    Ocultos
-                  </Button>
-                </div>
+            <div className="flex items-center gap-4 w-full xl:w-auto">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className={`h-14 px-8 rounded-xl border border-primary/20 bg-background/50 flex items-center gap-3 font-black uppercase tracking-widest text-[10px] md:text-xs transition-all hover:border-primary hover:bg-primary/5 ${stockQuery || filterStatus !== 'all' ? 'border-primary bg-primary/10 text-primary' : ''}`}
+                    >
+                      <Filter className="w-4 h-4 text-primary" />
+                      {stockQuery || filterStatus !== 'all' ? "Filtros Ativos" : "Filtrar"}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="bg-card/95 backdrop-blur-xl border-primary/20 w-[300px] md:w-[400px]">
+                    <SheetHeader className="mb-10 border-b border-primary/10 pb-6 text-left">
+                      <SheetTitle className="text-2xl font-black uppercase tracking-widest text-primary font-black uppercase">Filtros Avançados</SheetTitle>
+                      <SheetDescription className="text-[10px] font-bold uppercase tracking-widest opacity-40">Refine sua busca no estoque</SheetDescription>
+                    </SheetHeader>
+                    
+                    <div className="space-y-10">
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Pesquisar Produto</Label>
+                        <div className="relative">
+                          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-60" />
+                          <Input 
+                            placeholder="NOME OU CATEGORIA..." 
+                            value={stockQuery}
+                            onChange={(e) => handleQueryChange(e.target.value)}
+                            className="h-16 bg-background/50 border-primary/10 pl-14 pr-6 rounded-xl uppercase font-black text-xs tracking-widest focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
 
-                <div className="relative flex-1 md:w-80 w-full">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-60" />
-                   <Input 
-                     placeholder="PESQUISAR SKU OU NOME..." 
-                     value={stockQuery}
-                     onChange={(e) => handleQueryChange(e.target.value)}
-                     className="h-14 bg-background/50 border-primary/5 pl-14 pr-6 rounded-xl uppercase font-black text-xs tracking-widest focus:ring-primary/20 shadow-xl"
-                   />
-                </div>
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Status do Ativo</Label>
+                        <div className="flex flex-col gap-2">
+                          {[
+                            { id: 'all', label: 'Todos os Itens' },
+                            { id: 'active', label: 'Apenas Ativos' },
+                            { id: 'inactive', label: 'Apenas Ocultos' }
+                          ].map((s) => (
+                            <button
+                              key={s.id}
+                              onClick={() => handleStatusFilter(s.id as any)}
+                              className={`
+                                w-full h-16 px-6 rounded-xl flex items-center justify-between
+                                transition-all duration-300 font-black uppercase tracking-widest text-[10px]
+                                ${filterStatus === s.id 
+                                  ? "bg-primary text-black" 
+                                  : "bg-white/5 text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                                }
+                              `}
+                            >
+                              {s.label}
+                              {filterStatus === s.id && <Check className="w-4 h-4" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {(stockQuery || filterStatus !== 'all') && (
+                        <Button 
+                          variant="ghost" 
+                          className="w-full h-14 text-destructive font-black uppercase text-[10px] tracking-widest hover:bg-destructive/10"
+                          onClick={() => {
+                            setStockQuery("");
+                            setFilterStatus('all');
+                          }}
+                        >
+                          Limpar Filtros
+                        </Button>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
             </div>
           </div>
         </CardHeader>
@@ -444,11 +488,11 @@ const StockTab = ({
               <Table>
                 <TableHeader className="bg-primary/5 border-b border-primary/10">
                   <TableRow className="border-none">
-                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Ativo de Venda</TableHead>
-                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Classificação</TableHead>
-                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Valor SKU</TableHead>
-                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Volumetria</TableHead>
-                    <TableHead className="px-10 py-6 text-right text-[9px] font-black uppercase tracking-[0.2em] text-primary">Operativo</TableHead>
+                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Produto</TableHead>
+                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Categoria</TableHead>
+                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Preço</TableHead>
+                    <TableHead className="px-10 py-6 text-[9px] font-black uppercase tracking-[0.2em] text-primary">Estoque Total</TableHead>
+                    <TableHead className="px-10 py-6 text-right text-[9px] font-black uppercase tracking-[0.2em] text-primary">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-primary/5">
@@ -523,10 +567,10 @@ const StockTab = ({
                   </div>
                   <div className="space-y-1 min-w-0 flex-1">
                     <DialogTitle className="text-xl md:text-3xl font-black uppercase tracking-tight text-primary truncate">
-                      {editingProduct?.name || "Editor de Ativo"}
+                      {editingProduct?.name || "Editar Produto"}
                     </DialogTitle>
                     <div className="flex items-center gap-3">
-                        <DialogDescription className="text-[9px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
+                        <DialogDescription className="text-[9px] font-black uppercase tracking-widest opacity-40">Código do Produto: #{editingProduct?.id}</DialogDescription>
                         {editingProduct?.active === false && <Badge className="bg-destructive text-white border-none text-[8px] font-black h-4 px-2 tracking-widest">DESATIVADO</Badge>}
                     </div>
                   </div>
@@ -565,7 +609,7 @@ const StockTab = ({
                   <TabsContent value="geral" className="m-0 outline-none space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Título do Ativo</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Nome do Produto</Label>
                         <Input 
                           value={editingProduct?.name || ""} 
                           onChange={(e) => handleUpdateField("name", e.target.value)}
@@ -573,7 +617,7 @@ const StockTab = ({
                         />
                       </div>
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Precificação (BRL)</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Preço de Venda (R$)</Label>
                         <Input 
                           type="number"
                           value={editingProduct?.price || ""} 
@@ -584,7 +628,7 @@ const StockTab = ({
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Classificação de Catálogo</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Categoria do Produto</Label>
                       <div className="flex gap-4">
                         <Select value={editingProduct?.category} onValueChange={(val) => handleUpdateField("category", val)}>
                           <SelectTrigger className="h-14 md:h-16 bg-background/50 border-primary/10 rounded-xl font-black uppercase text-[10px] md:text-[11px] tracking-widest px-6 md:px-8 shadow-2xl flex-1">
@@ -601,7 +645,7 @@ const StockTab = ({
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Descritivo de Ficha Técnica</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Descrição do Produto</Label>
                       <Textarea 
                         value={editingProduct?.description || ""} 
                         onChange={(e) => handleUpdateField("description", e.target.value)}
@@ -614,7 +658,7 @@ const StockTab = ({
                   <TabsContent value="estoque" className="m-0 outline-none space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-6">
                       <div className="flex items-center justify-between px-2">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Matriz de Grade Ativa</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Grade de Tamanhos</Label>
                         <Button variant="ghost" size="sm" className="h-10 px-4 md:px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[8px] md:text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("size")}>
                           <PlusCircle className="w-3.5 h-3.5 mr-2" /> Novo
                         </Button>
@@ -638,7 +682,7 @@ const StockTab = ({
 
                     {editingProduct?.sizes && editingProduct.sizes.length > 0 && (
                       <div className="space-y-6 p-6 md:p-8 rounded-2xl bg-muted/5 border border-primary/5">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 block mb-6 text-center">Unidades por Tamanho</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 block mb-6 text-center">Quantidade por Tamanho</Label>
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
                           {sortSizes(editingProduct.sizes).map((s) => (
                             <div key={s} className="space-y-2 p-4 md:p-5 rounded-xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
@@ -660,7 +704,7 @@ const StockTab = ({
                   <TabsContent value="estilo" className="m-0 outline-none space-y-10 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="space-y-6">
                         <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2 flex items-center gap-2">
-                            <ImageIcon className="w-4 h-4" /> Portfólio de Imagens do Ativo
+                            <ImageIcon className="w-4 h-4" /> Galeria de Fotos
                         </Label>
                         <div className="grid grid-cols-3 gap-3 md:gap-8">
                             {[0, 1, 2].map((idx) => {
@@ -700,7 +744,7 @@ const StockTab = ({
 
                     <div className="space-y-6">
                       <div className="flex items-center justify-between px-2">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Paleta Colorimétrica</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Cores Disponíveis</Label>
                         <Button variant="ghost" size="sm" className="h-10 px-4 md:px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[8px] md:text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("color")}>
                           <PlusCircle className="w-3.5 h-3.5 mr-2" /> Nova
                         </Button>
@@ -729,10 +773,10 @@ const StockTab = ({
 
             <div className="p-6 md:p-12 border-t border-primary/10 bg-primary/5 shrink-0 flex flex-col md:flex-row gap-4">
                <Button variant="ghost" className="h-14 md:h-16 rounded-xl font-black uppercase tracking-widest text-xs w-full md:flex-1" onClick={() => setEditingProduct(null)}>
-                  Desistir
+                  Cancelar
                </Button>
                <Button className="h-14 md:h-16 bg-primary text-black font-black uppercase tracking-[0.1em] md:tracking-[0.2em] rounded-xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all w-full md:flex-[2]" onClick={handleSaveProduct} disabled={isSaving}>
-                  {isSaving ? "Sincronizando..." : <><Save className="w-5 h-5 mr-3" /> <span className="hidden xs:inline">Confirmar Atualização</span><span className="xs:hidden">Confirmar</span></>}
+                  {isSaving ? "Salvando..." : <><Save className="w-5 h-5 mr-3" /> <span className="hidden xs:inline">Salvar Alterações</span><span className="xs:hidden">Salvar</span></>}
                </Button>
             </div>
           </div>
