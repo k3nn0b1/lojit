@@ -16,7 +16,13 @@ import {
   SheetTrigger,
   SheetDescription
 } from "@/components/ui/sheet";
-import { Filter, Check } from "lucide-react";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Filter, Check, Tag, Ruler, Palette, RotateCcw } from "lucide-react";
 
 interface ProductGridProps {
   products: Product[];
@@ -25,15 +31,35 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [selectedSize, setSelectedSize] = useState("Todos");
+  const [selectedColor, setSelectedColor] = useState("Todos");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const categories = ["Todos", ...Array.from(new Set(products.map(p => p.category)))];
+  const allSizes = ["Todos", ...Array.from(new Set(products.flatMap(p => p.sizes || [])))];
   
-  const filteredProducts = selectedCategory === "Todos" 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
+  // Extrai cores únicas (objetos {name, hex})
+  const colorsMap = new Map();
+  products.forEach(p => {
+    if (Array.isArray(p.colors)) {
+      p.colors.forEach((c: any) => {
+        if (c.name && c.hex) colorsMap.set(c.name, c.hex);
+      } );
+    }
+  });
+  const colors = ["Todos", ...Array.from(colorsMap.keys())];
+
+  const filteredProducts = products.filter(p => {
+    const matchCategory = selectedCategory === "Todos" || p.category === selectedCategory;
+    const matchSize = selectedSize === "Todos" || (p.sizes && p.sizes.includes(selectedSize));
+    
+    const productColorsNames = Array.isArray(p.colors) ? p.colors.map((c: any) => c.name) : [];
+    const matchColor = selectedColor === "Todos" || productColorsNames.includes(selectedColor);
+    
+    return matchCategory && matchSize && matchColor;
+  });
 
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
@@ -89,33 +115,104 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 {selectedCategory === "Todos" ? "Filtrar" : selectedCategory}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-card/95 backdrop-blur-xl border-primary/20 w-[300px] md:w-[400px]">
-              <SheetHeader className="mb-12 border-b border-primary/10 pb-6 text-left">
-                <SheetTitle className="text-2xl font-black uppercase tracking-widest text-primary">Categorias</SheetTitle>
-                <SheetDescription className="text-[10px] font-bold uppercase tracking-widest opacity-40">Selecione uma categoria para descobrir novos produtos</SheetDescription>
+            <SheetContent side="right" className="bg-[#050505]/95 backdrop-blur-xl border-primary/20 w-[320px] md:w-[450px] p-0 overflow-hidden flex flex-col">
+              <SheetHeader className="p-8 border-b border-primary/10 text-left bg-primary/5">
+                <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-primary flex items-center gap-3">
+                  <Filter className="w-8 h-8" /> Filtros
+                </SheetTitle>
+                <SheetDescription className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Refine sua busca por produtos</SheetDescription>
               </SheetHeader>
               
-              <div className="flex flex-col gap-3">
-                {categories.map((category) => {
-                  const isActive = selectedCategory === category;
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => handleCategoryChange(category)}
-                      className={`
-                        w-full h-16 px-6 rounded-2xl flex items-center justify-between
-                        transition-all duration-300 font-black uppercase tracking-widest text-xs
-                        ${isActive 
-                          ? "bg-primary text-black" 
-                          : "bg-white/5 text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                        }
-                      `}
-                    >
-                      {category}
-                      {isActive && <Check className="w-5 h-5" />}
-                    </button>
-                  );
-                })}
+              <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+                <Accordion type="multiple" defaultValue={["categories"]} className="w-full space-y-4">
+                  
+                  {/* Categorias */}
+                  <AccordionItem value="categories" className="border-zinc-800/10">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                        <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3 text-white">
+                           <Tag className="w-4 h-4 text-primary" /> Categorias
+                        </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                        <div className="grid grid-cols-1 gap-1.5">
+                           {categories.map((c) => (
+                              <button
+                                key={c}
+                                onClick={() => { setSelectedCategory(c); setCurrentPage(1); }}
+                                className={`h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest text-left transition-all border flex items-center justify-between ${selectedCategory === c ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-white/5 text-zinc-500 hover:bg-white/10'}`}
+                              >
+                                {c === 'Todos' ? 'TODAS AS CATEGORIAS' : c}
+                                {selectedCategory === c && <Check className="w-4 h-4" />}
+                              </button>
+                           ))}
+                        </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Grades / Tamanhos */}
+                  <AccordionItem value="sizes" className="border-zinc-800/10">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                        <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3 text-white">
+                           <Ruler className="w-4 h-4 text-primary" /> Grades
+                        </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                        <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                           {allSizes.map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => { setSelectedSize(s); setCurrentPage(1); }}
+                                className={`h-11 rounded-lg text-[10px] font-black uppercase transition-all border flex items-center justify-center ${selectedSize === s ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-white/5 text-zinc-500 hover:bg-white/10'}`}
+                              >
+                                {s}
+                              </button>
+                           ))}
+                        </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Cores */}
+                  <AccordionItem value="colors" className="border-none">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                        <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3 text-white">
+                           <Palette className="w-4 h-4 text-primary" /> Paleta de Cores
+                        </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                           {colors.map((c) => (
+                              <button
+                                key={c}
+                                onClick={() => { setSelectedColor(c); setCurrentPage(1); }}
+                                className={`h-12 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-3 ${selectedColor === c ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-white/5 text-zinc-500 hover:bg-white/10'}`}
+                              >
+                                {c === 'Todos' ? (
+                                   <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-red-500 via-green-500 to-blue-500" />
+                                ) : (
+                                   <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: colorsMap.get(c) }} />
+                                )}
+                                <span className="truncate">{c}</span>
+                              </button>
+                           ))}
+                        </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+
+              <div className="p-8 border-t border-primary/10 bg-black/40">
+                <Button 
+                   onClick={() => { 
+                      setSelectedCategory("Todos"); 
+                      setSelectedSize("Todos"); 
+                      setSelectedColor("Todos");
+                      setCurrentPage(1);
+                      setIsFilterOpen(false);
+                   }}
+                   className="w-full h-14 bg-zinc-900 border border-zinc-800 text-zinc-400 font-black uppercase tracking-widest text-xs hover:text-primary transition-all flex items-center justify-center gap-3 rounded-2xl"
+                >
+                   <RotateCcw className="w-4 h-4" /> Resetar Filtros
+                </Button>
               </div>
             </SheetContent>
           </Sheet>
