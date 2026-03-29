@@ -53,7 +53,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
     topProducts: [] as { id: number; name: string; image: string; amount: number; qty: number }[],
     lowStock: [] as AdminProduct[],
     chartData: [] as { date: string; amount: number }[],
-    statusCounts: { pendente: 0, concluido: 0, outros: 0 }
+    paymentStats: [] as { method: string; amount: number; qty: number }[]
   });
 
   const fetchStats = async () => {
@@ -130,12 +130,18 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
            })
            .slice(-15); // Mostrar últimos 15 dias de dados para clareza
 
-        // Contagem de Status
-        const statusCounts = {
-           pendente: pedidos.filter(p => p.status === 'pendente').length,
-           concluido: pedidos.filter(p => p.status === 'concluido').length,
-           outros: pedidos.filter(p => p.status !== 'pendente' && p.status !== 'concluido').length
-        };
+        // Ranking de Métodos de Pagamento
+        const payMap: Record<string, { amount: number; qty: number }> = {};
+        concluded.forEach(p => {
+           const method = p.forma_pagamento || 'Não Identificado';
+           if (!payMap[method]) payMap[method] = { amount: 0, qty: 0 };
+           payMap[method].amount += (p.valor_total || 0);
+           payMap[method].qty += 1;
+        });
+
+        const paymentStats = Object.entries(payMap)
+           .map(([method, s]) => ({ method, ...s }))
+           .sort((a, b) => b.amount - a.amount);
 
         setStats({
           revenue: totalRevenue,
@@ -145,7 +151,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
           topProducts,
           lowStock,
           chartData: chartData.length > 0 ? chartData : [{ date: '--/--', amount: 0 }],
-          statusCounts
+          paymentStats
         });
       }
     } catch (e) {
@@ -366,46 +372,51 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      </div>
                   </div>
 
-                  {/* Distribuição Logística */}
-                  <div className="lg:col-span-4 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl">
+                  {/* Inteligência de Faturamento por Método */}
+                  <div className="lg:col-span-4 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10" />
                      <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground flex items-center gap-3 mb-6">
-                         <Layers className="w-5 h-5 text-primary" /> Distribuição Logística
+                         <Layers className="w-5 h-5 text-primary" /> Performance de Pagamento
                      </h5>
                      <div className="space-y-8">
-                        <div className="space-y-3">
-                           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-muted-foreground">Concluídos</span>
-                              <span className="text-primary">{stats.statusCounts.concluido} de {stats.orders}</span>
+                        {stats.paymentStats.map((p) => (
+                           <div key={p.method} className="space-y-3 p-4 bg-background/40 rounded-[2rem] border border-white/5 hover:border-primary/20 transition-all">
+                              <div className="flex justify-between items-center mb-1">
+                                 <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] font-black uppercase text-primary">
+                                       {p.method.substring(0, 3)}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{p.method}</span>
+                                 </div>
+                                 <span className="text-[10px] font-bold text-primary">{formatBRL(p.amount)}</span>
+                              </div>
+                              <div className="w-full h-2 bg-primary/10 rounded-full overflow-hidden">
+                                 <div 
+                                    className="h-full bg-primary shadow-[0_0_10px_rgba(35,231,227,0.5)] transition-all duration-1000" 
+                                    style={{ width: `${(p.amount / (stats.revenue || 1)) * 100}%` }}
+                                 />
+                              </div>
+                              <div className="flex justify-between text-[8px] text-muted-foreground uppercase font-black tracking-widest px-1">
+                                 <span>{p.qty} vendas efetuadas</span>
+                                 <span>{((p.amount / (stats.revenue || 1)) * 100).toFixed(1)}% do total</span>
+                              </div>
                            </div>
-                           <div className="w-full h-3 bg-primary/10 rounded-full overflow-hidden border border-white/5">
-                              <div 
-                                 className="h-full bg-primary shadow-[0_0_10px_rgba(35,231,227,0.5)] transition-all duration-1000" 
-                                 style={{ width: `${(stats.statusCounts.concluido / (stats.orders || 1)) * 100}%` }}
-                              />
+                        ))}
+                        
+                        {stats.paymentStats.length === 0 && (
+                           <div className="py-14 text-center opacity-20 border border-dashed border-primary/10 rounded-3xl">
+                              <p className="text-[8px] uppercase font-black tracking-widest">Aguardando dados de transação</p>
                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-muted-foreground">Pendentes / Em Aberto</span>
-                              <span className="text-amber-400">{stats.statusCounts.pendente}</span>
-                           </div>
-                           <div className="w-full h-3 bg-amber-400/10 rounded-full overflow-hidden border border-white/5">
-                              <div 
-                                 className="h-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)] transition-all duration-1000" 
-                                 style={{ width: `${(stats.statusCounts.pendente / (stats.orders || 1)) * 100}%` }}
-                              />
-                           </div>
-                        </div>
+                        )}
 
                         <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
                            <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
-                              <p className="text-xl font-black text-foreground">{stats.orders}</p>
-                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">PEDIDOS TOTAL</p>
+                              <p className="text-xl font-black text-foreground">{formatBRL(stats.ticket)}</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">TICKET MÉDIO</p>
                            </div>
                            <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
-                              <p className="text-xl font-black text-primary">{((stats.statusCounts.concluido / (stats.orders || 1)) * 100).toFixed(0)}%</p>
-                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">EFICIÊNCIA</p>
+                              <p className="text-xl font-black text-primary">{stats.orders}</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">ORDENS NO PERÍODO</p>
                            </div>
                         </div>
                      </div>
