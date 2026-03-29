@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   Package, 
   Search, 
-  ChevronDown, 
-  ChevronUp, 
   Layers, 
   Pencil, 
   X, 
   PlusCircle, 
   Box, 
   Save,
-  Trash2
+  Trash2,
+  Settings2,
+  BarChart3,
+  Palette,
+  Info,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -45,8 +49,13 @@ interface StockTabProps {
   storedProducts: AdminProduct[];
   setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
   globalSizes: string[];
+  setGlobalSizes: React.Dispatch<React.SetStateAction<string[]>>;
   globalColors: Color[];
+  setGlobalColors: React.Dispatch<React.SetStateAction<Color[]>>;
   categories: string[];
+  setCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  uploadToCloudinary: (file: File) => Promise<{ secure_url: string; public_id: string }>;
+  removeFromCloudinary: (publicId: string) => Promise<any>;
 }
 
 const formatBRL = (val: number) => {
@@ -65,18 +74,32 @@ const sortSizes = (sizes: string[]) => {
   });
 };
 
-const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, globalColors, categories }: StockTabProps) => {
+const StockTab = ({ 
+  tenantId, 
+  storedProducts, 
+  setStoredProducts, 
+  globalSizes, 
+  setGlobalSizes, 
+  globalColors, 
+  setGlobalColors, 
+  categories,
+  setCategories,
+  uploadToCloudinary,
+  removeFromCloudinary
+}: StockTabProps) => {
   const [stockQuery, setStockQuery] = useState("");
-  const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
-  const [editFields, setEditFields] = useState<Record<number, Partial<AdminProduct>>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Estados para nova grade
-  const [isNewSizeDialogOpen, setIsNewSizeDialogOpen] = useState(false);
-  const [newSizeName, setNewSizeName] = useState("");
-  const [targetProductForNewSize, setTargetProductForNewSize] = useState<number | null>(null);
-  const [creatingSize, setCreatingSize] = useState(false);
+  // Estado para o produto em edição (MODAL)
+  const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  // Estados para cadastros rápidos dentro do modal
+  const [quickAddType, setQuickAddType] = useState<"category" | "size" | "color" | null>(null);
+  const [quickInput, setQuickInput] = useState("");
+  const [quickHex, setQuickHex] = useState("#000000");
 
   const filteredStock = storedProducts.filter(p => 
     p.name.toLowerCase().includes(stockQuery.toLowerCase()) ||
@@ -91,56 +114,119 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
     setCurrentPage(1);
   };
 
-  const handleStockBySizeChange = async (productId: number, size: string, newVal: number) => {
+  const handleOpenEdit = (p: AdminProduct) => {
+    setEditingProduct({ ...p });
+  };
+
+  const handleUpdateField = (field: keyof AdminProduct, value: any) => {
+    if (!editingProduct) return;
+    setEditingProduct({ ...editingProduct, [field]: value });
+  };
+
+  const handleStockUpdate = (size: string, val: number) => {
+    if (!editingProduct) return;
+    const nextStock = { ...(editingProduct.stockBySize || {}), [size]: val };
+    const total = Object.values(nextStock).reduce((acc, v) => acc + (Number(v) || 0), 0) as number;
+    setEditingProduct({ ...editingProduct, stockBySize: nextStock, stock: total });
+  };
+
+  const handleToggleSize = (size: string) => {
+    if (!editingProduct) return;
+    const currentSizes = editingProduct.sizes || [];
+    const nextSizes = currentSizes.includes(size)
+      ? currentSizes.filter(s => s !== size)
+      : sortSizes([...currentSizes, size]);
+    
+    const nextStock = { ...(editingProduct.stockBySize || {}) };
+    if (!currentSizes.includes(size)) {
+      nextStock[size] = 0;
+    } else {
+      delete nextStock[size];
+    }
+    
+    const total = Object.values(nextStock).reduce((acc, v) => acc + (Number(v) || 0), 0) as number;
+    setEditingProduct({ ...editingProduct, sizes: nextSizes, stockBySize: nextStock, stock: total });
+  };
+
+  const handleToggleColor = (colorObj: Color) => {
+    if (!editingProduct) return;
+    const currentColors = (editingProduct.colors || []) as Color[];
+    const exists = currentColors.some(c => c.name === colorObj.name);
+    const nextColors = exists
+      ? currentColors.filter(c => c.name !== colorObj.name)
+      : [...currentColors, colorObj];
+    setEditingProduct({ ...editingProduct, colors: nextColors });
+  };
+
+  const handleImageUpload = async (file: File | undefined, index: number) => {
+    if (!file || !editingProduct) return;
+    setUploadingIdx(index);
     try {
-      const product = storedProducts.find(p => p.id === productId);
-      if (!product) return;
-
-      const updatedStockBySize = {
-        ...(product.stockBySize || {}),
-        [size]: newVal
-      };
-
-      const totalStock = Object.values(updatedStockBySize).reduce((acc: number, val: any) => acc + (Number(val) || 0), 0) as number;
-
-      const { error } = await supabase
-        .from('products')
-        .update({ stockBySize: updatedStockBySize, stock: totalStock })
-        .eq('id', productId)
-        .eq('tenant_id', tenantId);
-
-      if (error) throw error;
-
-      setStoredProducts(prev => prev.map(p => 
-        p.id === productId ? { ...p, stockBySize: updatedStockBySize, stock: totalStock } : p
-      ));
+      const result = await uploadToCloudinary(file);
+      const urlField = index === 0 ? "image" : index === 1 ? "image2" : "image3";
+      const idField = index === 0 ? "publicId" : index === 1 ? "publicId2" : "publicId3";
+      
+      handleUpdateField(urlField as any, result.secure_url);
+      handleUpdateField(idField as any, result.public_id);
+      
+      toast.success(`Foto ${index + 1} carregada`);
     } catch (e: any) {
-      toast.error("Erro ao atualizar estoque", { description: parseSupabaseError(e) });
+      toast.error("Erro no upload");
+    } finally {
+      setUploadingIdx(null);
     }
   };
 
-  const handleUpdateProductFields = async (id: number) => {
-    const fields = editFields[id];
-    if (!fields) return;
+  const handleImageRemove = async (index: number) => {
+    if (!editingProduct) return;
+    const idField = index === 0 ? "publicId" : index === 1 ? "publicId2" : "publicId3";
+    const urlField = index === 0 ? "image" : index === 1 ? "image2" : "image3";
+    const publicId = editingProduct[idField as keyof AdminProduct] as string;
 
+    try {
+      if (publicId) await removeFromCloudinary(publicId);
+      handleUpdateField(urlField as any, "");
+      handleUpdateField(idField as any, "");
+      toast.success("Imagem removida");
+    } catch (e: any) {
+      toast.error("Erro ao remover imagem");
+    }
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct || !editingProduct.id) return;
+    setIsSaving(true);
     try {
       const { error } = await supabase
         .from('products')
-        .update(fields)
-        .eq('id', id)
+        .update({
+          name: editingProduct.name,
+          price: editingProduct.price,
+          category: editingProduct.category,
+          description: editingProduct.description,
+          sizes: editingProduct.sizes,
+          stockBySize: editingProduct.stockBySize,
+          stock: editingProduct.stock,
+          colors: editingProduct.colors,
+          image: editingProduct.image,
+          image2: editingProduct.image2,
+          image3: editingProduct.image3,
+          publicId: editingProduct.publicId,
+          publicId2: editingProduct.publicId2,
+          publicId3: editingProduct.publicId3
+        })
+        .eq('id', editingProduct.id)
         .eq('tenant_id', tenantId);
 
       if (error) throw error;
 
-      setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, ...fields } : p));
-      setEditFields(prev => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-      toast.success("Produto atualizado com maestria");
+      setStoredProducts(prev => prev.map(p => p.id === editingProduct.id ? editingProduct : p));
+      toast.success("Produto atualizado com sucesso");
+      setEditingProduct(null);
     } catch (e: any) {
-      toast.error("Falha na atualização", { description: parseSupabaseError(e) });
+      toast.error("Erro ao salvar", { description: parseSupabaseError(e) });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -150,80 +236,39 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
       const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
       setStoredProducts((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Produto removido com sucesso");
+      toast.success("Produto removido");
+      setEditingProduct(null);
     } catch (e: any) {
       toast.error("Erro ao remover produto");
     }
   };
 
-  const handleAddSizeToModel = async (id: number, newSize: string) => {
+  const handleQuickAdd = async () => {
+    if (!quickInput.trim()) return;
     try {
-      const target = storedProducts.find(p => p.id === id);
-      if (!target) return;
-      if ((target.sizes || []).includes(newSize)) return;
-
-      const nextSizes = [...(target.sizes || []), newSize];
-      const nextStockBySize = { ...(target.stockBySize || {}), [newSize]: 0 };
-
-      const { error } = await supabase
-        .from('products')
-        .update({ sizes: nextSizes, stockBySize: nextStockBySize })
-        .eq('id', id)
-        .eq('tenant_id', tenantId);
-
-      if (error) throw error;
-
-      setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, sizes: nextSizes, stockBySize: nextStockBySize } : p));
-      toast.success(`Tamanho ${newSize} adicionado ao modelo`);
-    } catch (e: any) {
-      toast.error("Erro ao adicionar tamanho", { description: parseSupabaseError(e) });
-    }
-  };
-
-  const handleRemoveSizeFromModel = async (id: number, size: string) => {
-    if (!confirm(`Deseja remover o tamanho ${size} deste produto?`)) return;
-    try {
-      const target = storedProducts.find(p => p.id === id);
-      if (!target) return;
-      
-      const nextSizes = (target.sizes || []).filter(s => s !== size);
-      const nextStockBySize = { ...target.stockBySize };
-      delete nextStockBySize[size];
-      const nextTotal = Object.values(nextStockBySize).reduce((acc: number, n: any) => acc + (Number(n) || 0), 0) as number;
-      
-      const { error } = await supabase
-        .from('products')
-        .update({ sizes: nextSizes, stockBySize: nextStockBySize, stock: nextTotal })
-        .eq('id', id)
-        .eq('tenant_id', tenantId);
-        
-      if (error) throw error;
-      
-      setStoredProducts(prev => prev.map(p => p.id === id ? { ...p, sizes: nextSizes, stockBySize: nextStockBySize, stock: nextTotal } : p));
-      toast.success(`Tamanho ${size} removido`);
-    } catch (e: any) {
-      toast.error("Erro ao remover tamanho");
-    }
-  };
-
-  const handleCreateGlobalSize = async () => {
-    if (!newSizeName.trim()) return;
-    setCreatingSize(true);
-    try {
-      const { error } = await supabase.from('sizes').insert({ name: newSizeName.trim().toUpperCase(), tenant_id: tenantId });
-      if (error) throw error;
-      
-      if (targetProductForNewSize) {
-        await handleAddSizeToModel(targetProductForNewSize, newSizeName.trim().toUpperCase());
+      if (quickAddType === "category") {
+        const { error } = await supabase.from('categories').insert({ name: quickInput, tenant_id: tenantId });
+        if (error) throw error;
+        setCategories(prev => [...prev, quickInput].sort());
+        handleUpdateField("category", quickInput);
+        toast.success("Categoria criada!");
+      } else if (quickAddType === "size") {
+        const { error } = await supabase.from('sizes').insert({ name: quickInput.toUpperCase(), tenant_id: tenantId });
+        if (error) throw error;
+        setGlobalSizes(prev => [...prev, quickInput.toUpperCase()]);
+        handleToggleSize(quickInput.toUpperCase());
+        toast.success("Tamanho criado!");
+      } else if (quickAddType === "color") {
+        const { data, error } = await supabase.from('colors').insert({ name: quickInput, hex: quickHex, tenant_id: tenantId }).select('*').single();
+        if (error) throw error;
+        setGlobalColors(prev => [...prev, data]);
+        handleToggleColor(data);
+        toast.success("Cor criada!");
       }
-      
-      toast.success("Tamanho criado globalmente");
-      setIsNewSizeDialogOpen(false);
-      setNewSizeName("");
+      setQuickAddType(null);
+      setQuickInput("");
     } catch (e: any) {
-      toast.error("Erro ao criar tamanho");
-    } finally {
-      setCreatingSize(false);
+      toast.error("Erro no cadastro rápido");
     }
   };
 
@@ -268,149 +313,31 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
           </div>
 
           <div className="p-6 md:p-10 space-y-8 md:space-y-10">
+            {/* Mobile View */}
             <div className="md:hidden space-y-4">
               {visibleStock.map((p) => (
                 <div 
                   key={p.id} 
-                  className={`bg-card/40 border border-primary/5 rounded-[2rem] p-5 space-y-4 transition-all ${expandedProductId === p.id ? 'border-primary/40 ring-1 ring-primary/20' : ''}`}
-                  onClick={() => setExpandedProductId(p.id!)}
+                  className="bg-card/40 border border-primary/5 rounded-[2rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all"
+                  onClick={() => handleOpenEdit(p)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 max-w-[70%]">
-                      <div className="w-12 h-12 rounded-2xl bg-muted/20 border border-primary/10 overflow-hidden shrink-0">
-                        {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 m-3.5 opacity-20" />}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-black uppercase truncate leading-tight">{p.name}</h4>
-                        <p className="text-[10px] font-black text-primary">{formatBRL(p.price)}</p>
-                      </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-muted/20 overflow-hidden shrink-0">
+                      {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 m-3.5 opacity-20" />}
                     </div>
-                    <Badge variant="outline" className={`text-[8px] font-black uppercase px-2 py-1 rounded-lg ${p.stock > 10 ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}>
-                      {p.stock} UN
-                    </Badge>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-black uppercase truncate leading-tight">{p.name}</h4>
+                      <p className="text-[10px] font-black text-primary">{formatBRL(p.price)}</p>
+                    </div>
                   </div>
+                  <Badge variant="outline" className="text-[8px] font-black uppercase px-2 py-1 rounded-lg bg-primary/10 text-primary border-primary/20">
+                    {p.stock} UN
+                  </Badge>
                 </div>
               ))}
             </div>
 
-            <Dialog open={!!expandedProductId} onOpenChange={(open) => !open && setExpandedProductId(null)}>
-              <DialogContent className="md:hidden max-w-[95vw] w-full bg-card border-primary/30 rounded-[2.5rem] p-6 text-foreground shadow-3xl overflow-hidden max-h-[90vh] flex flex-col">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
-                <DialogHeader className="mb-4 shrink-0">
-                  <DialogTitle className="text-xl font-black uppercase tracking-tight text-primary truncate max-w-[80%]">
-                    {storedProducts.find(p => p.id === expandedProductId)?.name || "Gestão de Produto"}
-                  </DialogTitle>
-                </DialogHeader>
-
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                  {expandedProductId && (() => {
-                    const p = storedProducts.find(prod => prod.id === expandedProductId)!;
-                    const fieldData = editFields[p.id!] || p;
-                    const sortedSizes = sortSizes(p.sizes || []);
-                    return (
-                      <div className="space-y-6">
-                        <Tabs defaultValue="stock" className="w-full">
-                          <TabsList className="bg-muted/40 p-1.5 rounded-xl border border-primary/10 mb-6 w-full flex">
-                            <TabsTrigger value="stock" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
-                              Grade
-                            </TabsTrigger>
-                            <TabsTrigger value="edit" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
-                              Ficha
-                            </TabsTrigger>
-                          </TabsList>
-
-                          <TabsContent value="stock" className="mt-0 outline-none space-y-6">
-                            <div className="grid grid-cols-2 gap-3">
-                              {sortedSizes.map((s) => (
-                                <div key={s} className="group relative flex flex-col gap-2 p-4 rounded-2xl bg-card/60 border border-primary/5 shadow-xl">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">{s}</span>
-                                    <button onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id!, s); }} className="text-muted-foreground/40 hover:text-destructive">
-                                      <X className="h-3.5 w-3.5" />
-                                    </button>
-                                  </div>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    className="h-8 text-xl font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
-                                    value={Number((p.stockBySize || {})[s] || 0)}
-                                    onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
-                                  />
-                                </div>
-                              ))}
-                              <div className="flex flex-col gap-1 p-4 rounded-2xl bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center">
-                                 <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
-                                    <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-1 h-auto p-0">
-                                      <PlusCircle className="w-8 h-8 opacity-40 shrink-0" />
-                                      <span className="text-[8px] font-black uppercase tracking-widest">Add Grade</span>
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-card border-primary/30 rounded-2xl min-w-[200px]">
-                                       {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
-                                          <SelectItem key={gs} value={gs} className="font-black py-3 rounded-lg text-xs uppercase px-4 cursor-pointer">{gs}</SelectItem>
-                                       ))}
-                                    </SelectContent>
-                                 </Select>
-                              </div>
-                            </div>
-                          </TabsContent>
-
-                          <TabsContent value="edit" className="mt-0 outline-none space-y-4">
-                             <div className="space-y-2">
-                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Nome do Produto</Label>
-                               <Input
-                                 className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl focus:ring-primary/20"
-                                 value={fieldData.name}
-                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, name: e.target.value } }))}
-                               />
-                             </div>
-                             <div className="space-y-2">
-                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Preço (BRL)</Label>
-                               <Input
-                                 type="number"
-                                 className="h-12 bg-background/50 border-primary/5 rounded-xl text-lg font-black text-primary px-4 shadow-xl focus:ring-primary/20"
-                                 value={String(fieldData.price || '')}
-                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, price: parseFloat(e.target.value) || 0 } }))}
-                               />
-                             </div>
-                             <div className="space-y-2">
-                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Categoria</Label>
-                               <Select value={fieldData.category} onValueChange={(val) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, category: val } }))}>
-                                 <SelectTrigger className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl">
-                                   <SelectValue placeholder="Selecione..." />
-                                 </SelectTrigger>
-                                 <SelectContent className="bg-card border-primary/20 rounded-xl">
-                                   {categories.map(c => <SelectItem key={c} value={c} className="text-[10px] font-black uppercase">{c}</SelectItem>)}
-                                 </SelectContent>
-                               </Select>
-                             </div>
-                             <div className="space-y-2">
-                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Descrição</Label>
-                               <Textarea
-                                 className="min-h-[100px] bg-background/50 border-primary/5 rounded-xl p-4 text-xs font-medium resize-none leading-relaxed shadow-xl focus:ring-primary/20"
-                                 value={fieldData.description || ""}
-                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
-                               />
-                             </div>
-                             <Button onClick={() => handleUpdateProductFields(p.id!)} className="w-full h-12 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl mt-2">
-                                Salvar Alterações
-                             </Button>
-                          </TabsContent>
-                        </Tabs>
-                        
-                        <Button 
-                          variant="ghost" 
-                          className="w-full h-12 bg-destructive/5 text-destructive rounded-xl text-[10px] font-black uppercase tracking-widest border border-destructive/10"
-                          onClick={() => handleRemoveProduct(p.id!)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" /> Excluir Produto Permanentemente
-                        </Button>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </DialogContent>
-            </Dialog>
-
+            {/* Desktop Table */}
             <div className="hidden md:block overflow-hidden rounded-[2.5rem] border border-primary/10 bg-muted/5 shadow-2xl">
               <Table>
                 <TableHeader className="bg-primary/5 border-b border-primary/10">
@@ -423,208 +350,44 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-primary/5">
-                  {visibleStock.map((p) => {
-                    const isExpanded = expandedProductId === p.id;
-                    const fieldData = editFields[p.id!] || p;
-                    const sortedSizes = sortSizes(p.sizes || []);
-
-                    return (
-                      <React.Fragment key={p.id}>
-                        <TableRow 
-                          className={`cursor-pointer transition-all border-none ${isExpanded ? 'bg-primary/10 shadow-inner' : 'hover:bg-primary/5 group'}`} 
-                          onClick={() => setExpandedProductId(isExpanded ? null : p.id!)}
-                        >
-                          <TableCell className="px-10 py-6">
-                            <div className="flex items-center gap-6">
-                              <div className="w-14 h-14 rounded-[1.2rem] border border-primary/10 flex items-center justify-center bg-background/50 overflow-hidden shadow-lg shrink-0 group-hover:scale-110 transition-transform">
-                                {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-primary/20" />}
-                              </div>
-                              <span className="text-sm font-black uppercase tracking-tight truncate max-w-[200px]">{p.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-10 py-6">
-                            <Badge variant="outline" className="text-[8px] uppercase font-black border-primary/10 text-primary px-3 py-1 rounded-lg bg-background/20">
-                              {p.category}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="px-10 py-6 font-black text-primary text-base">{formatBRL(p.price)}</TableCell>
-                          <TableCell className="px-10 py-6">
-                            <div className="flex items-center gap-3">
-                              <div className={`h-2.5 w-2.5 rounded-full ${p.stock > 10 ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.4)]' : p.stock > 0 ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]' : 'bg-destructive shadow-[0_0_12px_rgba(239,68,68,0.4)]'}`} />
-                              <span className="font-black text-sm">{p.stock || 0} <span className="text-[9px] opacity-40 ml-1">UN</span></span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="px-10 py-6 text-right">
-                            <div className="flex justify-end gap-3">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className={`rounded-xl h-10 w-10 p-0 ${isExpanded ? 'bg-primary text-black shadow-xl shadow-primary/20' : 'bg-primary/5 text-primary'}`}
-                              >
-                                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="rounded-xl h-10 w-10 p-0 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                                onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-
-                        {isExpanded && (
-                          <TableRow className="hover:bg-transparent border-none">
-                            <TableCell colSpan={5} className="p-0 border-none">
-                              <div className="p-10 bg-black/30 animate-in fade-in slide-in-from-top-6 duration-500">
-                                <Tabs defaultValue="stock" className="w-full">
-                                  <TabsList className="bg-muted/40 p-2 rounded-2xl border border-primary/10 mb-10 w-fit mx-auto shadow-2xl">
-                                    <TabsTrigger value="stock" className="rounded-xl px-12 h-12 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
-                                      <Layers className="w-4 h-4 mr-3" /> Gestão de Variantes
-                                    </TabsTrigger>
-                                    <TabsTrigger value="edit" className="rounded-xl px-12 h-12 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[10px]">
-                                      <Pencil className="w-4 h-4 mr-3" /> Ficha Técnica
-                                    </TabsTrigger>
-                                  </TabsList>
-
-                                  <TabsContent value="stock" className="mt-0 outline-none space-y-10">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                                      {sortedSizes.map((s) => (
-                                        <div key={s} className="group relative flex flex-col gap-4 p-6 rounded-[2.5rem] bg-card/60 border border-primary/5 hover:border-primary/40 transition-all hover:translate-y-[-6px] shadow-2xl">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{s}</span>
-                                            <button 
-                                              className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity p-1" 
-                                              onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id!, s); }}
-                                            >
-                                              <X className="h-4 w-4" />
-                                            </button>
-                                          </div>
-                                          <div className="space-y-1">
-                                            <Label className="text-[8px] font-black text-muted-foreground uppercase opacity-40 block tracking-widest">Unidades</Label>
-                                            <Input
-                                              type="number"
-                                              min={0}
-                                              className="h-10 text-2xl font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
-                                              value={Number((p.stockBySize || {})[s] || 0)}
-                                              onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
-                                            />
-                                          </div>
-                                        </div>
-                                      ))}
-                                      
-                                      <div className="flex flex-col gap-3 p-6 rounded-[2.5rem] bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center group hover:bg-primary/10 transition-all cursor-pointer">
-                                         <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
-                                            <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-2 h-auto p-0">
-                                              <PlusCircle className="w-10 h-10 opacity-30 group-hover:opacity-100 transition-opacity shrink-0" />
-                                              <span className="text-[9px] font-black uppercase tracking-[0.2em]">Acoplar Grade</span>
-                                              <ChevronDown className="w-4 h-4 opacity-20" />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-card border-primary/30 rounded-3xl min-w-[240px] shadow-3xl">
-                                               {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
-                                                  <SelectItem key={gs} value={gs} className="font-black py-4 rounded-2xl text-xs uppercase px-6 cursor-pointer focus:bg-primary/10 transition-colors">{gs}</SelectItem>
-                                               ))}
-                                            </SelectContent>
-                                         </Select>
-                                      </div>
-                                    </div>
-                                  </TabsContent>
-
-                                  <TabsContent value="edit" className="mt-0 outline-none">
-                                    <div className="bg-card/40 rounded-[3rem] border border-primary/10 p-12 space-y-12 shadow-3xl relative overflow-hidden">
-                                       <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -z-10" />
-                                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                                          <div className="space-y-8">
-                                            <div className="space-y-3">
-                                              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificação Principal (SKU Name)</Label>
-                                              <Input
-                                                className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black text-lg px-8 shadow-2xl focus:ring-primary/20"
-                                                value={fieldData.name}
-                                                onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, name: e.target.value } }))}
-                                              />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-8">
-                                              <div className="space-y-3">
-                                                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Precificação (BRL)</Label>
-                                                <Input
-                                                  type="number"
-                                                  className="h-16 bg-background/50 border-primary/5 rounded-2xl text-2xl font-black text-primary px-8 shadow-2xl focus:ring-primary/20"
-                                                  value={String(fieldData.price || '')}
-                                                  onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, price: parseFloat(e.target.value) || 0 } }))}
-                                                />
-                                              </div>
-                                              <div className="space-y-3">
-                                                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Classificação</Label>
-                                                <Select value={fieldData.category} onValueChange={(val) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, category: val } }))}>
-                                                  <SelectTrigger className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-[10px] tracking-widest px-8 shadow-2xl">
-                                                     <SelectValue placeholder="CATEGORIA" />
-                                                  </SelectTrigger>
-                                                  <SelectContent className="bg-card border-primary/20 rounded-xl">
-                                                     {categories.map(c => <SelectItem key={c} value={c} className="text-[10px] font-black uppercase">{c}</SelectItem>)}
-                                                  </SelectContent>
-                                                </Select>
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          <div className="space-y-3">
-                                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Descritivo de Ficha Técnica</Label>
-                                            <Textarea
-                                              className="min-h-[200px] bg-background/50 border-primary/5 rounded-[2rem] p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl focus:ring-primary/20"
-                                              value={fieldData.description || ""}
-                                              onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
-                                            />
-                                          </div>
-                                       </div>
-
-                                       <div className="space-y-6 pt-10 border-t border-primary/5">
-                                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Cromatismo Ativos</Label>
-                                          <div className="flex flex-wrap gap-4">
-                                            {globalColors.map((c) => {
-                                              const currentColors = (fieldData.colors || []) as Color[];
-                                              const isSelected = currentColors.some(pc => pc.name === c.name);
-                                              return (
-                                                <button
-                                                  key={c.name}
-                                                  onClick={() => {
-                                                    const nextColors = isSelected ? currentColors.filter(pc => pc.name !== c.name) : [...currentColors, c];
-                                                    setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, colors: nextColors } }));
-                                                  }}
-                                                  className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all text-[11px] font-black uppercase ${isSelected ? 'bg-primary text-black border-primary shadow-2xl' : 'bg-muted/10 border-primary/5 text-muted-foreground/60'}`}
-                                                >
-                                                  <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: c.hex }} />
-                                                  {c.name}
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                       </div>
-
-                                       <div className="flex justify-center pt-8">
-                                          <Button onClick={() => handleUpdateProductFields(p.id!)} className="h-16 px-16 bg-primary text-black font-black uppercase tracking-[0.1em] rounded-2xl shadow-3xl">
-                                            <Save className="w-5 h-5 mr-4" /> Atualizar Ficha Técnica
-                                          </Button>
-                                       </div>
-                                    </div>
-                                  </TabsContent>
-                                </Tabs>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
+                  {visibleStock.map((p) => (
+                    <TableRow key={p.id} className="cursor-pointer transition-all border-none hover:bg-primary/5 group" onClick={() => handleOpenEdit(p)}>
+                      <TableCell className="px-10 py-6">
+                        <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 rounded-[1.2rem] border border-primary/10 overflow-hidden shadow-lg shrink-0 group-hover:scale-110 transition-transform duration-500">
+                            {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 text-primary/20" />}
+                          </div>
+                          <span className="text-sm font-black uppercase tracking-tight truncate max-w-[200px]">{p.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-10 py-6">
+                        <Badge variant="outline" className="text-[8px] uppercase font-black border-primary/10 text-primary px-3 py-1 rounded-lg bg-background/20">
+                          {p.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-10 py-6 font-black text-primary text-base">{formatBRL(p.price)}</TableCell>
+                      <TableCell className="px-10 py-6">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-2.5 w-2.5 rounded-full ${p.stock > 10 ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.4)]' : p.stock > 0 ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]' : 'bg-destructive shadow-[0_0_12px_rgba(239,68,68,0.4)]'}`} />
+                          <span className="font-black text-sm">{p.stock || 0} <span className="text-[9px] opacity-40 ml-1">UN</span></span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-10 py-6 text-right">
+                        <Button variant="ghost" className="h-12 w-12 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-black transition-all">
+                          <Settings2 className="w-5 h-5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
 
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-2 p-4 bg-primary/5 border-t border-primary/10 rounded-b-[2.5rem]">
+              <div className="flex items-center justify-between gap-6 p-6 border-t border-primary/10">
                 <Button variant="ghost" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Anterior</Button>
-                <div className="bg-muted/20 rounded-2xl border border-primary/5 px-4 h-10 flex items-center"><span className="text-xs font-black text-primary">{currentPage} / {totalPages}</span></div>
+                <div className="bg-muted/10 rounded-2xl border border-primary/5 px-6 h-10 flex items-center font-black text-xs text-primary">{currentPage} / {totalPages}</div>
                 <Button variant="ghost" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Próxima</Button>
               </div>
             )}
@@ -632,18 +395,263 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
         </CardContent>
       </Card>
 
-      <Dialog open={isNewSizeDialogOpen} onOpenChange={setIsNewSizeDialogOpen}>
-        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[3rem] p-12 shadow-3xl">
-          <DialogHeader className="mb-10 text-center">
-            <DialogTitle className="text-3xl font-black uppercase text-primary flex items-center justify-center gap-4"><PlusCircle className="w-8 h-8" /> Grade Global</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nome da Grade</Label>
-            <Input value={newSizeName} onChange={(e) => setNewSizeName(e.target.value.toUpperCase())} className="h-16 bg-background/50 border-primary/10 rounded-2xl text-2xl font-black px-8" />
+      {/* MODAL DE EDIÇÃO COMPLETA */}
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+        <DialogContent className="max-w-4xl w-[95vw] md:w-full bg-card border-primary/20 rounded-[2.5rem] md:rounded-[3.5rem] p-0 overflow-hidden shadow-3xl text-foreground">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 blur-[120px] -z-10" />
+          
+          <div className="flex flex-col h-[90vh] md:h-auto max-h-[90vh]">
+            <div className="p-8 md:p-12 border-b border-primary/10 bg-primary/5 flex items-center justify-between shrink-0">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0">
+                    {editingProduct?.image ? <img src={editingProduct.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-5 opacity-20" />}
+                  </div>
+                  <div className="space-y-1">
+                    <DialogTitle className="text-2xl md:text-3xl font-black uppercase tracking-tight text-primary truncate max-w-[300px] md:max-w-md">
+                      {editingProduct?.name || "Editor de Ativo"}
+                    </DialogTitle>
+                    <DialogDescription className="text-[10px] font-black uppercase tracking-widest opacity-40">Ref ID: #{editingProduct?.id}</DialogDescription>
+                  </div>
+               </div>
+               <Button variant="ghost" className="h-12 w-12 rounded-full hover:bg-destructive/10 text-destructive border border-destructive/5" onClick={() => editingProduct && handleRemoveProduct(editingProduct.id!)}>
+                  <Trash2 className="w-5 h-5" />
+               </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <Tabs defaultValue="geral" className="w-full h-full flex flex-col">
+                <TabsList className="bg-muted/30 p-2 border-b border-primary/5 w-full flex justify-start h-16 rounded-none px-8 md:px-12 gap-8">
+                  <TabsTrigger value="geral" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
+                    <Info className="w-4 h-4" /> Geral
+                  </TabsTrigger>
+                  <TabsTrigger value="estoque" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
+                    <BarChart3 className="w-4 h-4" /> Estoque
+                  </TabsTrigger>
+                  <TabsTrigger value="estilo" className="bg-transparent border-none data-[state=active]:text-primary data-[state=active]:bg-primary/5 h-full px-6 flex items-center gap-3 font-black uppercase text-[10px] tracking-widest transition-all">
+                    <Palette className="w-4 h-4" /> Estilo & Fotos
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="p-8 md:p-12 flex-1">
+                  <TabsContent value="geral" className="m-0 outline-none space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Título do Ativo</Label>
+                        <Input 
+                          value={editingProduct?.name || ""} 
+                          onChange={(e) => handleUpdateField("name", e.target.value)}
+                          className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-lg px-8 shadow-2xl focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Precificação (BRL)</Label>
+                        <Input 
+                          type="number"
+                          value={editingProduct?.price || ""} 
+                          onChange={(e) => handleUpdateField("price", parseFloat(e.target.value) || 0)}
+                          className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black text-2xl text-primary px-8 shadow-2xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Classificação de Catálogo</Label>
+                      <div className="flex gap-4">
+                        <Select value={editingProduct?.category} onValueChange={(val) => handleUpdateField("category", val)}>
+                          <SelectTrigger className="h-16 bg-background/50 border-primary/10 rounded-2xl font-black uppercase text-[11px] tracking-widest px-8 shadow-2xl flex-1">
+                            <SelectValue placeholder="CATEGORIA" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-primary/20 rounded-2xl">
+                            {categories.map(c => <SelectItem key={c} value={c} className="font-black uppercase text-[10px] py-4">{c}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" className="h-16 w-16 rounded-2xl border-primary/10 bg-primary/5 text-primary shrink-0 hover:bg-primary/20" onClick={() => setQuickAddType("category")}>
+                          <PlusCircle className="w-6 h-6" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Descritivo de Ficha Técnica</Label>
+                      <Textarea 
+                        value={editingProduct?.description || ""} 
+                        onChange={(e) => handleUpdateField("description", e.target.value)}
+                        className="min-h-[180px] bg-background/50 border-primary/10 rounded-[2rem] p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl"
+                        placeholder="Detalhes técnicos, materiais, cuidados..."
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="estoque" className="m-0 outline-none space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between px-2">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Matriz de Grade Ativa</Label>
+                        <Button variant="ghost" size="sm" className="h-10 px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("size")}>
+                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Novo Tamanho Global
+                        </Button>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        {globalSizes.map((s) => {
+                          const isSelected = editingProduct?.sizes?.includes(s);
+                          return (
+                            <button
+                              key={s}
+                              onClick={() => handleToggleSize(s)}
+                              className={`h-12 px-8 rounded-2xl border transition-all font-black text-[11px] uppercase tracking-widest ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:border-primary/40'}`}
+                            >
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {editingProduct?.sizes && editingProduct.sizes.length > 0 && (
+                      <div className="space-y-6 p-8 rounded-[2.5rem] bg-muted/5 border border-primary/5">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 block mb-6 text-center">Unidades por Tamanho</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          {sortSizes(editingProduct.sizes).map((s) => (
+                            <div key={s} className="space-y-2 p-5 rounded-2xl bg-background/50 border border-primary/5 shadow-inner group hover:border-primary/20 transition-all">
+                              <Label className="text-[9px] font-black text-primary/40 uppercase block text-center tracking-widest">{s}</Label>
+                              <Input 
+                                type="number" 
+                                min={0} 
+                                value={editingProduct.stockBySize?.[s] || 0}
+                                onChange={(e) => handleStockUpdate(s, parseInt(e.target.value) || 0)}
+                                className="h-10 border-none bg-transparent text-center font-black text-lg focus:ring-0 p-0"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="estilo" className="m-0 outline-none space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-6">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2 flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4" /> Portfólio de Imagens do Ativo
+                        </Label>
+                        <div className="grid grid-cols-3 gap-6 md:gap-8">
+                            {[0, 1, 2].map((idx) => {
+                                const urlField = idx === 0 ? "image" : idx === 1 ? "image2" : "image3";
+                                const currentUrl = editingProduct?.[urlField as keyof AdminProduct] as string;
+                                const isUploading = uploadingIdx === idx;
+
+                                return (
+                                    <div key={idx} className="group relative aspect-square rounded-[2rem] border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-2xl">
+                                        {currentUrl ? (
+                                            <>
+                                                <img src={currentUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-sm">
+                                                    <Button variant="destructive" size="icon" className="rounded-full h-12 w-12 shadow-2xl transform scale-75 group-hover:scale-100 transition-transform" onClick={() => handleImageRemove(idx)}>
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <Label htmlFor={`edit-img-${idx}`} className={`flex flex-col items-center justify-center gap-2 h-full cursor-pointer group-hover:bg-primary/5 transition-colors ${isUploading ? 'pointer-events-none' : ''}`}>
+                                                {isUploading ? (
+                                                    <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Upload className="w-8 h-8 text-primary/20 group-hover:text-primary transition-colors" />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 group-hover:text-primary">FOTO {idx+1}</span>
+                                                    </>
+                                                )}
+                                                <input id={`edit-img-${idx}`} type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e.target.files?.[0], idx)} />
+                                            </Label>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between px-2">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Paleta Colorimétrica</Label>
+                        <Button variant="ghost" size="sm" className="h-10 px-6 rounded-xl bg-primary/5 text-primary font-black uppercase text-[9px] tracking-widest border border-primary/5" onClick={() => setQuickAddType("color")}>
+                          <PlusCircle className="w-3.5 h-3.5 mr-2" /> Nova Cor Global
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {globalColors.map((c) => {
+                          const isSelected = (editingProduct?.colors as Color[])?.some(pc => pc.name === c.name);
+                          return (
+                            <button
+                              key={c.name}
+                              onClick={() => handleToggleColor(c)}
+                              className={`flex items-center gap-4 px-6 py-5 rounded-2xl border transition-all group ${isSelected ? 'bg-primary text-black border-primary shadow-xl shadow-primary/20' : 'bg-card/40 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'}`}
+                            >
+                              <div className="w-6 h-6 rounded-full border border-white/10 shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: c.hex }} />
+                              <span className="font-black uppercase text-[10px] tracking-widest">{c.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </div>
+
+            <div className="p-8 md:p-12 border-t border-primary/10 bg-primary/5 shrink-0 flex gap-4">
+               <Button variant="ghost" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest text-xs" onClick={() => setEditingProduct(null)}>
+                  Desistir
+               </Button>
+               <Button className="flex-[2] h-16 bg-primary text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-3xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all" onClick={handleSaveProduct} disabled={isSaving}>
+                  {isSaving ? "Sincronizando..." : <><Save className="w-5 h-5 mr-3" /> Confirmar Atualização</>}
+               </Button>
+            </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QUICK ADD SUB-MODAL */}
+      <Dialog open={quickAddType !== null} onOpenChange={(open) => !open && setQuickAddType(null)}>
+        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[3rem] p-12 shadow-3xl text-foreground">
+          <DialogHeader className="mb-10 text-center">
+            <DialogTitle className="text-2xl font-black uppercase text-primary flex items-center justify-center gap-4">
+              <PlusCircle className="w-8 h-8" /> {quickAddType === "category" ? "Nova Categoria" : quickAddType === "size" ? "Nova Grade" : "Nova Cor"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Identificador Visual</Label>
+              <Input 
+                value={quickInput} 
+                onChange={(e) => setQuickInput(e.target.value)} 
+                className="h-16 bg-background/50 border-primary/10 rounded-2xl text-xl font-black px-8"
+                autoFocus
+              />
+            </div>
+
+            {quickAddType === "color" && (
+              <div className="space-y-3 p-8 rounded-[2rem] bg-muted/5 border border-primary/5">
+                <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 block mb-4 text-center">Seletor de Hex</Label>
+                <div className="flex items-center justify-center gap-8">
+                  <Input 
+                    type="color" 
+                    value={quickHex} 
+                    onChange={(e) => setQuickHex(e.target.value)} 
+                    className="w-24 h-24 p-1 rounded-3xl bg-background border-primary/20 cursor-pointer shadow-2xl"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black font-mono text-primary">{quickHex.toUpperCase()}</span>
+                    <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">Matiz Hex</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <DialogFooter className="mt-12 gap-4">
-            <Button variant="ghost" onClick={() => setIsNewSizeDialogOpen(false)} className="flex-1 h-14 rounded-2xl font-black uppercase">Cancelar</Button>
-            <Button onClick={handleCreateGlobalSize} disabled={creatingSize || !newSizeName.trim()} className="flex-[2] h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl">{creatingSize ? "..." : "SALVAR"}</Button>
+            <Button variant="ghost" onClick={() => setQuickAddType(null)} className="flex-1 h-14 rounded-2xl font-black uppercase">Voltar</Button>
+            <Button onClick={handleQuickAdd} disabled={!quickInput.trim()} className="flex-[2] h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl">Cadastrar Global</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

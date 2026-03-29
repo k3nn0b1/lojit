@@ -253,8 +253,13 @@ const Admin = () => {
                   storedProducts={storedProducts}
                   setStoredProducts={setStoredProducts}
                   globalSizes={globalSizes}
+                  setGlobalSizes={setGlobalSizes}
                   globalColors={globalColors}
+                  setGlobalColors={setGlobalColors}
                   categories={categories}
+                  setCategories={setCategories}
+                  uploadToCloudinary={uploadToCloudinary}
+                  removeFromCloudinary={removeFromCloudinary}
                 />
               </TabsContent>
 
