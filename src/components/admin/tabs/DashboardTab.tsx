@@ -13,21 +13,27 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
+import { AdminProduct, Color, Pedido } from "@/lib/types";
+import { Package, ShoppingBag, AlertTriangle, Layers } from "lucide-react";
+
 interface DashboardTabProps {
   tenantId: string;
   IS_SUPABASE_READY: boolean;
+  storedProducts: AdminProduct[];
 }
 
 type Period = "today" | "7d" | "30d" | "all";
 
-const DashboardTab = ({ tenantId, IS_SUPABASE_READY }: DashboardTabProps) => {
+const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: DashboardTabProps) => {
   const [period, setPeriod] = useState<Period>("30d");
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     revenue: 0,
     orders: 0,
     ticket: 0,
-    growth: 5.2 // Placeholder de crescimento por enquanto
+    growth: 5.2,
+    topProducts: [] as { id: number; name: string; image: string; amount: number; qty: number }[],
+    lowStock: [] as AdminProduct[]
   });
 
   const fetchStats = async () => {
@@ -35,9 +41,8 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY }: DashboardTabProps) => {
     setLoading(true);
 
     try {
-      let query = supabase.from("pedidos").select("valor_total, status, data_criacao").eq("tenant_id", tenantId);
+      let query = supabase.from("pedidos").select("*").eq("tenant_id", tenantId);
 
-      // Filtro Cronológico Chronos
       const now = new Date();
       if (period === "today") {
         const startOfDay = new Date(now.setHours(0, 0, 0, 0)).toISOString();
@@ -54,16 +59,48 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY }: DashboardTabProps) => {
       if (error) throw error;
 
       if (data) {
-        const concluded = data.filter(p => p.status === "concluido");
+        const pedidos = data as Pedido[];
+        const concluded = pedidos.filter(p => p.status === "concluido");
+        
+        // Faturamento e Contagem
         const totalRevenue = concluded.reduce((sum, p) => sum + (p.valor_total || 0), 0);
         const totalOrders = data.length;
         const avgTicket = concluded.length > 0 ? totalRevenue / concluded.length : 0;
+
+        // Processar Ranking de Produtos
+        const prodMap: Record<number, { amount: number; qty: number }> = {};
+        pedidos.forEach(p => {
+           p.itens.forEach(item => {
+              if (!prodMap[item.product_id]) prodMap[item.product_id] = { amount: 0, qty: 0 };
+              prodMap[item.product_id].amount += (item.preco_unitario * item.quantidade);
+              prodMap[item.product_id].qty += item.quantidade;
+           });
+        });
+
+        const topProducts = Object.entries(prodMap)
+           .map(([id, s]) => {
+              const p = storedProducts.find(prod => prod.id === Number(id));
+              return {
+                 id: Number(id),
+                 name: p?.name || "Prod. Descontinuado",
+                 image: p?.imageUrl || "",
+                 amount: s.amount,
+                 qty: s.qty
+              };
+           })
+           .sort((a, b) => b.amount - a.amount)
+           .slice(0, 5);
+
+        // Radar de Estoque (Produtos com estoque total < 5)
+        const lowStock = storedProducts.filter(p => (p.stock || 0) < 5).slice(0, 5);
 
         setStats({
           revenue: totalRevenue,
           orders: totalOrders,
           ticket: avgTicket,
-          growth: 8.4 // Calcularemos real na Etapa 5
+          growth: 8.4,
+          topProducts,
+          lowStock
         });
       }
     } catch (e) {
@@ -75,7 +112,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY }: DashboardTabProps) => {
 
   useEffect(() => {
     fetchStats();
-  }, [period, tenantId]);
+  }, [period, tenantId, storedProducts]);
 
   const formatBRL = (val: number) => 
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -153,41 +190,111 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY }: DashboardTabProps) => {
                 ))}
              </div>
            ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard 
-                   title="Faturamento Bruto" 
-                   value={formatBRL(stats.revenue)} 
-                   sub="Liquidez de vendas concluídas"
-                   icon={TrendingUp}
-                   trend={stats.growth}
-                />
-                <StatsCard 
-                   title="Volume de Pedidos" 
-                   value={stats.orders} 
-                   sub="Total de ordens geradas"
-                   icon={Calendar}
-                   trend={2.1}
-                />
-                <StatsCard 
-                   title="Ticket Médio" 
-                   value={formatBRL(stats.ticket)} 
-                   sub="Valor médio por checkout"
-                   icon={ArrowUpRight}
-                   trend={0.5}
-                />
-                <StatsCard 
-                   title="Conversão CRM" 
-                   value="88%" 
-                   sub="Taxa de fechamento global"
-                   icon={ArrowUpRight}
-                   trend={1.2}
-                />
-             </div>
+             <>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatsCard 
+                     title="Faturamento Bruto" 
+                     value={formatBRL(stats.revenue)} 
+                     sub="Liquidez de vendas concluídas"
+                     icon={TrendingUp}
+                     trend={stats.growth}
+                  />
+                  <StatsCard 
+                     title="Volume de Pedidos" 
+                     value={stats.orders} 
+                     sub="Total de ordens geradas"
+                     icon={Calendar}
+                     trend={2.1}
+                  />
+                  <StatsCard 
+                     title="Ticket Médio" 
+                     value={formatBRL(stats.ticket)} 
+                     sub="Valor médio por checkout"
+                     icon={ArrowUpRight}
+                     trend={0.5}
+                  />
+                  <StatsCard 
+                     title="Conversão CRM" 
+                     value="88%" 
+                     sub="Taxa de fechamento global"
+                     icon={ArrowUpRight}
+                     trend={1.2}
+                  />
+               </div>
+
+               {/* Seção de Inteligência Complementar */}
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-14">
+                  {/* Top 5 Produtos */}
+                  <div className="space-y-6">
+                     <div className="flex items-center gap-4 px-2">
+                        <ShoppingBag className="w-5 h-5 text-primary" />
+                        <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground">Best Sellers do Escopo</h5>
+                     </div>
+                     <div className="space-y-4">
+                        {stats.topProducts.map((p, i) => (
+                           <div key={p.id} className="bg-muted/5 border border-primary/5 rounded-2xl p-4 flex items-center gap-4 hover:bg-muted/10 transition-colors">
+                              <div className="w-12 h-12 rounded-xl bg-background flex-shrink-0 overflow-hidden border border-white/5">
+                                 {p.image ? <img src={p.image} className="w-full h-full object-cover" /> : <Package className="w-full h-full p-3 opacity-20" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <p className="text-[10px] font-black uppercase tracking-widest truncate">{p.name}</p>
+                                 <div className="flex items-center justify-between mt-1">
+                                    <span className="text-[9px] text-muted-foreground uppercase">{p.qty} vendas</span>
+                                    <span className="text-[10px] font-bold text-primary">{formatBRL(p.amount)}</span>
+                                 </div>
+                                 <div className="w-full bg-primary/10 h-1.5 rounded-full mt-2 overflow-hidden">
+                                    <div 
+                                       className="bg-primary h-full rounded-full transition-all duration-1000" 
+                                       style={{ width: `${(p.amount / (stats.topProducts[0]?.amount || 1)) * 100}%` }}
+                                    />
+                                 </div>
+                              </div>
+                              <div className="text-[14px] font-black text-primary/10 select-none">#0{i+1}</div>
+                           </div>
+                        ))}
+                        {stats.topProducts.length === 0 && (
+                           <div className="py-20 text-center opacity-20 border border-dashed border-primary/10 rounded-3xl">
+                              <p className="text-[10px] uppercase font-black tracking-widest">Nenhuma transação no período</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+
+                  {/* Radar de Estoque Crítico */}
+                  <div className="space-y-6">
+                     <div className="flex items-center gap-4 px-2">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                        <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground">Radar de Estoque Crítico</h5>
+                     </div>
+                     <div className="space-y-4">
+                        {stats.lowStock.map((p) => (
+                           <div key={p.id} className="bg-destructive/5 border border-destructive/10 rounded-2xl p-4 flex items-center gap-4 group">
+                              <div className="w-12 h-12 rounded-xl bg-destructive/10 flex-shrink-0 flex items-center justify-center text-destructive border border-destructive/20">
+                                 <Package className="w-6 h-6" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <p className="text-[10px] font-black uppercase tracking-widest truncate">{p.name}</p>
+                                 <p className="text-[9px] text-destructive/60 uppercase font-black tracking-widest mt-1">ESTOQUE ATUAL: {p.stock || 0} UNIDADES</p>
+                              </div>
+                              <Button variant="ghost" className="h-10 px-4 rounded-xl bg-destructive/10 text-destructive text-[9px] font-black uppercase tracking-widest hover:bg-destructive hover:text-white transition-all">
+                                 Repor
+                              </Button>
+                           </div>
+                        ))}
+                        {stats.lowStock.length === 0 && (
+                           <div className="py-20 text-center opacity-20 border border-dashed border-green-500/20 rounded-3xl">
+                              <p className="text-[10px] uppercase font-black tracking-widest text-green-500">Fluxo de Inventário Estável</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+             </>
            )}
 
            {/* Placeholder para Gráficos (Etapa 4) */}
            {!loading && (
-             <div className="mt-10 h-80 rounded-[3rem] border border-dashed border-primary/10 bg-primary/5 flex items-center justify-center overflow-hidden relative">
+             <div className="mt-14 h-60 rounded-[3rem] border border-dashed border-primary/10 bg-primary/5 flex items-center justify-center overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
                 <div className="text-center space-y-4">
                   <Clock className="w-12 h-12 mx-auto text-primary opacity-20 animate-spin-slow" />

@@ -289,7 +289,8 @@ const Admin = () => {
           <TabsContent value="dashboard" className="mt-6">
             <DashboardTab 
               tenantId={tenantId} 
-              IS_SUPABASE_READY={IS_SUPABASE_READY} 
+              IS_SUPABASE_READY={IS_SUPABASE_READY}
+              storedProducts={storedProducts}
             />
           </TabsContent>
 
