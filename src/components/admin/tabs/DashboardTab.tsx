@@ -245,23 +245,28 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full max-w-[100vw] overflow-hidden">
       <Card className="bg-background/20 backdrop-blur-xl border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-3xl overflow-hidden border-none p-1 md:p-2">
-        <CardHeader className="p-6 md:p-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-           <div>
-              <CardTitle className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-2">
-                 Relatórios <span className="text-primary italic">Alpha</span>
-              </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em]">
-                 Inteligência de Mercado • {periodLabels[period]}
-              </p>
+        <CardHeader className="p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+           <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-primary/10 border border-primary/20">
+                 <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                 <CardTitle className="text-2xl md:text-3xl font-black tracking-widest uppercase text-primary">
+                    Relatórios
+                 </CardTitle>
+                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em] mt-1 opacity-70">
+                    Inteligência de Mercado e Performance
+                 </p>
+              </div>
            </div>
            
-           <div className="flex items-center gap-1 md:gap-2 p-1 md:p-1.5 bg-background/40 backdrop-blur-xl border border-white/5 rounded-xl md:rounded-2xl w-full sm:w-auto overflow-x-auto">
+           <div className="flex items-center gap-1 md:gap-2 p-1.5 bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl w-full md:w-auto overflow-x-auto shadow-inner">
               {(['today', '7d', '30d', 'all'] as Period[]).map((p) => (
                  <button
                     key={p}
                     onClick={() => setPeriod(p)}
-                    className={`flex-1 sm:flex-none px-3 md:px-6 py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                       period === p ? 'bg-primary text-background shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-white/5'
+                    className={`flex-1 md:flex-none px-5 py-2.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                       period === p ? 'bg-primary text-background shadow-[0_0_15px_rgba(35,231,227,0.4)]' : 'text-muted-foreground hover:bg-white/5'
                     }`}
                  >
                     {periodLabels[p]}
