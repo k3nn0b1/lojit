@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Check, X, Trash2, Palette, PlusCircle, Search, Droplets, Info } from "lucide-react";
+import { Pencil, Check, X, Trash2, Palette, PlusCircle, Search, Droplets, Info, Loader2 } from "lucide-react";
 import { parseSupabaseError } from "@/lib/utils";
 import { Color } from "@/lib/types";
 import { Label } from "@/components/ui/label";
@@ -175,7 +175,7 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                    const isEditing = editingId === c.id;
                    return (
                      <div key={c.id} className={`group relative rounded-2xl md:rounded-[2.5rem] border transition-all p-4 md:p-6 flex flex-row md:flex-col items-center gap-4 text-left md:text-center overflow-hidden shadow-xl ${isEditing ? 'bg-primary/10 border-primary scale-[1.02] md:scale-[1.05] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 -z-10 group-hover:scale-150 transition-transform" />
                       
                       {isEditing ? (
                         <div className="space-y-6 w-full animate-in fade-in duration-300">

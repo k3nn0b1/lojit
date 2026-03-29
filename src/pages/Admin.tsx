@@ -254,6 +254,7 @@ const Admin = () => {
                   setStoredProducts={setStoredProducts}
                   globalSizes={globalSizes}
                   globalColors={globalColors}
+                  categories={categories}
                 />
               </TabsContent>
 

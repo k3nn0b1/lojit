@@ -18,8 +18,7 @@ import {
   PlusCircle, 
   Box, 
   Save,
-  CheckCircle2,
-  AlertCircle
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -47,6 +46,7 @@ interface StockTabProps {
   setStoredProducts: React.Dispatch<React.SetStateAction<AdminProduct[]>>;
   globalSizes: string[];
   globalColors: Color[];
+  categories: string[];
 }
 
 const formatBRL = (val: number) => {
@@ -65,7 +65,7 @@ const sortSizes = (sizes: string[]) => {
   });
 };
 
-const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, globalColors }: StockTabProps) => {
+const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, globalColors, categories }: StockTabProps) => {
   const [stockQuery, setStockQuery] = useState("");
   const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
   const [editFields, setEditFields] = useState<Record<number, Partial<AdminProduct>>>({});
@@ -141,6 +141,18 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
       toast.success("Produto atualizado com maestria");
     } catch (e: any) {
       toast.error("Falha na atualização", { description: parseSupabaseError(e) });
+    }
+  };
+
+  const handleRemoveProduct = async (id: number) => {
+    if (!confirm("Deseja realmente excluir este produto permanentemente?")) return;
+    try {
+      const { error } = await supabase.from("products").delete().eq("id", id).eq("tenant_id", tenantId);
+      if (error) throw error;
+      setStoredProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Produto removido com sucesso");
+    } catch (e: any) {
+      toast.error("Erro ao remover produto");
     }
   };
 
@@ -241,7 +253,6 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
         </CardHeader>
 
         <CardContent className="p-0">
-          {/* Dashboard Superior Mobile-Responsive */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6 md:p-10 pb-0">
              {[
                { label: 'Total Itens', val: storedProducts.length, color: 'text-primary' },
@@ -257,7 +268,6 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
           </div>
 
           <div className="p-6 md:p-10 space-y-8 md:space-y-10">
-            {/* Listagem Mobile */}
             <div className="md:hidden space-y-4">
               {visibleStock.map((p) => (
                 <div 
@@ -283,7 +293,6 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
               ))}
             </div>
 
-            {/* Modal de Gestão de Produto (Mobile APENAS) */}
             <Dialog open={!!expandedProductId} onOpenChange={(open) => !open && setExpandedProductId(null)}>
               <DialogContent className="md:hidden max-w-[95vw] w-full bg-card border-primary/30 rounded-[2.5rem] p-6 text-foreground shadow-3xl overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
@@ -299,89 +308,109 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                     const fieldData = editFields[p.id!] || p;
                     const sortedSizes = sortSizes(p.sizes || []);
                     return (
-                      <Tabs defaultValue="stock" className="w-full">
-                        <TabsList className="bg-muted/40 p-1.5 rounded-xl border border-primary/10 mb-6 w-full flex">
-                          <TabsTrigger value="stock" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
-                            Grade
-                          </TabsTrigger>
-                          <TabsTrigger value="edit" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
-                            Ficha
-                          </TabsTrigger>
-                        </TabsList>
+                      <div className="space-y-6">
+                        <Tabs defaultValue="stock" className="w-full">
+                          <TabsList className="bg-muted/40 p-1.5 rounded-xl border border-primary/10 mb-6 w-full flex">
+                            <TabsTrigger value="stock" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
+                              Grade
+                            </TabsTrigger>
+                            <TabsTrigger value="edit" className="flex-1 rounded-lg h-10 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px]">
+                              Ficha
+                            </TabsTrigger>
+                          </TabsList>
 
-                        <TabsContent value="stock" className="mt-0 outline-none space-y-6">
-                          <div className="grid grid-cols-2 gap-3">
-                            {sortedSizes.map((s) => (
-                              <div key={s} className="group relative flex flex-col gap-2 p-4 rounded-2xl bg-card/60 border border-primary/5 shadow-xl">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">{s}</span>
-                                  <button onClick={() => handleRemoveSizeFromModel(p.id!, s)} className="text-muted-foreground/40 hover:text-destructive">
-                                    <X className="h-3.5 w-3.5" />
-                                  </button>
+                          <TabsContent value="stock" className="mt-0 outline-none space-y-6">
+                            <div className="grid grid-cols-2 gap-3">
+                              {sortedSizes.map((s) => (
+                                <div key={s} className="group relative flex flex-col gap-2 p-4 rounded-2xl bg-card/60 border border-primary/5 shadow-xl">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-black text-primary uppercase tracking-widest">{s}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); handleRemoveSizeFromModel(p.id!, s); }} className="text-muted-foreground/40 hover:text-destructive">
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    className="h-8 text-xl font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
+                                    value={Number((p.stockBySize || {})[s] || 0)}
+                                    onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
+                                  />
                                 </div>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  className="h-8 text-xl font-black bg-transparent border-none focus-visible:ring-0 p-0 shadow-none text-foreground"
-                                  value={Number((p.stockBySize || {})[s] || 0)}
-                                  onChange={(e) => handleStockBySizeChange(p.id!, s, parseInt(e.target.value) || 0)}
-                                />
+                              ))}
+                              <div className="flex flex-col gap-1 p-4 rounded-2xl bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center">
+                                 <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
+                                    <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-1 h-auto p-0">
+                                      <PlusCircle className="w-8 h-8 opacity-40 shrink-0" />
+                                      <span className="text-[8px] font-black uppercase tracking-widest">Add Grade</span>
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-card border-primary/30 rounded-2xl min-w-[200px]">
+                                       {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
+                                          <SelectItem key={gs} value={gs} className="font-black py-3 rounded-lg text-xs uppercase px-4 cursor-pointer">{gs}</SelectItem>
+                                       ))}
+                                    </SelectContent>
+                                 </Select>
                               </div>
-                            ))}
-                            <div className="flex flex-col gap-1 p-4 rounded-2xl bg-primary/5 border-2 border-dashed border-primary/10 flex items-center justify-center text-center">
-                               <Select onValueChange={(val) => val && handleAddSizeToModel(p.id!, val)}>
-                                  <SelectTrigger className="border-none bg-transparent focus:ring-0 shadow-none text-primary flex flex-col items-center gap-1 h-auto p-0">
-                                    <PlusCircle className="w-8 h-8 opacity-40 shrink-0" />
-                                    <span className="text-[8px] font-black uppercase tracking-widest">Add Grade</span>
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-card border-primary/30 rounded-2xl min-w-[200px]">
-                                     {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
-                                        <SelectItem key={gs} value={gs} className="font-black py-3 rounded-lg text-xs uppercase px-4 cursor-pointer">{gs}</SelectItem>
-                                     ))}
-                                  </SelectContent>
-                               </Select>
                             </div>
-                          </div>
-                        </TabsContent>
+                          </TabsContent>
 
-                        <TabsContent value="edit" className="mt-0 outline-none space-y-4">
-                           <div className="space-y-2">
-                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Nome do Produto</Label>
-                             <Input
-                               className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl focus:ring-primary/20"
-                               value={fieldData.name}
-                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, name: e.target.value } }))}
-                             />
-                           </div>
-                           <div className="space-y-2">
-                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Preço (BRL)</Label>
-                             <Input
-                               type="number"
-                               className="h-12 bg-background/50 border-primary/5 rounded-xl text-lg font-black text-primary px-4 shadow-xl focus:ring-primary/20"
-                               value={String(fieldData.price || '')}
-                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, price: parseFloat(e.target.value) || 0 } }))}
-                             />
-                           </div>
-                           <div className="space-y-2">
-                             <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Descrição</Label>
-                             <Textarea
-                               className="min-h-[120px] bg-background/50 border-primary/5 rounded-xl p-4 text-xs font-medium resize-none leading-relaxed shadow-xl focus:ring-primary/20"
-                               value={fieldData.description || ""}
-                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
-                             />
-                           </div>
-                           <Button onClick={() => handleUpdateProductFields(p.id!)} className="w-full h-12 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl shadow-xl shadow-primary/20 mt-4">
-                              Salvar Alterações
-                           </Button>
-                        </TabsContent>
-                      </Tabs>
+                          <TabsContent value="edit" className="mt-0 outline-none space-y-4">
+                             <div className="space-y-2">
+                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Nome do Produto</Label>
+                               <Input
+                                 className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl focus:ring-primary/20"
+                                 value={fieldData.name}
+                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, name: e.target.value } }))}
+                               />
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Preço (BRL)</Label>
+                               <Input
+                                 type="number"
+                                 className="h-12 bg-background/50 border-primary/5 rounded-xl text-lg font-black text-primary px-4 shadow-xl focus:ring-primary/20"
+                                 value={String(fieldData.price || '')}
+                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, price: parseFloat(e.target.value) || 0 } }))}
+                               />
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Categoria</Label>
+                               <Select value={fieldData.category} onValueChange={(val) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, category: val } }))}>
+                                 <SelectTrigger className="h-12 bg-background/50 border-primary/5 rounded-xl font-black text-xs px-4 shadow-xl">
+                                   <SelectValue placeholder="Selecione..." />
+                                 </SelectTrigger>
+                                 <SelectContent className="bg-card border-primary/20 rounded-xl">
+                                   {categories.map(c => <SelectItem key={c} value={c} className="text-[10px] font-black uppercase">{c}</SelectItem>)}
+                                 </SelectContent>
+                               </Select>
+                             </div>
+                             <div className="space-y-2">
+                               <Label className="text-[8px] font-black uppercase tracking-widest text-primary/60 ml-1">Descrição</Label>
+                               <Textarea
+                                 className="min-h-[100px] bg-background/50 border-primary/5 rounded-xl p-4 text-xs font-medium resize-none leading-relaxed shadow-xl focus:ring-primary/20"
+                                 value={fieldData.description || ""}
+                                 onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
+                               />
+                             </div>
+                             <Button onClick={() => handleUpdateProductFields(p.id!)} className="w-full h-12 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl mt-2">
+                                Salvar Alterações
+                             </Button>
+                          </TabsContent>
+                        </Tabs>
+                        
+                        <Button 
+                          variant="ghost" 
+                          className="w-full h-12 bg-destructive/5 text-destructive rounded-xl text-[10px] font-black uppercase tracking-widest border border-destructive/10"
+                          onClick={() => handleRemoveProduct(p.id!)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" /> Excluir Produto Permanentemente
+                        </Button>
+                      </div>
                     );
                   })()}
                 </div>
               </DialogContent>
             </Dialog>
 
-            {/* Tabela Desktop Elite */}
             <div className="hidden md:block overflow-hidden rounded-[2.5rem] border border-primary/10 bg-muted/5 shadow-2xl">
               <Table>
                 <TableHeader className="bg-primary/5 border-b border-primary/10">
@@ -426,9 +455,23 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                             </div>
                           </TableCell>
                           <TableCell className="px-10 py-6 text-right">
-                            <Button variant="ghost" size="sm" className={`rounded-xl h-10 w-10 p-0 ${isExpanded ? 'bg-primary text-black shadow-xl shadow-primary/20' : 'bg-primary/5 text-primary'}`}>
-                              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                            </Button>
+                            <div className="flex justify-end gap-3">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className={`rounded-xl h-10 w-10 p-0 ${isExpanded ? 'bg-primary text-black shadow-xl shadow-primary/20' : 'bg-primary/5 text-primary'}`}
+                              >
+                                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="rounded-xl h-10 w-10 p-0 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                                onClick={(e) => { e.stopPropagation(); handleRemoveProduct(p.id!); }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
 
@@ -480,30 +523,9 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                                               <ChevronDown className="w-4 h-4 opacity-20" />
                                             </SelectTrigger>
                                             <SelectContent className="bg-card border-primary/30 rounded-3xl min-w-[240px] shadow-3xl">
-                                               <div className="p-3 border-b border-primary/5 mb-2">
-                                                  <p className="text-[8px] font-black text-primary/40 uppercase tracking-widest text-center">Grades Disponíveis</p>
-                                               </div>
                                                {globalSizes.filter(gs => !p.sizes.includes(gs)).map(gs => (
-                                                  <SelectItem key={gs} value={gs} className="font-black py-4 rounded-2xl text-xs uppercase px-6 cursor-pointer focus:bg-primary/10 focus:text-primary transition-colors">{gs}</SelectItem>
+                                                  <SelectItem key={gs} value={gs} className="font-black py-4 rounded-2xl text-xs uppercase px-6 cursor-pointer focus:bg-primary/10 transition-colors">{gs}</SelectItem>
                                                ))}
-                                               {globalSizes.filter(gs => !p.sizes.includes(gs)).length === 0 && (
-                                                  <div className="py-8 px-6 text-center opacity-40">
-                                                     <p className="text-[9px] font-black uppercase">Todas as grades já aplicadas</p>
-                                                  </div>
-                                               )}
-                                               <div className="p-2 mt-2 border-t border-primary/5">
-                                                  <Button 
-                                                    variant="ghost" 
-                                                    className="w-full text-[9px] font-black uppercase text-primary/60 hover:text-primary hover:bg-primary/5 rounded-xl h-10"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setTargetProductForNewSize(p.id!);
-                                                        setIsNewSizeDialogOpen(true);
-                                                    }}
-                                                  >
-                                                     CRIAR NOVA GRADE GLOBAL
-                                                  </Button>
-                                               </div>
                                             </SelectContent>
                                          </Select>
                                       </div>
@@ -534,10 +556,15 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                                                 />
                                               </div>
                                               <div className="space-y-3">
-                                                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Assinatura de Sistema</Label>
-                                                <div className="h-16 bg-muted/20 border border-primary/5 rounded-2xl flex items-center px-8 font-black text-sm opacity-30 italic">
-                                                  UNIQUE_ID: #{p.id}
-                                                </div>
+                                                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Classificação</Label>
+                                                <Select value={fieldData.category} onValueChange={(val) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, category: val } }))}>
+                                                  <SelectTrigger className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-[10px] tracking-widest px-8 shadow-2xl">
+                                                     <SelectValue placeholder="CATEGORIA" />
+                                                  </SelectTrigger>
+                                                  <SelectContent className="bg-card border-primary/20 rounded-xl">
+                                                     {categories.map(c => <SelectItem key={c} value={c} className="text-[10px] font-black uppercase">{c}</SelectItem>)}
+                                                  </SelectContent>
+                                                </Select>
                                               </div>
                                             </div>
                                           </div>
@@ -548,13 +575,12 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                                               className="min-h-[200px] bg-background/50 border-primary/5 rounded-[2rem] p-8 text-sm font-medium resize-none leading-relaxed shadow-2xl focus:ring-primary/20"
                                               value={fieldData.description || ""}
                                               onChange={(e) => setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, description: e.target.value } }))}
-                                              placeholder="Especifique materiais, tecnologia e diferenciais deste lote..."
                                             />
                                           </div>
                                        </div>
 
                                        <div className="space-y-6 pt-10 border-t border-primary/5">
-                                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Variantes de Cromatismo Ativas</Label>
+                                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Cromatismo Ativos</Label>
                                           <div className="flex flex-wrap gap-4">
                                             {globalColors.map((c) => {
                                               const currentColors = (fieldData.colors || []) as Color[];
@@ -563,18 +589,12 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                                                 <button
                                                   key={c.name}
                                                   onClick={() => {
-                                                    const nextColors = isSelected
-                                                      ? currentColors.filter(pc => pc.name !== c.name)
-                                                      : [...currentColors, c];
+                                                    const nextColors = isSelected ? currentColors.filter(pc => pc.name !== c.name) : [...currentColors, c];
                                                     setEditFields(prev => ({ ...prev, [p.id!]: { ...fieldData, colors: nextColors } }));
                                                   }}
-                                                  className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all text-[11px] font-black uppercase tracking-widest ${
-                                                    isSelected 
-                                                      ? 'bg-primary text-black border-primary shadow-2xl shadow-primary/20 scale-105' 
-                                                      : 'bg-muted/10 border-primary/5 text-muted-foreground/60 hover:bg-primary/5'
-                                                  }`}
+                                                  className={`flex items-center gap-4 px-8 py-4 rounded-2xl border transition-all text-[11px] font-black uppercase ${isSelected ? 'bg-primary text-black border-primary shadow-2xl' : 'bg-muted/10 border-primary/5 text-muted-foreground/60'}`}
                                                 >
-                                                  <div className={`w-4 h-4 rounded-full border-2 ${isSelected ? 'border-black/20' : 'border-white/10'}`} style={{ backgroundColor: c.hex }} />
+                                                  <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: c.hex }} />
                                                   {c.name}
                                                 </button>
                                               );
@@ -583,11 +603,8 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
                                        </div>
 
                                        <div className="flex justify-center pt-8">
-                                          <Button 
-                                            onClick={() => handleUpdateProductFields(p.id!)}
-                                            className="h-16 px-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.3em] shadow-3xl shadow-primary/30 rounded-2xl animate-pulse-subtle active:scale-95 transition-all text-xs"
-                                          >
-                                            <Save className="w-5 h-5 mr-4" /> Aplicar Alterações no Modelo
+                                          <Button onClick={() => handleUpdateProductFields(p.id!)} className="h-16 px-16 bg-primary text-black font-black uppercase tracking-[0.1em] rounded-2xl shadow-3xl">
+                                            <Save className="w-5 h-5 mr-4" /> Atualizar Ficha Técnica
                                           </Button>
                                        </div>
                                     </div>
@@ -604,70 +621,29 @@ const StockTab = ({ tenantId, storedProducts, setStoredProducts, globalSizes, gl
               </Table>
             </div>
 
-            {/* Pagination Premium */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-2 md:gap-6 p-4 md:p-8 bg-primary/5 border-t border-primary/10 rounded-b-[2rem] md:rounded-b-[2.5rem]">
-                <Button 
-                    variant="ghost" 
-                    disabled={currentPage <= 1} 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
-                >
-                    Anterior
-                </Button>
-                <div className="flex items-center gap-1.5 p-1 md:p-2 bg-muted/20 rounded-xl md:rounded-2xl border border-primary/5 shadow-inner px-2 shrink-0">
-                    <span className="px-2 md:px-4 text-[10px] md:text-xs font-black text-primary whitespace-nowrap">{currentPage} <span className="text-muted-foreground opacity-30 mx-1">/</span> {totalPages}</span>
-                </div>
-                <Button 
-                    variant="ghost" 
-                    disabled={currentPage >= totalPages} 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="h-10 md:h-12 px-4 md:px-8 font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-primary/10 rounded-xl w-auto flex-1 md:flex-none max-w-[120px]"
-                >
-                    Próxima
-                </Button>
+              <div className="flex items-center justify-between gap-2 p-4 bg-primary/5 border-t border-primary/10 rounded-b-[2.5rem]">
+                <Button variant="ghost" disabled={currentPage <= 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Anterior</Button>
+                <div className="bg-muted/20 rounded-2xl border border-primary/5 px-4 h-10 flex items-center"><span className="text-xs font-black text-primary">{currentPage} / {totalPages}</span></div>
+                <Button variant="ghost" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="h-12 px-8 font-black text-[10px] uppercase rounded-xl">Próxima</Button>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Modal: Novo Tamanho Global Premium */}
       <Dialog open={isNewSizeDialogOpen} onOpenChange={setIsNewSizeDialogOpen}>
-        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[3rem] p-12 border shadow-3xl overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
+        <DialogContent className="max-w-md bg-card border-primary/30 rounded-[3rem] p-12 shadow-3xl">
           <DialogHeader className="mb-10 text-center">
-            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary flex items-center justify-center gap-4">
-              <PlusCircle className="w-8 h-8" /> Nova Grade Global
-            </DialogTitle>
-            <DialogDescription className="text-xs font-black tracking-[0.3em] uppercase opacity-40 pt-3">
-              Engenharia de Variantes Sistemática
-            </DialogDescription>
+            <DialogTitle className="text-3xl font-black uppercase text-primary flex items-center justify-center gap-4"><PlusCircle className="w-8 h-8" /> Grade Global</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Dimensão do SKU (Ex: XL, 44, GGG)</Label>
-              <Input
-                placeholder="DIGITE O NOME..."
-                value={newSizeName}
-                onChange={(e) => setNewSizeName(e.target.value.toUpperCase())}
-                className="h-16 bg-background/50 border-primary/10 rounded-2xl text-2xl font-black px-8 focus:ring-primary/20 shadow-2xl"
-                onKeyDown={(e) => e.key === "Enter" && handleCreateGlobalSize()}
-              />
-              <p className="text-[9px] text-muted-foreground font-medium italic opacity-40 ml-2">Este protocolo criará o tamanho para uso coletivo no painel.</p>
-            </div>
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Nome da Grade</Label>
+            <Input value={newSizeName} onChange={(e) => setNewSizeName(e.target.value.toUpperCase())} className="h-16 bg-background/50 border-primary/10 rounded-2xl text-2xl font-black px-8" />
           </div>
-
           <DialogFooter className="mt-12 gap-4">
-            <Button variant="ghost" onClick={() => { setIsNewSizeDialogOpen(false); setNewSizeName(""); }} className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]">Abortar</Button>
-            <Button 
-                onClick={handleCreateGlobalSize} 
-                disabled={creatingSize || !newSizeName.trim()} 
-                className="flex-[2] h-14 rounded-2xl bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all"
-            >
-                {creatingSize ? "PROCESSANDO..." : "VALIDAR E CADASTRAR"}
-            </Button>
+            <Button variant="ghost" onClick={() => setIsNewSizeDialogOpen(false)} className="flex-1 h-14 rounded-2xl font-black uppercase">Cancelar</Button>
+            <Button onClick={handleCreateGlobalSize} disabled={creatingSize || !newSizeName.trim()} className="flex-[2] h-14 rounded-2xl bg-primary text-black font-black uppercase shadow-xl">{creatingSize ? "..." : "SALVAR"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
