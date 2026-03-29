@@ -21,9 +21,15 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   ResponsiveContainer 
 } from 'recharts';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { AdminProduct, Color, Pedido } from "@/lib/types";
@@ -180,27 +186,36 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
   const formatBRL = (val: number) => 
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 
-  const StatsCard = ({ title, value, sub, icon: Icon, trend }: any) => (
-    <Card className="bg-background/40 backdrop-blur-md border-primary/5 hover:border-primary/20 transition-all p-8 rounded-[2rem] shadow-2xl group overflow-hidden relative">
-       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
-       <div className="flex justify-between items-start mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/10 group-hover:scale-110 transition-all group-hover:bg-primary/20">
-             <Icon className="w-6 h-6" />
-          </div>
-          <div className="flex flex-col items-end">
-             <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${trend >= 0 ? 'text-green-400' : 'text-destructive'}`}>
-                {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                {trend >= 0 ? `+${trend}%` : `${trend}%`}
-             </div>
-             <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest opacity-40">vs anterior</span>
-          </div>
-       </div>
-       <div className="space-y-1">
-          <h4 className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em]">{title}</h4>
-          <p className="text-2xl font-black text-foreground tracking-tight">{value}</p>
-          <p className="text-[9px] text-primary/40 uppercase font-black tracking-widest">{sub}</p>
-       </div>
-    </Card>
+  const StatsCard = ({ title, value, sub, icon: Icon, trend, explanation }: any) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Card className="bg-background/40 backdrop-blur-md border-primary/5 hover:border-primary/20 transition-all p-8 rounded-[2rem] shadow-2xl group overflow-hidden relative cursor-help">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
+            <div className="flex justify-between items-start mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/10 group-hover:scale-110 transition-all group-hover:bg-primary/20">
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${trend >= 0 ? 'text-green-400' : 'text-destructive'}`}>
+                      {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {trend >= 0 ? `+${trend}%` : `${trend}%`}
+                  </div>
+                  <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest opacity-40">vs anterior</span>
+                </div>
+            </div>
+            <div className="space-y-1">
+                <h4 className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em]">{title}</h4>
+                <p className="text-2xl font-black text-foreground tracking-tight">{value}</p>
+                <p className="text-[9px] text-primary/40 uppercase font-black tracking-widest">{sub}</p>
+            </div>
+          </Card>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="bg-black/95 border-primary/30 backdrop-blur-xl text-white border rounded-2xl p-4 shadow-3xl animate-in fade-in zoom-in duration-300">
+           <p className="text-[10px] font-black uppercase tracking-[0.1em] leading-relaxed max-w-[220px] text-center text-primary/90">{explanation}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 
   const periodLabels = {
@@ -261,6 +276,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      sub="Liquidez de vendas concluídas"
                      icon={TrendingUp}
                      trend={stats.growth}
+                     explanation="Soma total de todos os pedidos marcados como CONCLUÍDOS no sistema."
                   />
                   <StatsCard 
                      title="Volume de Pedidos" 
@@ -268,6 +284,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      sub="Total de ordens geradas"
                      icon={Calendar}
                      trend={2.1}
+                     explanation="Quantidade total de pedidos criados, incluindo pendentes, cancelados e concluídos."
                   />
                   <StatsCard 
                      title="Ticket Médio" 
@@ -275,6 +292,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      sub="Valor médio por checkout"
                      icon={ArrowUpRight}
                      trend={0.5}
+                     explanation="Média aritmética do valor arrecadado por cada venda efetivada."
                   />
                   <StatsCard 
                      title="Conversão CRM" 
@@ -282,6 +300,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      sub="Taxa de fechamento global"
                      icon={ArrowUpRight}
                      trend={1.2}
+                     explanation="Percentual de pedidos que iniciaram e foram finalizados com sucesso."
                   />
                </div>
 
@@ -328,7 +347,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                                  axisLine={false}
                                  tickFormatter={(val) => `R$${val}`}
                               />
-                              <Tooltip 
+                              <RechartsTooltip 
                                  contentStyle={{ backgroundColor: '#000', border: '1px solid #23e7e3', borderRadius: '12px' }}
                                  itemStyle={{ color: '#23e7e3', fontWeight: 'bold', fontSize: '10px' }}
                                  labelStyle={{ color: '#fff', fontSize: '10px', marginBottom: '4px' }}
