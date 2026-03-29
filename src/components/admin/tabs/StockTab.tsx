@@ -517,7 +517,7 @@ const StockTab = ({
           <div className="flex flex-col h-[90vh] md:h-auto max-h-[90vh]">
             <div className="p-8 md:p-12 border-b border-primary/10 bg-primary/5 flex items-center justify-between shrink-0">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0">
+                  <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-2xl bg-background shrink-0 relative">
                     {editingProduct?.active === false && <div className="absolute inset-0 bg-destructive/10 backdrop-grayscale-[0.5] z-10" />}
                     {editingProduct?.image ? <img src={editingProduct.image} className="w-full h-full object-cover" /> : <Package className="w-6 h-6 m-5 opacity-20" />}
                   </div>

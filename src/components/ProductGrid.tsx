@@ -29,7 +29,26 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   const startIndex = (currentPage - 1) * pageSize;
   const visibleProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
 
-  // Reset page when category changes
+  const scrollToProducts = () => {
+    const element = document.getElementById("products");
+    if (element) {
+      const offset = 100; // Ajuste para não ficar colado no topo
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Pequeno delay para garantir que o estado do React atualizou a renderização antes do scroll
+    setTimeout(scrollToProducts, 50);
+  };
+
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setCurrentPage(1);
@@ -38,8 +57,6 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   return (
     <section id="products" className="min-h-screen pt-4 pb-16 md:pb-32" data-aos="fade-up">
       <div className="container mx-auto px-4 md:px-8">
-        {/* Título dinâmico removido daqui e movido para o Index.tsx para evitar duplicidade */}
-
         {/* Category Filter */}
         <div className="flex flex-wrap gap-2 md:gap-4 justify-center mb-16 md:mb-24">
           {categories.map((category) => (
@@ -87,7 +104,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 value={String(pageSize)}
                 onValueChange={(val) => {
                   setPageSize(Number(val));
-                  setCurrentPage(1);
+                  handlePageChange(1);
                 }}
               >
                 <SelectTrigger className="h-8 w-[70px] bg-background">
@@ -108,7 +125,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 variant="outline"
                 size="sm"
                 disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 hover:text-foreground text-xs font-bold uppercase tracking-wider h-9"
               >
                 Anterior
@@ -146,7 +163,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                         key={item}
                         variant={currentPage === item ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setCurrentPage(item as number)}
+                        onClick={() => handlePageChange(item as number)}
                         className={`h-9 w-9 p-0 font-bold transition-all duration-300 ${
                           currentPage === item
                             ? "bg-primary text-primary-foreground shadow-primary/40"
@@ -164,7 +181,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
                 variant="outline"
                 size="sm"
                 disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                 className="border-primary/20 hover:bg-primary/10 hover:border-primary/50 hover:text-foreground text-xs font-bold uppercase tracking-wider h-9"
               >
                 Próxima
