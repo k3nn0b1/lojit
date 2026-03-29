@@ -223,52 +223,64 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
                     <p className="text-muted-foreground font-medium italic">Seu carrinho está vazio no momento.</p>
                   </div>
                 ) : (
-                  items.map((item) => (
-                    <div
-                      key={`${item.id}-${item.size}-${item.color || ""}`}
-                      className="flex gap-4 p-4 rounded-2xl border border-border/50 bg-muted/5 relative group hover:border-primary/20 transition-all"
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-20 h-20 object-cover rounded-xl shadow-lg"
-                      />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex justify-between items-start gap-2">
-                           <h4 className="text-[11px] font-black uppercase leading-tight line-clamp-2 pr-6">{item.name}</h4>
-                           <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => onRemoveItem(item.id, item.size, item.color)}
-                              className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-6 w-6 p-0 absolute top-3 right-3 rounded-full"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                  <>
+                    <div className="space-y-4">
+                      {items.map((item) => (
+                        <div
+                          key={`${item.id}-${item.size}-${item.color || ""}`}
+                          className="flex gap-4 p-4 rounded-2xl border border-border/50 bg-muted/5 relative group hover:border-primary/20 transition-all"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-20 h-20 object-cover rounded-xl shadow-lg"
+                          />
+                          <div className="flex-1 space-y-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <h4 className="text-[11px] font-black uppercase leading-tight line-clamp-2 pr-6">{item.name}</h4>
+                              <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => onRemoveItem(item.id, item.size, item.color)}
+                                  className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-6 w-6 p-0 absolute top-3 right-3 rounded-full"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest leading-none">
+                              {item.color ? `${item.color} • ` : ""}TAMANHO {item.size}
+                            </p>
+                            <div className="flex items-center justify-between pt-1">
+                              <p className="text-primary font-black text-sm">{formatBRL(item.price)}</p>
+                              <div className="flex items-center gap-2 bg-background/50 rounded-lg p-1 border border-border/50">
+                                  <button
+                                    onClick={() => onUpdateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
+                                    className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted font-black"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="w-6 text-center text-[10px] font-black">{item.quantity}</span>
+                                  <button
+                                    onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1, item.color)}
+                                    className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted font-black"
+                                  >
+                                    +
+                                  </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest leading-none">
-                          {item.color ? `${item.color} • ` : ""}TAMANHO {item.size}
-                        </p>
-                        <div className="flex items-center justify-between pt-1">
-                           <p className="text-primary font-black text-sm">{formatBRL(item.price)}</p>
-                           <div className="flex items-center gap-2 bg-background/50 rounded-lg p-1 border border-border/50">
-                              <button
-                                onClick={() => onUpdateQuantity(item.id, item.size, Math.max(1, item.quantity - 1), item.color)}
-                                className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted font-black"
-                              >
-                                -
-                              </button>
-                              <span className="w-6 text-center text-[10px] font-black">{item.quantity}</span>
-                              <button
-                                onClick={() => onUpdateQuantity(item.id, item.size, item.quantity + 1, item.color)}
-                                className="h-6 w-6 flex items-center justify-center rounded-md hover:bg-muted font-black"
-                              >
-                                +
-                              </button>
-                           </div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))
+
+                    <div className="pt-6 mt-6 border-t border-primary/10 flex flex-col gap-1 items-end px-2">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">Somatório dos Itens</span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary/40">Subtotal:</span>
+                            <span className="text-2xl font-black text-primary">{formatBRL(subtotal)}</span>
+                        </div>
+                    </div>
+                  </>
                 )}
               </motion.div>
             )}
