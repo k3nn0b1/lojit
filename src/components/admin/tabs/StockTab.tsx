@@ -158,6 +158,31 @@ const StockTab = ({
     setEditingProduct({ ...editingProduct, [field]: value });
   };
 
+  const handleToggleActive = async (currentStatus: boolean) => {
+    if (!editingProduct || !editingProduct.id) return;
+    const nextStatus = !currentStatus;
+    
+    // Atualização otimista na UI
+    setEditingProduct({ ...editingProduct, active: nextStatus });
+    
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ active: nextStatus })
+        .eq('id', editingProduct.id)
+        .eq('tenant_id', tenantId);
+
+      if (error) throw error;
+      
+      setStoredProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...p, active: nextStatus } : p));
+      toast.success(nextStatus ? "Produto ativado na loja" : "Produto oculto na loja");
+    } catch (e: any) {
+      toast.error("Erro ao alterar visibilidade");
+      // Rollback em caso de erro
+      setEditingProduct({ ...editingProduct, active: currentStatus });
+    }
+  };
+
   const handleStockUpdate = (size: string, val: number) => {
     if (!editingProduct) return;
     const nextStock = { ...(editingProduct.stockBySize || {}), [size]: val };
@@ -511,7 +536,7 @@ const StockTab = ({
                   <Button 
                     variant="outline" 
                     className={`h-12 w-12 md:h-14 md:w-auto md:px-6 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest flex items-center gap-3 border shadow-xl ${editingProduct?.active ? 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/20' : 'border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/20'}`}
-                    onClick={() => handleUpdateField("active", !editingProduct?.active)}
+                    onClick={() => handleToggleActive(editingProduct?.active ?? true)}
                   >
                     {editingProduct?.active ? <><Eye className="w-5 h-5" /> <span className="hidden md:inline">Ativo na Loja</span></> : <><EyeOff className="w-5 h-5" /> <span className="hidden md:inline">Oculto na Loja</span></>}
                   </Button>
