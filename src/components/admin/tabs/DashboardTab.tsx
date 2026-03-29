@@ -8,13 +8,25 @@ import {
   ChevronDown, 
   ArrowUpRight, 
   ArrowDownRight,
-  Clock
+  Clock,
+  Package, 
+  ShoppingBag, 
+  AlertTriangle, 
+  Layers,
+  Activity
 } from "lucide-react";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-
 import { AdminProduct, Color, Pedido } from "@/lib/types";
-import { Package, ShoppingBag, AlertTriangle, Layers } from "lucide-react";
 
 interface DashboardTabProps {
   tenantId: string;
@@ -33,7 +45,9 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
     ticket: 0,
     growth: 5.2,
     topProducts: [] as { id: number; name: string; image: string; amount: number; qty: number }[],
-    lowStock: [] as AdminProduct[]
+    lowStock: [] as AdminProduct[],
+    chartData: [] as { date: string; amount: number }[],
+    statusCounts: { pendente: 0, concluido: 0, outros: 0 }
   });
 
   const fetchStats = async () => {
@@ -94,13 +108,38 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
         // Radar de Estoque (Produtos com estoque total < 5)
         const lowStock = storedProducts.filter(p => (p.stock || 0) < 5).slice(0, 5);
 
+        // Dados do Gráfico (Últimos dias selecionados)
+        const dateMap: Record<string, number> = {};
+        concluded.forEach(p => {
+           const d = new Date(p.data_criacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+           dateMap[d] = (dateMap[d] || 0) + (p.valor_total || 0);
+        });
+
+        const chartData = Object.entries(dateMap)
+           .map(([date, amount]) => ({ date, amount }))
+           .sort((a, b) => {
+              const [da, ma] = a.date.split('/').map(Number);
+              const [db, mb] = b.date.split('/').map(Number);
+              return ma === mb ? da - db : ma - mb;
+           })
+           .slice(-15); // Mostrar últimos 15 dias de dados para clareza
+
+        // Contagem de Status
+        const statusCounts = {
+           pendente: pedidos.filter(p => p.status === 'pendente').length,
+           concluido: pedidos.filter(p => p.status === 'concluido').length,
+           outros: pedidos.filter(p => p.status !== 'pendente' && p.status !== 'concluido').length
+        };
+
         setStats({
           revenue: totalRevenue,
           orders: totalOrders,
           ticket: avgTicket,
           growth: 8.4,
           topProducts,
-          lowStock
+          lowStock,
+          chartData: chartData.length > 0 ? chartData : [{ date: '--/--', amount: 0 }],
+          statusCounts
         });
       }
     } catch (e) {
@@ -112,6 +151,30 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
 
   useEffect(() => {
     fetchStats();
+
+    // Sincronização Alpha Realtime (Etapa 5)
+    if (!IS_SUPABASE_READY || !tenantId) return;
+
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'pedidos',
+          filter: `tenant_id=eq.${tenantId}`
+        },
+        () => {
+          // Atualiza as métricas silenciosamente quando algo muda no banco
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [period, tenantId, storedProducts]);
 
   const formatBRL = (val: number) => 
@@ -191,7 +254,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
              </div>
            ) : (
              <>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-white">
                   <StatsCard 
                      title="Faturamento Bruto" 
                      value={formatBRL(stats.revenue)} 
@@ -220,6 +283,114 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      icon={ArrowUpRight}
                      trend={1.2}
                   />
+               </div>
+
+               {/* Gráfico de Fluxo de Caixa */}
+               <div className="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  <div className="lg:col-span-8 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                     <div className="flex items-center justify-between mb-2">
+                        <div className="space-y-1">
+                           <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground flex items-center gap-3">
+                              <Activity className="w-5 h-5 text-primary" /> Fluxo de Caixa Digital
+                           </h5>
+                           <p className="text-[9px] text-muted-foreground uppercase opacity-60">Histórico de liquidez base dia</p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[20px] font-black text-primary tracking-tighter">{formatBRL(stats.revenue)}</p>
+                           <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Total no Período</p>
+                        </div>
+                     </div>
+                     
+                     <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                           <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <defs>
+                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#23e7e3" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#23e7e3" stopOpacity={0}/>
+                                 </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#23e7e3" opacity={0.05} vertical={false} />
+                              <XAxis 
+                                 dataKey="date" 
+                                 stroke="#23e7e3" 
+                                 opacity={0.3} 
+                                 fontSize={10} 
+                                 tickLine={false} 
+                                 axisLine={false}
+                                 tick={{ fill: '#23e7e3', fontWeight: 'bold' }}
+                              />
+                              <YAxis 
+                                 stroke="#23e7e3" 
+                                 opacity={0.3} 
+                                 fontSize={10} 
+                                 tickLine={false} 
+                                 axisLine={false}
+                                 tickFormatter={(val) => `R$${val}`}
+                              />
+                              <Tooltip 
+                                 contentStyle={{ backgroundColor: '#000', border: '1px solid #23e7e3', borderRadius: '12px' }}
+                                 itemStyle={{ color: '#23e7e3', fontWeight: 'bold', fontSize: '10px' }}
+                                 labelStyle={{ color: '#fff', fontSize: '10px', marginBottom: '4px' }}
+                                 formatter={(value: number) => [formatBRL(value), 'Faturamento']}
+                              />
+                              <Area 
+                                 type="monotone" 
+                                 dataKey="amount" 
+                                 stroke="#23e7e3" 
+                                 strokeWidth={4}
+                                 fillOpacity={1} 
+                                 fill="url(#colorRevenue)" 
+                              />
+                           </AreaChart>
+                        </ResponsiveContainer>
+                     </div>
+                  </div>
+
+                  {/* Distribuição Logística */}
+                  <div className="lg:col-span-4 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl">
+                     <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground flex items-center gap-3 mb-6">
+                         <Layers className="w-5 h-5 text-primary" /> Distribuição Logística
+                     </h5>
+                     <div className="space-y-8">
+                        <div className="space-y-3">
+                           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-muted-foreground">Concluídos</span>
+                              <span className="text-primary">{stats.statusCounts.concluido} de {stats.orders}</span>
+                           </div>
+                           <div className="w-full h-3 bg-primary/10 rounded-full overflow-hidden border border-white/5">
+                              <div 
+                                 className="h-full bg-primary shadow-[0_0_10px_rgba(35,231,227,0.5)] transition-all duration-1000" 
+                                 style={{ width: `${(stats.statusCounts.concluido / (stats.orders || 1)) * 100}%` }}
+                              />
+                           </div>
+                        </div>
+
+                        <div className="space-y-3">
+                           <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-muted-foreground">Pendentes / Em Aberto</span>
+                              <span className="text-amber-400">{stats.statusCounts.pendente}</span>
+                           </div>
+                           <div className="w-full h-3 bg-amber-400/10 rounded-full overflow-hidden border border-white/5">
+                              <div 
+                                 className="h-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)] transition-all duration-1000" 
+                                 style={{ width: `${(stats.statusCounts.pendente / (stats.orders || 1)) * 100}%` }}
+                              />
+                           </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
+                           <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
+                              <p className="text-xl font-black text-foreground">{stats.orders}</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">PEDIDOS TOTAL</p>
+                           </div>
+                           <div className="text-center p-4 bg-background/40 rounded-2xl border border-white/5">
+                              <p className="text-xl font-black text-primary">{((stats.statusCounts.concluido / (stats.orders || 1)) * 100).toFixed(0)}%</p>
+                              <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">EFICIÊNCIA</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
                </div>
 
                {/* Seção de Inteligência Complementar */}
@@ -291,33 +462,8 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                </div>
              </>
            )}
-
-           {/* Placeholder para Gráficos (Etapa 4) */}
-           {!loading && (
-             <div className="mt-14 h-60 rounded-[3rem] border border-dashed border-primary/10 bg-primary/5 flex items-center justify-center overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-                <div className="text-center space-y-4">
-                  <Clock className="w-12 h-12 mx-auto text-primary opacity-20 animate-spin-slow" />
-                  <p className="text-[10px] uppercase font-black tracking-widest opacity-20 text-primary leading-relaxed px-10">
-                    Mapeamento Visual de Fluxo Chronos em desenvolvimento...<br/>
-                    Aguardando ativação da Etapa 4 do protocolo de implantação.
-                  </p>
-                </div>
-             </div>
-           )}
         </CardContent>
       </Card>
-
-      {/* Informativo de Rodapé */}
-      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col md:flex-row items-center gap-8 text-primary shadow-3xl">
-         <div className="hidden md:block">
-            <TrendingUp className="w-10 h-10 opacity-30" />
-         </div>
-         <p className="text-[11px] font-black uppercase tracking-[0.2em] leading-relaxed text-center md:text-left">
-            O painel de relatórios consolida dados brutos em inteligência comercial. 
-            Métricas de faturamento, volume e comportamento de compra são processadas em tempo real para otimizar a tomada de decisão estratégica da loja.
-         </p>
-      </div>
     </div>
   );
 };
