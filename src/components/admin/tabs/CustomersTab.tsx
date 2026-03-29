@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { 
   Pencil, Check, X, MessageCircle, UserPlus, Users, Search, 
-  Trash2, ShoppingCart, TrendingUp, Crown, Gem, Trophy, Award, History, Info
+  Trash2, ShoppingCart, TrendingUp, Gem, Trophy, Award, History, Info, Filter, Star, Phone, ArrowRight, Loader2
 } from "lucide-react";
 import { normalizePhone, formatPhoneMask, parseSupabaseError, formatBRL } from "@/lib/utils";
 import {
@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Select,
@@ -56,6 +55,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     if (!IS_SUPABASE_READY || !tenantId) return;
@@ -74,51 +74,41 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
     void fetchClientes();
   }, [IS_SUPABASE_READY, tenantId]);
 
-  // CRM: Calcular estatísticas do cliente a partir dos pedidos
   const customerStats = useMemo(() => {
     const stats: Record<string, { count: number; spent: number; lastOrder: string | null }> = {};
-    
     pedidos.forEach((p) => {
-      // Registrar apenas pedidos CONCLUÍDOS como venda real
       if (p.status !== 'concluido') return;
-
       const tel = normalizePhone(p.cliente_telefone);
       if (!stats[tel]) {
         stats[tel] = { count: 0, spent: 0, lastOrder: p.data_criacao };
       }
       stats[tel].count += 1;
       stats[tel].spent += Number(p.valor_total);
-      
       if (new Date(p.data_criacao) > new Date(stats[tel].lastOrder || 0)) {
         stats[tel].lastOrder = p.data_criacao;
       }
     });
-
     return stats;
   }, [pedidos]);
 
   const getClientRank = (count: number) => {
-    if (count >= 10) return { label: "Diamante", color: "bg-cyan-500", icon: <Gem className="w-3 h-3 mr-1" /> };
-    if (count >= 5) return { label: "Ouro", color: "bg-yellow-500", icon: <Crown className="w-3 h-3 mr-1" /> };
-    if (count >= 2) return { label: "Prata", color: "bg-slate-400", icon: <Trophy className="w-3 h-3 mr-1" /> };
-    if (count === 1) return { label: "Bronze", color: "bg-orange-600", icon: <Award className="w-3 h-3 mr-1" /> };
-    return { label: "Recém-Chegado", color: "bg-muted", icon: <UserPlus className="w-3 h-3 mr-1" /> };
+    if (count >= 10) return { label: "Diamante", color: "bg-[#00f2ff]/10 text-[#00f2ff] border-[#00f2ff]/20", icon: <Gem className="w-4 h-4" /> };
+    if (count >= 5) return { label: "Ouro", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Star className="w-4 h-4" /> };
+    if (count >= 2) return { label: "Prata", color: "bg-slate-400/10 text-slate-400 border-slate-400/20", icon: <Trophy className="w-4 h-4" /> };
+    if (count === 1) return { label: "Bronze", color: "bg-orange-600/10 text-orange-600 border-orange-600/20", icon: <Award className="w-4 h-4" /> };
+    return { label: "New Entry", color: "bg-muted/10 text-muted-foreground border-muted-foreground/20", icon: <UserPlus className="w-4 h-4" /> };
   };
 
   const clientesFiltered = clientes.filter((c) => {
     const term = clientesQuery.toLowerCase().trim();
     const matchesSearch = term === "" || c.nome?.toLowerCase().includes(term) || String(c.telefone || "").toLowerCase().includes(term);
-    
-    // Filtro por Perfil CRM
     const stats = customerStats[normalizePhone(c.telefone)] || { count: 0, spent: 0 };
     let matchesProfile = true;
-    
     if (filterProfile === "diamante") matchesProfile = stats.count >= 10;
     else if (filterProfile === "ouro") matchesProfile = stats.count >= 5 && stats.count < 10;
     else if (filterProfile === "prata") matchesProfile = stats.count >= 2 && stats.count < 5;
     else if (filterProfile === "bronze") matchesProfile = stats.count === 1;
     else if (filterProfile === "novo") matchesProfile = stats.count === 0;
-
     return matchesSearch && matchesProfile;
   });
 
@@ -127,57 +117,39 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
   const visibleClientes = clientesFiltered.slice(startIndex, startIndex + pageSize);
 
   const handleAddCliente = async () => {
-    const nome = clienteNome.trim();
+    const nome = clienteNome.trim().toUpperCase();
     const telRaw = normalizePhone(clienteTelefone.trim());
-    
     if (!nome || telRaw.length < 10) {
       toast.error("Preencha nome e telefone válidos");
       return;
     }
-
+    setAdding(true);
     try {
-      const { error } = await supabase
-        .from("clientes")
-        .insert({ nome, telefone: telRaw, tenant_id: tenantId });
+      const { error } = await supabase.from("clientes").insert({ nome, telefone: telRaw, tenant_id: tenantId });
       if (error) throw error;
-
-      toast.success("Cliente cadastrado com sucesso!");
+      toast.success("Perfil sincronizado com sucesso!");
       setClienteNome("");
       setClienteTelefone("");
-      
-      // Update local list
-      const fetchClientes = async () => {
-        const { data } = await supabase
-          .from("clientes")
-          .select("*")
-          .eq("tenant_id", tenantId)
-          .order("created_at", { ascending: false });
-        if (data) setClientes(data);
-      };
-      void fetchClientes();
+      const { data } = await supabase.from("clientes").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
+      if (data) setClientes(data);
     } catch (e: any) {
       toast.error("Erro ao cadastrar", { description: parseSupabaseError(e) });
+    } finally {
+      setAdding(false);
     }
   };
 
   const handleSaveEdit = async (id: number) => {
-    const nome = editingClienteNome.trim();
+    const nome = editingClienteNome.trim().toUpperCase();
     const telRaw = normalizePhone(editingClienteTelefone.trim());
-
     if (!nome || telRaw.length < 10) {
       toast.error("Dados inválidos");
       return;
     }
-
     try {
-      const { error } = await supabase
-        .from("clientes")
-        .update({ nome, telefone: telRaw })
-        .eq("id", id)
-        .eq("tenant_id", tenantId);
+      const { error } = await supabase.from("clientes").update({ nome, telefone: telRaw }).eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
-
-      toast.success("Dados atualizados");
+      toast.success("Atualização efetuada");
       setClientes(prev => prev.map(c => c.id === id ? { ...c, nome, telefone: telRaw } : c));
       setEditingClienteId(null);
     } catch (e: any) {
@@ -190,93 +162,99 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
       const { error } = await supabase.from("clientes").delete().eq("id", id).eq("tenant_id", tenantId);
       if (error) throw error;
       setClientes(prev => prev.filter(c => c.id !== id));
-      toast.success("Cliente removido");
+      toast.success("Registro removido");
     } catch (e: any) {
       toast.error("Erro ao remover");
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem]">
-        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <Users className="w-8 h-8" /> Mini CRM Elite
+    <div className="space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-3xl rounded-[3rem]">
+        <CardHeader className="bg-primary/5 py-10 border-b border-primary/10 px-12">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+            <div className="space-y-2">
+              <CardTitle className="text-3xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-6">
+                 <Users className="w-10 h-10" /> PROTOCOLO CRM
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60 mt-1">Gestão inteligente e fidelização de clientes</p>
+              <p className="text-[11px] text-muted-foreground uppercase font-black tracking-[0.3em] opacity-40">Engenharia de retenção e inteligência de mercado</p>
             </div>
-            <div className="flex items-center gap-2 bg-background/40 p-2 rounded-2xl border border-primary/5">
-                <Badge variant="outline" className="h-10 px-4 rounded-xl border-primary/10 text-[10px] font-black uppercase text-muted-foreground flex flex-col items-center justify-center min-w-[80px]">
-                  <span className="opacity-50">Clientes</span>
-                  <span className="text-primary">{clientes.length}</span>
-                </Badge>
-                <Badge variant="outline" className="h-10 px-4 rounded-xl border-primary/10 text-[10px] font-black uppercase text-muted-foreground flex flex-col items-center justify-center min-w-[80px]">
-                  <span className="opacity-50">Pedidos</span>
-                  <span className="text-primary">{pedidos.length}</span>
-                </Badge>
+            <div className="flex items-center gap-4 bg-background/30 p-3 rounded-[2rem] border border-primary/10 shadow-inner">
+                <div className="flex flex-col items-center px-6 border-r border-primary/10">
+                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">DATABASE</span>
+                   <span className="text-xl font-black text-primary">{clientes.length}</span>
+                </div>
+                <div className="flex flex-col items-center px-6">
+                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">CONVERSOES</span>
+                   <span className="text-xl font-black text-green-500">{pedidos.filter(p => p.status === 'concluido').length}</span>
+                </div>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 md:p-10 space-y-12">
-          {/* Quick Add Bar */}
-          <div className="relative group overflow-hidden">
-            <div className="absolute inset-0 bg-primary/10 blur-[50px] opacity-20 -z-10 transition-all group-hover:opacity-40" />
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 bg-muted/10 p-4 md:p-6 rounded-[2rem] border border-primary/5">
-              <div className="md:col-span-5 space-y-1.5">
-                 <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-primary ml-2">Identificação do Cliente</Label>
-                 <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Ex: João da Silva Sauro" className="h-12 bg-background/50 border-primary/10 uppercase font-black text-xs px-5 rounded-xl" />
+        <CardContent className="p-12 space-y-14">
+          <div className="relative group p-1 bg-gradient-to-br from-primary/10 to-transparent rounded-[2.5rem] shadow-3xl overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-muted/10 p-10 rounded-[2.4rem] border border-primary/5 backdrop-blur-3xl relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] -z-10 group-hover:scale-110 transition-transform" />
+              <div className="lg:col-span-5 space-y-4">
+                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Identificação Nominal</Label>
+                 <div className="relative">
+                    <Users className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30" />
+                    <Input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="EX: JOHN CONNOR..." className="h-16 bg-background/50 border-primary/5 uppercase font-black text-sm pl-16 rounded-2xl shadow-2xl focus:ring-primary/20" />
+                 </div>
               </div>
-              <div className="md:col-span-4 space-y-1.5">
-                 <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-primary ml-2">Canal de Contato (WhatsApp)</Label>
-                 <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(75) 90000-0000" className="h-12 bg-background/50 border-primary/10 font-black text-xs px-5 rounded-xl" />
+              <div className="lg:col-span-4 space-y-4">
+                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary ml-2">Canais de Contato</Label>
+                 <div className="relative">
+                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30" />
+                    <Input value={clienteTelefone} onChange={(e) => setClienteTelefone(formatPhoneMask(e.target.value))} placeholder="(00) 00000-0000" className="h-16 bg-background/50 border-primary/5 font-black text-sm pl-16 rounded-2xl shadow-2xl focus:ring-primary/20" />
+                 </div>
               </div>
-              <div className="md:col-span-3 flex items-end">
-                 <Button onClick={handleAddCliente} className="w-full h-12 bg-primary text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                   <UserPlus className="w-4 h-4 mr-2" /> Cadastrar Novo
+              <div className="lg:col-span-3 flex items-end">
+                 <Button onClick={handleAddCliente} disabled={adding} className="w-full h-16 bg-primary text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/30 transition-all hover:scale-[1.05] active:scale-95 flex items-center justify-center gap-4">
+                   {adding ? <Loader2 className="w-6 h-6 animate-spin" /> : <><UserPlus className="w-6 h-6" /> SINCRONIZAR</>}
                  </Button>
               </div>
             </div>
           </div>
 
-          {/* Mini CRM Controls */}
-          <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-                  <div className="relative w-full md:w-80">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+          <div className="space-y-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-10">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-6 flex-1 max-w-4xl">
+                  <div className="relative flex-1 group">
+                      <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
                       <Input
                           value={clientesQuery}
                           onChange={(e) => { setClientesQuery(e.target.value); setCurrentPage(1); }}
-                          placeholder="Buscar por nome ou número..."
-                          className="h-12 bg-muted/20 border-primary/10 rounded-2xl pl-12 pr-6 text-xs font-black uppercase tracking-widest focus:ring-primary/20"
+                          placeholder="FILTRAR POR ID OU NOME MASTER..."
+                          className="h-14 bg-muted/10 border-primary/5 rounded-2xl pl-16 pr-8 text-[11px] font-black uppercase tracking-widest focus:ring-primary/20 shadow-inner group-hover:bg-muted/20 transition-all"
                       />
                   </div>
-                  
                   <Select value={filterProfile} onValueChange={(val) => { setFilterProfile(val); setCurrentPage(1); }}>
-                    <SelectTrigger className="h-12 rounded-2xl border-primary/10 bg-muted/20 w-full md:w-56 font-black uppercase text-[10px] tracking-widest text-primary">
-                      <SelectValue placeholder="Perfil de Fidelidade" />
+                    <SelectTrigger className="h-14 rounded-2xl border-primary/5 bg-muted/10 w-full md:w-64 font-black uppercase text-[10px] tracking-[0.2em] text-primary shadow-inner">
+                      <div className="flex items-center gap-3">
+                        <Filter className="w-4 h-4 opacity-50" />
+                        <SelectValue placeholder="SEGMENTAÇÃO RFM" />
+                      </div>
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-primary/20 rounded-xl">
-                      <SelectItem value="todos" className="text-[10px] font-black uppercase">Todos os Clientes</SelectItem>
-                      <SelectItem value="diamante" className="text-[10px] font-black uppercase">💎 Diamante (10+ pedidos)</SelectItem>
-                      <SelectItem value="ouro" className="text-[10px] font-black uppercase">🥇 Ouro (5+ pedidos)</SelectItem>
-                      <SelectItem value="prata" className="text-[10px] font-black uppercase">🥈 Prata (2+ pedidos)</SelectItem>
-                      <SelectItem value="bronze" className="text-[10px] font-black uppercase">🥉 Bronze (1 pedido)</SelectItem>
-                      <SelectItem value="novo" className="text-[10px] font-black uppercase">❄️ Novos / Potenciais</SelectItem>
+                    <SelectContent className="bg-card border-primary/20 rounded-2xl overflow-hidden p-2">
+                      <SelectItem value="todos" className="text-[10px] font-black uppercase py-4">Status: Todos</SelectItem>
+                      <SelectItem value="diamante" className="text-[10px] font-black uppercase py-4">💎 Elite Diamante (10+)</SelectItem>
+                      <SelectItem value="ouro" className="text-[10px] font-black uppercase py-4">🥇 Patente Ouro (5+)</SelectItem>
+                      <SelectItem value="prata" className="text-[10px] font-black uppercase py-4">🥈 Patente Prata (2+)</SelectItem>
+                      <SelectItem value="bronze" className="text-[10px] font-black uppercase py-4">🥉 Patente Bronze (1)</SelectItem>
+                      <SelectItem value="novo" className="text-[10px] font-black uppercase py-4">❄️ Fresh Entry (0)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div className="flex items-center gap-4 bg-primary/5 px-6 py-3 rounded-2xl border border-primary/10">
-                   <Info className="w-4 h-4 text-primary opacity-60" />
-                   <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Mostrando <span className="text-primary">{clientesFiltered.length}</span> resultados filtrados</p>
+                <div className="hidden xl:flex items-center gap-4 bg-primary/5 px-8 py-4 rounded-3xl border border-primary/10">
+                   <Info className="w-5 h-5 text-primary opacity-40 animate-pulse" />
+                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Mostrando <span className="text-primary">{clientesFiltered.length}</span> perfis segmentados</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
               {visibleClientes.map((c) => {
                 const tel = normalizePhone(c.telefone);
                 const stats = customerStats[tel] || { count: 0, spent: 0, lastOrder: null };
@@ -284,138 +262,142 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                 const clientOrders = pedidos.filter(p => normalizePhone(p.cliente_telefone) === tel);
 
                 return (
-                  <div key={c.id} className="group relative rounded-[2.5rem] border border-primary/10 bg-muted/5 p-8 hover:border-primary shadow-xl shadow-primary/[0.02] hover:shadow-primary/5 transition-all duration-500 overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] -z-10 group-hover:bg-primary/15 transition-all duration-500" />
+                  <div key={c.id} className="group relative rounded-[3.5rem] border border-primary/5 bg-muted/5 p-10 hover:border-primary/40 shadow-2xl transition-all duration-700 overflow-hidden flex flex-col gap-10">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[50px] -z-10 group-hover:bg-primary/10 transition-all duration-700" />
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 blur-[40px] -z-10" />
                     
                     {editingClienteId === c.id ? (
-                      <div className="space-y-6 animate-in zoom-in duration-300">
-                           <div className="space-y-4">
-                               <div className="space-y-1">
-                                 <Label className="text-[9px] font-black uppercase ml-1 opacity-60">Nome</Label>
-                                 <Input value={editingClienteNome} onChange={(e) => setEditingClienteNome(e.target.value)} className="h-11 text-xs font-black uppercase rounded-xl border-primary/20" />
+                      <div className="space-y-8 animate-in zoom-in duration-500 flex-1 flex flex-col justify-center">
+                           <div className="space-y-6">
+                               <div className="space-y-2">
+                                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2 opacity-40">NOME MASTER</Label>
+                                 <Input value={editingClienteNome} onChange={(e) => setEditingClienteNome(e.target.value)} className="h-14 text-sm font-black uppercase rounded-2xl border-primary/10 bg-background/50" />
                                </div>
-                               <div className="space-y-1">
-                                 <Label className="text-[9px] font-black uppercase ml-1 opacity-60">WhatsApp</Label>
-                                 <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} className="h-11 text-xs font-mono rounded-xl border-primary/20" />
+                               <div className="space-y-2">
+                                 <Label className="text-[10px] font-black uppercase tracking-widest ml-2 opacity-40">PROTOCOLO CONTATO</Label>
+                                 <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} className="h-14 text-sm font-black rounded-2xl border-primary/10 bg-background/50" />
                                </div>
                            </div>
-                           <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleSaveEdit(c.id)} className="flex-1 h-11 rounded-xl bg-primary/10 text-primary font-black uppercase text-[10px] hover:bg-primary hover:text-black">
-                                  <Check className="w-4 h-4 mr-2" /> Salvar
+                           <div className="flex gap-4">
+                              <Button variant="ghost" onClick={() => handleSaveEdit(c.id)} className="flex-1 h-14 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest hover:opacity-90 shadow-xl shadow-primary/20">
+                                  Validar
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setEditingClienteId(null)} className="flex-1 h-11 rounded-xl bg-destructive/5 text-destructive font-black uppercase text-[10px] hover:bg-destructive hover:text-white">
-                                  <X className="w-4 h-4 mr-2" /> Cancelar
+                              <Button variant="ghost" onClick={() => setEditingClienteId(null)} className="flex-1 h-14 rounded-2xl bg-destructive/10 text-destructive font-black uppercase text-[10px] tracking-widest hover:bg-destructive hover:text-white">
+                                  Sair
                               </Button>
                            </div>
                       </div>
                     ) : (
                       <>
-                        <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-10 flex-1">
                           <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${rank.color} text-white shadow-xl rotate-3 group-hover:rotate-0`}>
-                                {rank.icon || <Users className="w-7 h-7" />}
+                            <div className="flex items-center gap-6">
+                              <div className={`w-20 h-20 rounded-[2.5rem] border-2 border-white/5 flex items-center justify-center transition-all duration-700 ${rank.color} shadow-2xl group-hover:rotate-[360deg] group-hover:scale-90`}>
+                                {rank.icon || <Users className="w-10 h-10" />}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                  <h4 className="font-black text-base uppercase truncate leading-tight group-hover:text-primary transition-colors">{c.nome}</h4>
-                                  <p className="text-[10px] font-black text-muted-foreground opacity-60 tracking-widest">{formatPhoneMask(c.telefone)}</p>
+                              <div className="flex-1 min-w-0 space-y-1">
+                                  <h4 className="font-black text-lg uppercase truncate leading-none group-hover:text-primary transition-colors tracking-tight">{c.nome}</h4>
+                                  <p className="text-[11px] font-black text-muted-foreground opacity-40 tracking-[0.2em]">{formatPhoneMask(c.telefone)}</p>
                               </div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                               <Badge className={`${rank.color} text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-md shadow-lg shadow-black/20`}>
+                            <div className="flex flex-col items-end gap-2">
+                               <Badge className={`${rank.color} border px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-xl`}>
                                   {rank.label}
-                               </Badge>
+                                </Badge>
                                {stats.count > 0 && (
-                                 <span className="text-[8px] font-black opacity-30 italic">Nível {stats.count}</span>
+                                 <span className="text-[9px] font-black text-primary opacity-40 uppercase tracking-widest italic">{stats.count}X LOYALTY</span>
                                )}
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                             <div className="bg-background/40 p-4 rounded-2xl border border-primary/5 flex flex-col gap-1 items-center justify-center">
-                                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1 opacity-50">Total Compras</span>
-                                <div className="flex items-center gap-2">
-                                   <ShoppingCart className="w-3 h-3 text-primary" />
-                                   <span className="text-sm font-black text-primary">{stats.count}</span>
+                          <div className="grid grid-cols-2 gap-6">
+                             <div className="bg-background/40 p-6 rounded-[2rem] border border-primary/5 flex flex-col gap-2 items-center justify-center shadow-inner group-hover:bg-primary/5 transition-colors">
+                                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] opacity-40">CONVERSOES</span>
+                                <div className="flex items-center gap-3">
+                                   <ShoppingCart className="w-4 h-4 text-primary" />
+                                   <span className="text-xl font-black text-foreground">{stats.count}</span>
                                 </div>
                              </div>
-                             <div className="bg-background/40 p-4 rounded-2xl border border-primary/5 flex flex-col gap-1 items-center justify-center">
-                                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1 opacity-50">Valor Total</span>
-                                <div className="flex items-center gap-2">
-                                   <TrendingUp className="w-3 h-3 text-green-500" />
-                                   <span className="text-sm font-black text-green-500">{formatBRL(stats.spent)}</span>
+                             <div className="bg-background/40 p-6 rounded-[2rem] border border-primary/5 flex flex-col gap-2 items-center justify-center shadow-inner group-hover:bg-primary/5 transition-colors">
+                                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] opacity-40">LTV TOTAL</span>
+                                <div className="flex items-center gap-3">
+                                   <TrendingUp className="w-4 h-4 text-green-500" />
+                                   <span className="text-xl font-black text-green-500">{formatBRL(stats.spent)}</span>
                                 </div>
                              </div>
                           </div>
                           
-                          <div className="flex gap-2">
+                          <div className="flex gap-4">
                             <Sheet>
                               <SheetTrigger asChild>
                                 <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="flex-1 h-12 rounded-2xl border-primary/10 hover:bg-primary/20 hover:text-primary font-black uppercase text-[9px] tracking-widest shadow-inner group-hover:border-primary/30"
+                                  variant="ghost" 
+                                  className="flex-1 h-14 rounded-2xl bg-muted/10 hover:bg-primary hover:text-black border border-primary/5 font-black uppercase text-[10px] tracking-[0.2em] shadow-xl group-hover:border-primary/30 transition-all active:scale-95"
                                 >
-                                  <History className="w-3.5 h-3.5 mr-2" /> Histórico
+                                  <History className="w-4 h-4 mr-3" /> Historico
                                 </Button>
                               </SheetTrigger>
-                              <SheetContent side="right" className="bg-card w-full sm:max-w-xl border-l border-primary/10 p-0 overflow-hidden rounded-l-[3rem] p-0">
-                                <SheetHeader className="bg-primary/5 p-10 border-b border-primary/5">
-                                  <div className="flex items-center gap-6">
-                                     <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center ${rank.color} text-white shadow-2xl`}>
-                                        {rank.icon}
-                                     </div>
-                                     <div>
-                                        <div className="flex items-center gap-3">
-                                          <SheetTitle className="text-2xl font-black uppercase tracking-tight text-primary">{c.nome}</SheetTitle>
-                                          <Badge className={`${rank.color} text-[9px] font-black uppercase`}>{rank.label}</Badge>
-                                        </div>
-                                        <p className="text-xs font-mono text-muted-foreground mt-1 opacity-60">{formatPhoneMask(c.telefone)}</p>
-                                     </div>
-                                  </div>
-                                </SheetHeader>
-                                <div className="p-10 space-y-8 overflow-y-auto h-[calc(100vh-160px)] custom-scrollbar">
-                                   <div className="grid grid-cols-2 gap-4">
-                                      <div className="bg-muted/10 p-6 rounded-[1.5rem] border border-primary/5">
-                                         <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 opacity-50">Volume de Compras</p>
-                                         <p className="text-2xl font-black">{stats.count} <span className="text-xs font-medium text-muted-foreground">pedidos</span></p>
+                              <SheetContent side="right" className="bg-card w-full sm:max-w-xl border-l border-primary/30 p-0 overflow-hidden rounded-l-[4rem] shadow-3xl">
+                                <div className="bg-primary/5 p-16 border-b border-primary/10 relative">
+                                   <div className="absolute top-0 right-0 w-64 h-full bg-primary/10 blur-[80px] -z-10" />
+                                   <div className="flex items-center gap-10">
+                                      <div className={`w-24 h-24 rounded-[2.5rem] border-4 border-white/10 flex items-center justify-center ${rank.color} shadow-3xl transform -rotate-6`}>
+                                         {rank.icon}
                                       </div>
-                                      <div className="bg-muted/10 p-6 rounded-[1.5rem] border border-primary/5">
-                                         <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 opacity-50">Investimento Total</p>
-                                         <p className="text-2xl font-black text-green-500">{formatBRL(stats.spent)}</p>
+                                      <div className="space-y-2">
+                                         <div className="flex items-center gap-6">
+                                           <SheetTitle className="text-3xl font-black uppercase tracking-tighter text-foreground">{c.nome}</SheetTitle>
+                                           <Badge className={`${rank.color} py-2 px-4 rounded-full text-[10px] font-black uppercase border`}>{rank.label}</Badge>
+                                         </div>
+                                         <p className="text-sm font-black text-primary uppercase tracking-[0.4em] opacity-60 italic">{formatPhoneMask(c.telefone)}</p>
+                                      </div>
+                                   </div>
+                                </div>
+                                <div className="p-16 space-y-12 overflow-y-auto h-[calc(100vh-210px)] custom-scrollbar">
+                                   <div className="grid grid-cols-2 gap-8">
+                                      <div className="bg-muted/10 p-8 rounded-[2.5rem] border border-primary/10 flex flex-col items-center justify-center text-center shadow-inner">
+                                         <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 opacity-40">MÉTRICA FREQUÊNCIA</p>
+                                         <p className="text-4xl font-black">{stats.count} <span className="text-xs font-medium text-muted-foreground opacity-40">ORDERS</span></p>
+                                      </div>
+                                      <div className="bg-muted/10 p-8 rounded-[2.5rem] border border-primary/10 flex flex-col items-center justify-center text-center shadow-inner">
+                                         <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 opacity-40">CAPITAL INJETADO</p>
+                                         <p className="text-3xl font-black text-green-500">{formatBRL(stats.spent)}</p>
                                       </div>
                                    </div>
 
-                                   <div className="space-y-4">
-                                      <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                         <ShoppingCart className="w-4 h-4" /> Cronologia de Pedidos
+                                   <div className="space-y-10">
+                                      <h5 className="text-[12px] font-black uppercase tracking-[0.6em] text-primary flex items-center gap-6 opacity-60">
+                                         <ShoppingCart className="w-6 h-6" /> TIMELINE OPERACIONAL
                                       </h5>
                                       {clientOrders.length === 0 ? (
-                                        <div className="py-20 text-center opacity-20 text-xs font-black uppercase italic">Nenhum pedido registrado para este cliente</div>
+                                        <div className="py-32 text-center opacity-20 text-[10px] font-black uppercase tracking-[0.4em] italic">Database Empty: No records found</div>
                                       ) : (
-                                        <div className="space-y-4">
+                                        <div className="space-y-8 relative before:absolute before:inset-0 before:left-0 before:w-px before:bg-primary/10 before:ml-2">
                                           {clientOrders.map((p, idx) => (
-                                            <div key={p.id} className="relative pl-6 border-l border-primary/10 group/item">
-                                               <div className="absolute left-[-5px] top-6 w-2.5 h-2.5 rounded-full bg-primary border-4 border-background" />
-                                               <div className="bg-muted/5 border border-primary/5 rounded-2xl p-6 hover:border-primary/20 transition-all">
-                                                  <div className="flex justify-between items-start mb-4">
+                                            <div key={p.id} className="relative pl-12 group/item">
+                                               <div className="absolute left-0 top-8 w-4 h-4 rounded-full bg-primary border-4 border-background shadow-xl shadow-primary/20 transform -translate-x-2" />
+                                               <div className="bg-muted/5 border border-primary/5 rounded-[2.5rem] p-10 hover:border-primary/40 transition-all shadow-xl hover:bg-muted/10">
+                                                  <div className="flex justify-between items-start mb-8 border-b border-primary/5 pb-6">
                                                      <div>
-                                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">Pedido #{idx + 1}</p>
-                                                        <p className="text-xs font-black opacity-40">{new Date(p.data_criacao).toLocaleDateString()}</p>
+                                                        <p className="text-[11px] font-black text-primary uppercase tracking-[0.4em]">REGISTRO #{idx + 1}</p>
+                                                        <p className="text-xs font-black opacity-30 uppercase tracking-widest mt-1">{new Date(p.data_criacao).toLocaleDateString()}</p>
                                                      </div>
-                                                     <Badge className="text-[8px] font-black uppercase">{p.status}</Badge>
+                                                     <Badge className="text-[9px] font-black uppercase px-4 py-1.5 rounded-full border border-primary/20 bg-background/50 shadow-inner">{p.status}</Badge>
                                                   </div>
-                                                  <div className="space-y-2">
+                                                  <div className="space-y-4">
                                                      {Array.isArray(p.itens) && p.itens.map((item: any, i: number) => (
-                                                       <p key={i} className="text-[11px] font-medium flex justify-between">
-                                                          <span>{item.quantidade}x {item.produto} {item.tamanho ? `(${item.tamanho})` : ""}</span>
-                                                          <span className="font-black text-muted-foreground">{formatBRL(item.preco_unitario * item.quantidade)}</span>
-                                                       </p>
+                                                       <div key={i} className="flex justify-between items-center group/prod">
+                                                          <div className="flex items-center gap-4">
+                                                             <Badge variant="outline" className="h-6 w-10 text-[8px] font-black rounded-lg border-primary/20 flex items-center justify-center">{item.tamanho || 'UNI'}</Badge>
+                                                             <span className="text-[12px] font-black uppercase tracking-tight group-hover/prod:text-primary transition-colors">{item.quantidade}X {item.produto}</span>
+                                                          </div>
+                                                          <span className="font-mono text-[11px] font-black text-muted-foreground opacity-60">{formatBRL(item.preco_unitario * item.quantidade)}</span>
+                                                       </div>
                                                      ))}
                                                   </div>
-                                                  <div className="mt-4 pt-4 border-t border-primary/5 flex justify-between items-center">
-                                                     <span className="text-[10px] font-black uppercase text-muted-foreground">Total do Pedido</span>
-                                                     <span className="text-sm font-black text-primary">{formatBRL(Number(p.valor_total))}</span>
+                                                  <div className="mt-8 pt-6 border-t border-primary/10 flex justify-between items-center">
+                                                     <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-40">TOTAL LIQUIDADO</span>
+                                                     <span className="text-xl font-black text-primary">{formatBRL(Number(p.valor_total))}</span>
                                                   </div>
                                                </div>
                                             </div>
@@ -427,32 +409,36 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                               </SheetContent>
                             </Sheet>
                             
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  className="h-12 w-12 rounded-2xl bg-primary/5 hover:bg-primary/10 hover:text-primary transition-all"
+                                  className="h-14 w-14 rounded-2xl bg-primary/5 hover:bg-primary/20 hover:text-primary transition-all shadow-xl"
                                   onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome); setEditingClienteTelefone(c.telefone); }}
                                 >
-                                  <Pencil className="w-4 h-4" />
+                                  <Pencil className="w-5 h-5" />
                                 </Button>
 
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-destructive/5 hover:bg-destructive hover:text-white transition-all text-destructive">
-                                      <Trash2 className="w-4 h-4" />
+                                    <Button variant="ghost" size="icon" className="h-14 w-14 rounded-2xl bg-destructive/5 hover:bg-destructive hover:text-white transition-all text-destructive shadow-xl">
+                                      <Trash2 className="w-5 h-5" />
                                     </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent className="bg-card border-primary/20 rounded-[3rem] p-10">
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle className="text-2xl font-black uppercase text-destructive tracking-tight">Excluir Perfil?</AlertDialogTitle>
-                                      <AlertDialogDescription className="text-base font-medium opacity-80 py-4">
-                                        Ao remover o cliente <span className="text-primary font-black">"{c.nome}"</span>, você perderá todas as métricas de fidelidade e histórico de contato associados a este número.
+                                  <AlertDialogContent className="bg-card border-primary/40 rounded-[4rem] p-16 shadow-3xl text-center">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-destructive/10 blur-[80px] -z-10" />
+                                    <AlertDialogHeader className="space-y-6">
+                                      <div className="w-24 h-24 rounded-[3rem] bg-destructive/10 flex items-center justify-center text-destructive mx-auto shadow-2xl">
+                                         <Trash2 className="w-10 h-10" />
+                                      </div>
+                                      <AlertDialogTitle className="text-4xl font-black uppercase text-destructive tracking-tighter">Deletar Registro?</AlertDialogTitle>
+                                      <AlertDialogDescription className="text-lg font-medium opacity-60 leading-relaxed px-10">
+                                        Confirmando a exclusão de <span className="text-foreground font-black">"{c.nome}"</span>, todos os dados históricos de fidelidade e score CRM serão permanentemente expurgados.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <AlertDialogFooter className="mt-6 gap-3">
-                                      <AlertDialogCancel className="rounded-[1.5rem] border-primary/10 px-8 h-12 uppercase font-black text-[10px] tracking-widest">Voltar</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleRemoveCliente(c.id)} className="bg-destructive hover:bg-destructive/90 rounded-[1.5rem] px-8 h-12 font-black uppercase text-[10px] tracking-widest text-white">Remover Permanentemente</AlertDialogAction>
+                                    <AlertDialogFooter className="mt-12 gap-6 justify-center">
+                                      <AlertDialogCancel className="rounded-[2rem] border-primary/10 px-12 h-16 uppercase font-black text-[12px] tracking-[0.3em] active:scale-95 transition-all">Abortar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleRemoveCliente(c.id)} className="bg-destructive hover:bg-destructive/90 rounded-[2rem] px-12 h-16 font-black uppercase text-[12px] tracking-[0.3em] text-white shadow-xl shadow-red-500/20 active:scale-95 transition-all">Sim, Excluir</AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
                                 </AlertDialog>
@@ -461,10 +447,10 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
 
                           <Button 
                             variant="ghost" 
-                            className="w-full h-12 rounded-2xl bg-green-500/5 hover:bg-green-500/10 text-green-500 font-black uppercase text-[9px] tracking-[0.2em] border border-green-500/0 hover:border-green-500/20"
+                            className="w-full h-16 rounded-[2rem] bg-green-500/5 hover:bg-green-500 text-green-500 hover:text-black font-black uppercase text-[11px] tracking-[0.3em] border border-green-500/10 hover:border-green-500/0 shadow-xl transition-all active:scale-95"
                             onClick={() => window.open(`https://wa.me/55${normalizePhone(c.telefone)}`, '_blank')}
                           >
-                            <MessageCircle className="w-4 h-4 mr-2" /> Iniciar Remarketing
+                            <MessageCircle className="w-6 h-6 mr-3" /> Firing Remarketing
                           </Button>
                         </div>
                       </>
@@ -475,41 +461,53 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
             </div>
 
             {visibleClientes.length === 0 && (
-                <div className="py-32 flex flex-col items-center justify-center text-center space-y-4 opacity-20">
-                   <Users className="w-16 h-16" />
-                   <p className="text-xs font-black uppercase tracking-[0.3em]">Nenhum cliente encontrado neste perfil.</p>
+                <div className="py-48 flex flex-col items-center justify-center text-center space-y-8 opacity-20">
+                   <Users className="w-20 h-20 opacity-30 animate-pulse" />
+                   <div className="space-y-2">
+                      <p className="text-xs font-black uppercase tracking-[0.6em]">Nenhum perfil detectado</p>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.4em]">Sincronize novos clientes para iniciar o CRM</p>
+                   </div>
                 </div>
             )}
 
-            {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 pt-16">
+                <div className="flex items-center justify-center gap-6 pt-20">
                     <Button 
                       variant="outline" 
-                      size="sm" 
                       disabled={currentPage <= 1} 
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-                      className="rounded-2xl px-6 h-12 border-primary/10 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10"
+                      className="rounded-2xl px-10 h-14 border-primary/10 font-black uppercase text-[11px] tracking-widest hover:bg-primary/20 hover:text-primary shadow-xl transition-all"
                     >
                       Anterior
                     </Button>
-                    <div className="px-8 h-12 flex items-center justify-center bg-primary/10 rounded-2xl text-primary font-black text-xs shadow-inner">
+                    <div className="px-12 h-14 flex items-center justify-center bg-primary/10 rounded-2xl text-primary font-black text-sm shadow-inner border border-primary/5">
                         {currentPage} / {totalPages}
                     </div>
                     <Button 
                       variant="outline" 
-                      size="sm" 
                       disabled={currentPage >= totalPages} 
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-                      className="rounded-2xl px-6 h-12 border-primary/10 font-black uppercase text-[10px] tracking-widest hover:bg-primary/10"
+                      className="rounded-2xl px-10 h-14 border-primary/10 font-black uppercase text-[11px] tracking-widest hover:bg-primary/20 hover:text-primary shadow-xl transition-all"
                     >
-                      Próxima
+                      Proxima
                     </Button>
                 </div>
             )}
           </div>
         </CardContent>
       </Card>
+      
+      <div className="p-12 rounded-[3rem] bg-primary/5 border border-primary/10 flex flex-col md:flex-row items-center gap-12 text-primary shadow-3xl">
+         <div className="hidden md:block">
+            <TrendingUp className="w-14 h-14 opacity-30 animate-bounce-subtle" />
+         </div>
+         <div className="space-y-3 text-center md:text-left flex-1">
+            <h5 className="text-[14px] font-black uppercase tracking-[0.4em] leading-relaxed">Ecossistema de Fidelização</h5>
+            <p className="text-[11px] font-medium uppercase tracking-[0.15em] leading-relaxed opacity-60">
+                O seu Mini CRM analisa automaticamente o comportamento de compra. Diamantes são seus melhores clientes (LTV alto), enquanto novos perfis precisam de cadências de remarketing agressivas. Utilize o botão de WhatsApp para disparar campanhas personalizadas baseadas no histórico de cada um.
+            </p>
+         </div>
+      </div>
     </div>
   );
 };

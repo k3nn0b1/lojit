@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, X, Loader2, PlusCircle, Tag } from "lucide-react";
+import { Pencil, X, Loader2, PlusCircle, Tag, Search, Trash2 } from "lucide-react";
 import { parseSupabaseError } from "@/lib/utils";
 import {
   Dialog,
@@ -38,6 +38,9 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
   const [catEditValue, setCatEditValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [catToRemove, setCatToRemove] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredCategories = categories.filter(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleAddCategory = async () => {
     const raw = newCategory.trim().toUpperCase();
@@ -109,102 +112,148 @@ const CategoriesTab = ({ tenantId, categories, setCategories, IS_SUPABASE_READY 
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
-        <CardHeader className="bg-primary/5 py-6 border-b border-primary/10 px-8">
-          <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-3">
-            <Tag className="w-6 h-6" /> Categorias de Produtos
-          </CardTitle>
-          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Organize seu catálogo por tipos de mercadoria</p>
+    <div className="space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-3xl rounded-[2.5rem]">
+        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
+                <Tag className="w-8 h-8" /> Categorias Master
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Arquitetura de taxonomia do catálogo comercial</p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="p-8 space-y-8">
-          <div className="flex gap-4 max-w-xl mx-auto bg-muted/20 p-2 rounded-2xl border border-primary/10 shadow-inner">
-            <Input
-              placeholder="Ex: CAMISA TAILANDESA, CHAIR, RETRÔ..."
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              className="h-12 bg-transparent border-none shadow-none text-base font-black uppercase px-6 focus-visible:ring-0"
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-            />
-            <Button
-              onClick={handleAddCategory}
-              disabled={saving || !newCategory.trim()}
-              className="h-12 px-8 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" /> Salvar
-            </Button>
-          </div>
 
-          <div className="flex flex-col gap-3">
-            {categories.map((c) => (
-              <div key={c} className="group relative border border-primary/10 rounded-2xl p-4 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex items-center gap-4">
-                <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary group-hover:text-black transition-all">
-                    <Tag className="w-5 h-5" />
-                </div>
-                <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground flex-1 truncate">{c}</h4>
-                <div className="flex gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-10 w-10 p-0 rounded-full hover:bg-primary/10 hover:text-primary">
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setCatToRemove(c)} className="h-10 w-10 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive">
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <Dialog open={!!editingCat} onOpenChange={(open) => !open && setEditingCat(null)}>
-            <DialogContent className="bg-card border-primary/30 rounded-[2.5rem] p-10 max-w-md border shadow-2xl">
-              <DialogHeader className="mb-6">
-                <DialogTitle className="text-2xl font-black uppercase tracking-widest text-primary">Editar Categoria</DialogTitle>
-                <DialogDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-60">Altere o nome global desta categoria</DialogDescription>
-              </DialogHeader>
-              <div className="py-6">
-                <Input
-                  value={catEditValue}
-                  onChange={(e) => setCatEditValue(e.target.value)}
-                  placeholder="EX: RETRÔ..."
-                  className="h-16 text-xl font-black text-center uppercase border-primary/20 focus:ring-primary/20 bg-muted/20 rounded-2xl shadow-xl"
-                  autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory()}
-                />
-              </div>
-              <DialogFooter className="gap-3">
-                <Button variant="ghost" onClick={() => setEditingCat(null)} className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]">Abandonar</Button>
-                <Button onClick={handleUpdateCategory} disabled={saving} className="flex-[2] h-14 font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-black rounded-2xl shadow-xl shadow-primary/20">
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirmar Alteração"}
+        <CardContent className="p-10 space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            <div className="lg:col-span-8 space-y-3">
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Identificador de Categoria (Marketing Name)</Label>
+               <div className="relative group">
+                  <Tag className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary opacity-30 group-hover:opacity-100 transition-opacity" />
+                  <Input
+                    placeholder="EX: CAMISAS RETRÔ, ACESSÓRIOS, LOTE VIP..."
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-base pl-16 pr-8 shadow-2xl focus:ring-primary/20"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                  />
+               </div>
+            </div>
+            <div className="lg:col-span-4">
+               <Button
+                  onClick={handleAddCategory}
+                  disabled={saving || !newCategory.trim()}
+                  className="w-full h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> Cadastrar Categoria</>}
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </div>
+          </div>
 
-          <AlertDialog open={!!catToRemove} onOpenChange={(open) => !open && setCatToRemove(null)}>
-            <AlertDialogContent className="bg-card border-primary/30 rounded-[2.5rem] p-10 border shadow-2xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-2xl font-black uppercase tracking-widest text-destructive">Confirmar Exclusão</AlertDialogTitle>
-                <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
-                  Deseja remover a categoria <span className="text-foreground font-black">"{catToRemove}"</span>? 
-                  Produtos vinculados a ela ficarão sem categoria definida.
+          <div className="pt-10 border-t border-primary/5 space-y-8">
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Inventário de Taxonomias ({categories.length})</h4>
+                <div className="relative w-full md:w-80">
+                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
+                   <Input 
+                      placeholder="PESQUISAR..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-12 bg-background/50 border-primary/5 pl-12 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-inner"
+                   />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCategories.map((c) => (
+                  <div key={c} className="group relative rounded-[2rem] border border-primary/5 p-6 bg-muted/5 hover:border-primary/40 hover:bg-muted/10 transition-all shadow-xl flex items-center justify-between overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
+                    <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform">
+                            <Tag className="w-6 h-6" />
+                        </div>
+                        <span className="font-black text-xs uppercase tracking-widest text-foreground truncate max-w-[150px]">{c}</span>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingCat(c); setCatEditValue(c); }} className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl">
+                            <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setCatToRemove(c)} className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredCategories.length === 0 && (
+                   <div className="col-span-full py-20 text-center opacity-20">
+                      <Tag className="w-16 h-16 mx-auto mb-6 opacity-30" />
+                      <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhum registro encontrado</p>
+                   </div>
+                )}
+             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!editingCat} onOpenChange={(open) => !open && setEditingCat(null)}>
+        <DialogContent className="bg-card border-primary/30 rounded-[3rem] p-12 max-w-md border shadow-3xl overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[50px] -z-10" />
+          <DialogHeader className="mb-10 text-center">
+            <DialogTitle className="text-3xl font-black uppercase tracking-tight text-primary">Editar Taxonomia</DialogTitle>
+            <DialogDescription className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground opacity-40 pt-4">Protocolo de Redefinição Global</DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2 mb-4 block text-center">Nova Etiqueta de Categoria</Label>
+            <Input
+              value={catEditValue}
+              onChange={(e) => setCatEditValue(e.target.value)}
+              placeholder="EX: NOVO NOME..."
+              className="h-16 text-2xl font-black text-center uppercase border-primary/20 focus:ring-primary/20 bg-background/50 rounded-2xl shadow-2xl"
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory()}
+            />
+          </div>
+          <DialogFooter className="mt-10 gap-4">
+            <Button variant="ghost" onClick={() => setEditingCat(null)} className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]">Abandonar</Button>
+            <Button onClick={handleUpdateCategory} disabled={saving} className="flex-[2] h-14 font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-black rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95">
+              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Validar Mudança"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!catToRemove} onOpenChange={(open) => !open && setCatToRemove(null)}>
+        <AlertDialogContent className="bg-card border-primary/30 rounded-[3rem] p-12 border shadow-3xl text-center">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-destructive/10 blur-[50px] -z-10" />
+            <AlertDialogHeader className="mb-8">
+                <AlertDialogTitle className="text-3xl font-black uppercase tracking-tight text-destructive flex flex-col items-center gap-6">
+                   <div className="w-20 h-20 rounded-[2rem] bg-destructive/10 flex items-center justify-center text-destructive">
+                      <Trash2 className="w-10 h-10" />
+                   </div>
+                   EXTINGUIR CATEGORIA
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm font-medium text-muted-foreground leading-relaxed">
+                   Você está prestes a remover <span className="text-foreground font-black">"{catToRemove}"</span>. 
+                   Produtos vinculados perderão sua classificação sistemática.
                 </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="mt-8 gap-3">
-                <AlertDialogCancel disabled={saving} className="flex-1 h-14 font-black uppercase tracking-widest text-[10px] rounded-2xl border-primary/10">Voltar</AlertDialogCancel>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-10 gap-4 justify-center">
+                <AlertDialogCancel disabled={saving} className="flex-1 h-14 font-black uppercase tracking-widest text-[10px] rounded-2xl border-primary/10 transition-all">Abortar Missão</AlertDialogCancel>
                 <AlertDialogAction 
                   disabled={saving}
                   onClick={(e) => {
                     e.preventDefault();
                     if (catToRemove) handleRemoveCategory(catToRemove);
                   }}
-                  className="flex-[2] h-14 bg-destructive hover:bg-destructive/90 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-destructive/20"
+                  className="flex-[2] h-14 bg-destructive hover:bg-destructive/90 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-destructive/20 transition-all active:scale-95"
                 >
-                  {saving ? "Processando..." : "Sim, Excluir"}
+                  {saving ? "PROCESSANDO..." : "SIM, EXCLUIR REGISTRO"}
                 </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardContent>
-      </Card>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { Pencil, Check, X, Trash2, Palette, PlusCircle } from "lucide-react";
+import { Pencil, Check, X, Trash2, Palette, PlusCircle, Search, Droplets, Info } from "lucide-react";
 import { parseSupabaseError } from "@/lib/utils";
 import { Color } from "@/lib/types";
+import { Label } from "@/components/ui/label";
 
 interface ColorsTabProps {
   tenantId: string;
@@ -22,9 +23,15 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
   const [editName, setEditName] = useState("");
   const [editHex, setEditHex] = useState("");
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredColors = globalColors.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    c.hex.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleAddColor = async () => {
-    const name = newColorName.trim();
+    const name = newColorName.trim().toUpperCase();
     if (!name || !newColorHex) {
       toast.error("Preencha o nome e a cor");
       return;
@@ -66,13 +73,13 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
     try {
       const { error } = await supabase
         .from("colors")
-        .update({ name: editName, hex: editHex })
+        .update({ name: editName.toUpperCase(), hex: editHex })
         .eq("id", color.id)
         .eq("tenant_id", tenantId);
 
       if (error) throw error;
 
-      setGlobalColors(prev => prev.map(c => c.id === color.id ? { ...c, name: editName, hex: editHex } : c));
+      setGlobalColors(prev => prev.map(c => c.id === color.id ? { ...c, name: editName.toUpperCase(), hex: editHex } : c));
       setEditingId(null);
       toast.success("Cor atualizada com sucesso");
     } catch (e: any) {
@@ -102,94 +109,144 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-card/30 backdrop-blur-sm border-primary/10 overflow-hidden shadow-2xl">
-        <CardHeader className="bg-primary/5 py-6 border-b border-primary/10 px-8">
-          <CardTitle className="text-xl font-black uppercase tracking-widest text-primary flex items-center gap-3">
-            <Palette className="w-6 h-6" /> Paleta de Cores
-          </CardTitle>
-          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Gerencie as variações cromáticas oficiais dos modelos</p>
-        </CardHeader>
-        <CardContent className="p-8 space-y-10">
-          <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto bg-muted/20 p-4 rounded-3xl border border-primary/10 shadow-inner">
-            <div className="flex-1 flex items-center gap-4">
-                <div className="relative">
-                    <Input
-                        type="color"
-                        className="w-12 h-12 p-1.5 bg-background border-primary/20 rounded-xl cursor-pointer shadow-lg"
-                        value={newColorHex}
-                        onChange={(e) => setNewColorHex(e.target.value)}
-                    />
-                </div>
-                <Input
-                    placeholder="Nome da cor..."
-                    value={newColorName}
-                    onChange={(e) => setNewColorName(e.target.value)}
-                    className="h-12 bg-transparent border-none shadow-none text-base font-black uppercase px-2 focus-visible:ring-0"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddColor()}
-                />
+    <div className="space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-3xl rounded-[2.5rem]">
+        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
+                <Droplets className="w-8 h-8" /> Paleta de SKUS
+              </CardTitle>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Protocolação cromática oficial dos lotes comerciais</p>
             </div>
-            <Button 
-                onClick={handleAddColor} 
-                disabled={saving || !newColorName.trim()}
-                className="h-12 px-8 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-primary/20"
-            >
-                <PlusCircle className="mr-2 h-4 w-4" /> Cadastrar
-            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-10 space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end p-8 rounded-[2rem] bg-muted/10 border border-primary/5 shadow-inner">
+            <div className="lg:col-span-2 space-y-3">
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">HEX MASTER</Label>
+               <div className="relative group">
+                  <Input
+                    type="color"
+                    className="h-16 w-full p-2 bg-background border-none rounded-2xl cursor-pointer shadow-2xl hover:scale-105 transition-transform"
+                    value={newColorHex}
+                    onChange={(e) => setNewColorHex(e.target.value)}
+                  />
+               </div>
+            </div>
+            <div className="lg:col-span-7 space-y-3">
+               <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Label Cromática (EX: AZUL MARINHO)</Label>
+               <Input
+                  placeholder="DIGITE O NOME DA COR..."
+                  value={newColorName}
+                  onChange={(e) => setNewColorName(e.target.value)}
+                  className="h-16 bg-background/50 border-primary/5 rounded-2xl font-black uppercase text-base px-8 shadow-2xl focus:ring-primary/20"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddColor()}
+               />
+            </div>
+            <div className="lg:col-span-3">
+               <Button
+                  onClick={handleAddColor}
+                  disabled={saving || !newColorName.trim()}
+                  className="w-full h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><PlusCircle className="w-6 h-6" /> ACOPLAR COR</>}
+                </Button>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {globalColors.map((c) => (
-              <div key={c.id} className="group relative rounded-2xl border border-primary/10 p-4 bg-muted/10 hover:border-primary/40 hover:bg-muted/20 transition-all shadow-primary/5 flex items-center gap-4">
-                {editingId === c.id ? (
-                  <div className="flex flex-1 items-center gap-4">
-                    <div className="flex items-center gap-3 bg-background/50 p-2 rounded-2xl border border-primary/10 flex-1">
-                        <Input type="color" className="w-10 h-10 p-1 bg-transparent border-none shrink-0" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
-                        <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-9 bg-transparent border-none text-[10px] font-black uppercase flex-1" />
+          <div className="pt-10 border-t border-primary/5 space-y-8">
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <h4 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary/40">Inventário de Matizes ({globalColors.length})</h4>
+                <div className="relative w-full md:w-80">
+                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
+                   <Input 
+                      placeholder="FILTRAR PALETA..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-12 bg-background/50 border-primary/5 pl-12 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-inner"
+                   />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {filteredColors.map((c) => {
+                  const isEditing = editingId === c.id;
+                  return (
+                    <div key={c.id} className={`group relative rounded-[2.5rem] border transition-all p-6 flex flex-col items-center gap-4 text-center overflow-hidden shadow-2xl ${isEditing ? 'bg-primary/10 border-primary scale-[1.05] z-10' : 'bg-muted/5 border-primary/5 hover:border-primary/20 hover:bg-muted/10'}`}>
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl -z-10 group-hover:scale-150 transition-transform" />
+                      
+                      {isEditing ? (
+                        <div className="space-y-6 w-full animate-in fade-in duration-300">
+                           <div className="flex items-center gap-3 bg-background/40 p-2 rounded-2xl border border-primary/10">
+                              <Input type="color" className="w-12 h-12 p-0 bg-transparent border-none shrink-0 cursor-pointer" value={editHex} onChange={(e) => setEditHex(e.target.value)} />
+                              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-12 bg-transparent border-none text-[10px] font-black uppercase tracking-widest flex-1 px-2" />
+                           </div>
+                           <div className="flex gap-2 justify-center">
+                              <Button variant="ghost" size="icon" onClick={() => handleUpdateColor(c)} className="h-12 w-12 rounded-2xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black shadow-xl shadow-green-500/10 transition-all">
+                                 <Check className="h-6 w-6" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => setEditingId(null)} className="h-12 w-12 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive hover:text-white shadow-xl shadow-destructive/10 transition-all">
+                                 <X className="h-6 w-6" />
+                              </Button>
+                           </div>
+                        </div>
+                      ) : (
+                        <>
+                           <div className="relative group/color">
+                              <div className="w-20 h-20 rounded-[2rem] border-4 border-white/5 shadow-2xl transition-all group-hover/color:rotate-12 group-hover/color:scale-110" style={{ backgroundColor: c.hex }} />
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/color:opacity-100 transition-opacity pointer-events-none">
+                                 <Droplets className="w-6 h-6 text-white drop-shadow-lg" />
+                              </div>
+                           </div>
+                           <div className="space-y-1 flex-1 min-w-0">
+                              <h5 className="font-black text-xs uppercase tracking-[0.2em] text-foreground truncate">{c.name}</h5>
+                              <code className="text-[9px] font-mono text-primary font-black opacity-60 uppercase">{c.hex}</code>
+                           </div>
+                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0 pt-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => { setEditingId(c.id!); setEditName(c.name); setEditHex(c.hex); }}
+                                className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleRemoveColor(c.id!)}
+                                className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                           </div>
+                        </>
+                      )}
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleUpdateColor(c)} className="h-10 w-10 p-0 rounded-full hover:bg-green-500/10 hover:text-green-500">
-                          <Check className="h-5 w-5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setEditingId(null)} className="h-10 w-10 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive">
-                          <X className="h-5 w-5" />
-                        </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-xl border border-white/10 shadow-lg" style={{ backgroundColor: c.hex }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-foreground truncate">{c.name}</h4>
-                        <p className="text-[10px] font-mono text-muted-foreground uppercase">{c.hex}</p>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => { setEditingId(c.id!); setEditName(c.name); setEditHex(c.hex); }}
-                          className="h-10 w-10 p-0 rounded-full hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10 p-0 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => handleRemoveColor(c.id!)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                  </>
+                  );
+                })}
+                
+                {filteredColors.length === 0 && (
+                   <div className="col-span-full py-20 text-center opacity-20">
+                      <Droplets className="w-16 h-16 mx-auto mb-6 opacity-30 animate-pulse" />
+                      <p className="font-black uppercase tracking-[0.3em] text-[10px]">Nenhum matiz registrado nesta visualização</p>
+                   </div>
                 )}
-              </div>
-            ))}
+             </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/10 flex flex-col md:flex-row items-center gap-8 text-primary shadow-3xl">
+         <div className="hidden md:block">
+            <Info className="w-10 h-10 opacity-30" />
+         </div>
+         <p className="text-[11px] font-black uppercase tracking-[0.2em] leading-relaxed text-center md:text-left">
+            Estas cores formam o Atlas Cromático Global do seu painel. Toda cor cadastrada aqui fica imediatamente disponível para seleção rápida em qualquer ficha técnica de produto, permitindo filtros harmônicos no layout comercial.
+         </p>
+      </div>
     </div>
   );
 };
