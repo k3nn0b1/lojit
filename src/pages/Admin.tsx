@@ -210,15 +210,17 @@ const Admin = () => {
 
           <TabsContent value="catalogo" className="mt-0 space-y-6">
             <Tabs value={activeCatalogTab} onValueChange={setActiveCatalogTab} className="w-full">
-              <div className="flex justify-start md:justify-center mb-6 overflow-hidden">
-                 <TabsList className="bg-muted/10 p-1.5 rounded-xl border border-primary/5 h-auto overflow-x-auto lg:overflow-x-visible items-center flex-nowrap py-1 px-2 gap-1 scrollbar-hide">
-                    <TabsTrigger value="products" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Produtos</TabsTrigger>
-                    <TabsTrigger value="stock" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Estoque</TabsTrigger>
-                    <TabsTrigger value="sizes" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Tamanhos</TabsTrigger>
-                    <TabsTrigger value="categories" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Categorias</TabsTrigger>
-                    <TabsTrigger value="colors" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Cores</TabsTrigger>
-                    <TabsTrigger value="images" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Imagens</TabsTrigger>
-                 </TabsList>
+              <div className="w-full relative mb-6">
+                 <div className="w-full overflow-x-auto scrollbar-hide pb-2 flex lg:justify-center px-1">
+                    <TabsList className="bg-muted/10 p-1.5 rounded-xl border border-primary/5 h-auto flex flex-nowrap !justify-start items-center py-1 px-2 gap-1 min-w-max">
+                       <TabsTrigger value="products" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Produtos</TabsTrigger>
+                       <TabsTrigger value="stock" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Estoque</TabsTrigger>
+                       <TabsTrigger value="sizes" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Tamanhos</TabsTrigger>
+                       <TabsTrigger value="categories" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Categorias</TabsTrigger>
+                       <TabsTrigger value="colors" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Cores</TabsTrigger>
+                       <TabsTrigger value="images" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Imagens</TabsTrigger>
+                    </TabsList>
+                 </div>
               </div>
 
               <TabsContent value="products">
