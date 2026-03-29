@@ -197,9 +197,9 @@ const ColorsTab = ({ tenantId, globalColors, setGlobalColors, IS_SUPABASE_READY 
                            <div className="relative shrink-0">
                                <div className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-2xl border border-white/10 shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: c.hex }} />
                            </div>
-                           <div className="flex-1 min-w-0">
-                               <h5 className="font-black text-[10px] md:text-xs uppercase tracking-widest text-foreground truncate">{c.name}</h5>
-                               <code className="text-[8px] md:text-[9px] font-mono text-primary font-black opacity-60 uppercase">{c.hex}</code>
+                           <div className="flex flex-col flex-1 min-w-0">
+                               <span className="font-black text-[11px] md:text-sm uppercase tracking-widest text-white block mb-0.5">{c.name}</span>
+                               <code className="text-[9px] md:text-[10px] font-mono text-primary font-black opacity-80 uppercase">{c.hex}</code>
                            </div>
                            <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-all shrink-0">
                                <Button 
