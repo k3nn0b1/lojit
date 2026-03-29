@@ -299,8 +299,8 @@ const ProductsTab = ({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-10 space-y-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <CardContent className="p-6 md:p-10 space-y-8 md:space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
             <div className="lg:col-span-7 space-y-8">
               <div className="space-y-3">
                 <Label className="text-[9px] font-black uppercase tracking-[0.2em] text-primary ml-2">Identificação Principal</Label>
@@ -381,9 +381,9 @@ const ProductsTab = ({
                   <p className="text-[8px] font-black text-muted-foreground opacity-40 uppercase tracking-widest text-center">Tamanho recomendado: 1000x1000px (Máx 5MB)</p>
                </div>
 
-               {/* Variantes e Estoque Rápido */}
-               <div className="p-8 rounded-[2rem] bg-muted/10 border border-primary/5 space-y-6">
-                   <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 text-center">Variantes & Inventário</h5>
+                {/* Variantes e Estoque Rápido */}
+                <div className="p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-muted/10 border border-primary/5 space-y-6">
+                    <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 text-center">Variantes & Inventário</h5>
                    
                    <div className="space-y-4">
                       <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/50 ml-1">Grade de Tamanhos</Label>
@@ -431,11 +431,11 @@ const ProductsTab = ({
                          </div>
                       </div>
                    )}
-               </div>
-            </div>
+                </div>
+             </div>
           </div>
 
-          <div className="pt-10 border-t border-primary/10 flex flex-col sm:flex-row gap-4">
+          <div className="pt-8 md:pt-10 border-t border-primary/10 flex flex-col sm:flex-row gap-3 md:gap-4">
             <Button 
               className="flex-1 h-16 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 text-xs" 
               onClick={handleSubmit} 
@@ -467,8 +467,8 @@ const ProductsTab = ({
       </Card>
 
       {/* Grid: Lista de Produtos Premium */}
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2.5rem] overflow-hidden">
-        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="bg-primary/5 py-6 md:py-8 border-b border-primary/10 px-6 md:px-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
@@ -494,12 +494,12 @@ const ProductsTab = ({
         </CardHeader>
         <CardContent className="p-0">
           {/* Layout de Cartões para Mobile */}
-          <div className="grid grid-cols-1 gap-6 md:hidden p-6 sm:p-10">
+          <div className="grid grid-cols-1 gap-4 md:hidden p-4">
             {visibleProducts.map((p) => (
               <div 
                 key={p.id} 
                 onClick={() => setActiveTab("stock")}
-                className="p-8 rounded-[2.5rem] bg-muted/5 border border-primary/10 space-y-6 relative overflow-hidden active:scale-[0.98] transition-all hover:border-primary/40 shadow-xl"
+                className="p-6 rounded-[2rem] bg-muted/5 border border-primary/10 space-y-5 relative overflow-hidden active:scale-[0.98] transition-all hover:border-primary/40 shadow-xl"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-[30px] -z-10" />
                 <div className="flex items-start gap-6">

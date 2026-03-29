@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { formatBRL } from "@/lib/utils";
+import { formatBRL, formatPhoneMask } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { supabase } from "@/lib/supabase";
 import { BairroFrete, FormaPagamento } from "@/lib/types";
@@ -133,15 +133,7 @@ const Cart = ({ isOpen, onClose, items, onUpdateQuantity, onRemoveItem, onChecko
     b.nome.toLowerCase().includes(bairroSearchQuery.toLowerCase())
   );
 
-  const formatPhoneMask = (value: string) => {
-    const digits = value.replace(/\D+/g, "").slice(0, 11);
-    const part1 = digits.slice(0, 2);
-    const part2 = digits.slice(2, 7);
-    const part3 = digits.slice(7, 11);
-    if (digits.length <= 2) return part1 ? `(${part1}` : "";
-    if (digits.length <= 7) return `(${part1}) ${part2}`;
-    return `(${part1}) ${part2}-${part3}`;
-  };
+
 
   const nextStep = () => {
     if (currentStep === 1) {

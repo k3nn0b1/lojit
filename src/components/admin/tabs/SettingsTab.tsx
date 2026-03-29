@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { hexToHSL, hslStringToHex } from "@/lib/colors";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { formatPhoneMask } from "@/lib/utils";
 import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save, CreditCard, Trash2, Plus, Search, Wallet, MapPin, Truck, ExternalLink, TrendingUp } from "lucide-react";
 import { WhatsappIcon } from "../../icons/WhatsappIcon";
 import { YoutubeIcon } from "../../icons/YoutubeIcon";
@@ -95,11 +96,11 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
 
   return (
     <div className="space-y-10">
-       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-primary/5">
-          <div className="space-y-1">
-            <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-primary">Protocolos de Caixa</h3>
-            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Configuração de canais de liquidação financeira</p>
-          </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-primary/5">
+           <div className="space-y-1">
+             <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-primary leading-tight">Meios de Pagamento</h3>
+             <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Configure as opções disponíveis no checkout</p>
+           </div>
           
           <div className="relative w-full md:w-80">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
@@ -381,12 +382,21 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                         </div>
                         <div className="space-y-2">
                            <Label className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest ml-1">Protocolo de Link</Label>
-                           <Input 
-                                value={formData[item.field]} 
-                                onChange={e => setFormData({...formData, [item.field]: e.target.value})} 
-                                placeholder={item.placeholder}
-                                className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-2xl focus:ring-primary/20"
-                            />
+                           {item.field === 'whatsapp' ? (
+                             <Input 
+                                  value={formatPhoneMask(formData[item.field] || "")} 
+                                  onChange={e => setFormData({...formData, [item.field]: e.target.value.replace(/\D/g, "")})} 
+                                  placeholder="(00) 00000-0000"
+                                  className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-2xl focus:ring-primary/20"
+                              />
+                           ) : (
+                             <Input 
+                                  value={formData[item.field]} 
+                                  onChange={e => setFormData({...formData, [item.field]: e.target.value})} 
+                                  placeholder={item.placeholder}
+                                  className="h-14 bg-background border-none rounded-2xl font-black text-xs px-6 shadow-2xl focus:ring-primary/20"
+                              />
+                           )}
                         </div>
                     </div>
                   ))}

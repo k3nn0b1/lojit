@@ -171,34 +171,33 @@ const OrdersTab = ({
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem]">
-        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <ShoppingBag className="w-8 h-8" /> Gestão de Pedidos
-              </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Controle operacional e fluxo de caixa em tempo real</p>
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
+        <CardContent className="p-4 md:p-10">
+          <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-1">
+                <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
+                  <ShoppingBag className="w-8 h-8" /> Gestão de Pedidos
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Controle operacional e fluxo de caixa em tempo real</p>
+              </div>
+              <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="h-10 px-4 rounded-xl border-primary/10 text-[10px] font-black uppercase text-muted-foreground flex flex-col items-center justify-center min-w-[100px] bg-background/40">
+                    <span className="opacity-50">Total</span>
+                    <span className="text-primary">{pedidos.length}</span>
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    onClick={fetchPedidos}
+                    disabled={refreshingOrders}
+                    className={`h-12 w-12 rounded-2xl bg-primary/5 border border-primary/10 hover:bg-primary/20 transition-all ${refreshingOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <RefreshCw className={`w-5 h-5 text-primary ${refreshingOrders ? 'animate-spin' : ''}`} />
+                  </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-                <Badge variant="outline" className="h-10 px-4 rounded-xl border-primary/10 text-[10px] font-black uppercase text-muted-foreground flex flex-col items-center justify-center min-w-[100px] bg-background/40">
-                  <span className="opacity-50">Total</span>
-                  <span className="text-primary">{pedidos.length}</span>
-                </Badge>
-                <Button
-                  variant="ghost"
-                  onClick={fetchPedidos}
-                  disabled={refreshingOrders}
-                  className={`h-12 w-12 rounded-2xl bg-primary/5 border border-primary/10 hover:bg-primary/20 transition-all ${refreshingOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <RefreshCw className={`w-5 h-5 text-primary ${refreshingOrders ? 'animate-spin' : ''}`} />
-                </Button>
-            </div>
-          </div>
-        </CardHeader>
 
-        <CardContent className="p-6 md:p-10 space-y-10">
-          {/* Dashboard Superior Rápido (Opcional, mas melhora visual) */}
+          {/* Dashboard Superior Rápido */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
              {[
                { label: 'Hoje', val: pedidos.filter(p => new Date(p.data_criacao).toDateString() === new Date().toDateString()).length, color: 'text-primary' },
@@ -248,7 +247,7 @@ const OrdersTab = ({
 
           {/* Listagem / Tabela */}
           <div className="space-y-6">
-            {visiblePedidos.length === 0 ? (
+            {orderedPedidos.length === 0 ? (
               <div className="py-32 flex flex-col items-center justify-center text-center space-y-4 opacity-20">
                  <ShoppingBag className="w-16 h-16" />
                  <p className="text-xs font-black uppercase tracking-[0.3em]">Nenhum pedido encontrado nos registros.</p>
@@ -256,54 +255,56 @@ const OrdersTab = ({
             ) : (
               <>
                 {/* Cards para Mobile */}
-                <div className="grid grid-cols-1 gap-6 md:hidden">
+                <div className="grid grid-cols-1 gap-4 md:hidden">
                   {visiblePedidos.map((p) => {
                     const status = getStatusInfo(p.status);
                     return (
                       <div 
                         key={p.id} 
                         onClick={() => setPedidoDetalhesId(p.id)}
-                        className="p-8 rounded-[2.5rem] bg-muted/5 border border-primary/10 space-y-6 relative overflow-hidden active:scale-[0.98] transition-all hover:border-primary/40 shadow-xl"
+                        className="p-6 rounded-[2rem] bg-muted/5 border border-primary/10 space-y-5 relative overflow-hidden active:scale-[0.98] transition-all hover:border-primary/40 shadow-xl"
                       >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-[30px] -z-10" />
-                        
-                        <div className="flex justify-between items-start">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex flex-col items-center justify-center">
-                                 <span className="text-[10px] font-black text-primary leading-none">#{pedidoSeq[p.id] || '—'}</span>
-                              </div>
-                              <div className="space-y-0.5">
-                                 <h4 className="font-black text-sm uppercase truncate max-w-[140px] leading-tight">{p.cliente_nome}</h4>
-                                 <p className="text-[10px] font-black text-muted-foreground opacity-60 tracking-widest">{formatPhoneMask(p.cliente_telefone)}</p>
-                              </div>
-                           </div>
-                           <div className="text-right">
-                              <div className="text-lg font-black text-primary">{formatBRL(Number(p.valor_total || 0))}</div>
-                              <div className="text-[8px] font-black opacity-30 uppercase">{new Date(p.data_criacao).toLocaleDateString()}</div>
-                           </div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-[40px] -z-10" />
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-background/80 border border-primary/10 flex items-center justify-center font-black text-primary/40 text-sm shadow-inner group-hover:scale-110 transition-transform italic">
+                              #{pedidoSeq[p.id] ?? '—'}
+                            </div>
+                            <div className="min-w-0">
+                               <h4 className="font-black text-sm uppercase truncate leading-none mb-1">{p.cliente_nome}</h4>
+                               <p className="text-[10px] font-black text-muted-foreground opacity-60 tracking-widest">{formatPhoneMask(p.cliente_telefone)}</p>
+                            </div>
+                          </div>
+                          <Badge className={`${status.color} uppercase text-[7px] font-black border tracking-tighter`}>{status.label}</Badge>
                         </div>
-
+                        
                         <div className="flex items-center justify-between pt-4 border-t border-primary/5">
-                           <Badge className={`${status.color} px-3 py-1 text-[8px] font-black uppercase rounded-lg border`}>{status.label}</Badge>
-                           
+                           <div className="flex flex-col">
+                              <span className="text-[10px] font-black text-primary italic leading-none">{formatBRL(Number(p.valor_total || 0))}</span>
+                              <span className="text-[8px] font-black text-muted-foreground opacity-30 uppercase tracking-widest mt-1">{new Date(p.data_criacao).toLocaleDateString()} · {new Date(p.data_criacao).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                           </div>
                            <div className="flex gap-2">
                              {p.status === 'pendente' ? (
                                <>
                                  <Button 
-                                   className="h-10 w-10 bg-green-500 rounded-xl p-0 hover:bg-green-600 transition-all text-black"
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-10 w-10 rounded-xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black transition-all border border-green-500/10"
                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'concluir' }); }}
                                  >
                                     <Check className="w-5 h-5" />
                                  </Button>
                                  <Button 
-                                   className="h-10 w-10 bg-destructive rounded-xl p-0 hover:bg-destructive/80 transition-all"
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-black transition-all border border-red-500/10"
                                    onClick={(e) => { e.stopPropagation(); setConfirmAction({ id: p.id, action: 'cancelar' }); }}
                                  >
                                     <X className="w-5 h-5" />
                                  </Button>
                                </>
                              ) : (
-                               <Button variant="ghost" className="h-10 px-4 rounded-xl bg-primary/5 text-[9px] font-black uppercase text-primary border border-primary/10">Ver Mais</Button>
+                               <Button variant="ghost" className="h-10 px-4 rounded-xl bg-primary/5 text-[9px] font-black uppercase text-primary border border-primary/10 hover:bg-primary/20">DETALHES</Button>
                              )}
                            </div>
                         </div>
@@ -445,8 +446,9 @@ const OrdersTab = ({
                       </Button>
                    </div>
                 </div>
-              </>
+               </>
             )}
+           </div>
           </div>
         </CardContent>
       </Card>

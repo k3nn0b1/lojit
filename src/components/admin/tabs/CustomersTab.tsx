@@ -171,29 +171,39 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-3xl rounded-[3rem]">
-        <CardHeader className="bg-primary/5 py-10 border-b border-primary/10 px-12">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-            <div className="space-y-2">
-              <CardTitle className="text-3xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-6">
-                 <Users className="w-10 h-10" /> PROTOCOLO CRM
-              </CardTitle>
-              <p className="text-[11px] text-muted-foreground uppercase font-black tracking-[0.3em] opacity-40">Engenharia de retenção e inteligência de mercado</p>
-            </div>
-            <div className="flex items-center gap-4 bg-background/30 p-3 rounded-[2rem] border border-primary/10 shadow-inner">
-                <div className="flex flex-col items-center px-6 border-r border-primary/10">
-                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">DATABASE</span>
-                   <span className="text-xl font-black text-primary">{clientes.length}</span>
-                </div>
-                <div className="flex flex-col items-center px-6">
-                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground opacity-40">CONVERSOES</span>
-                   <span className="text-xl font-black text-green-500">{pedidos.filter(p => p.status === 'concluido').length}</span>
-                </div>
-            </div>
-          </div>
-        </CardHeader>
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
+        <CardContent className="p-6 md:p-10 space-y-8 md:space-y-10">
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-1">
+                <CardTitle className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
+                  <Users className="w-6 h-6 md:w-8 md:h-8" /> Gestão de Clientela
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Mini CRM Integrado: Fidelização e Histórico</p>
+              </div>
+              <Button 
+                onClick={() => setAdding(true)}
+                className="w-full md:w-auto h-12 md:h-14 px-8 rounded-2xl bg-primary text-black font-black uppercase tracking-widest text-[10px] shadow-primary/20 shadow-xl transition-all hover:scale-105"
+              >
+                <UserPlus className="w-4 h-4 mr-2" /> Novo Cliente
+              </Button>
+           </div>
 
-        <CardContent className="p-12 space-y-14">
+      {/* Dashboard Superior Mobile-Responsive */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Base', val: clientes.length, color: 'text-primary', icon: <Users className="w-4 h-4" /> },
+          { label: 'Ativos (LTV)', val: Object.keys(customerStats).length, color: 'text-green-500', icon: <TrendingUp className="w-4 h-4" /> },
+          { label: 'Diamante', val: Object.values(customerStats).filter(s => s.count >= 10).length, color: 'text-[#00f2ff]', icon: <Gem className="w-4 h-4" /> },
+          { label: 'Retenção', val: `${Math.round((Object.values(customerStats).filter(s => s.count > 1).length / (Object.keys(customerStats).length || 1)) * 100)}%`, color: 'text-amber-500', icon: <Star className="w-4 h-4" /> }
+        ].map((stat, i) => (
+           <div key={stat.label} className="bg-muted/10 p-5 rounded-[1.5rem] border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all shadow-xl">
+              <div className="p-2 rounded-xl bg-primary/5 text-primary mb-2 group-hover:scale-110 transition-all">{stat.icon}</div>
+              <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 text-center">{stat.label}</span>
+              <span className={`text-xl md:text-2xl font-black ${stat.color}`}>{stat.val}</span>
+           </div>
+        ))}
+      </div>
+
           <div className="relative group p-1 bg-gradient-to-br from-primary/10 to-transparent rounded-[2.5rem] shadow-3xl overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-muted/10 p-10 rounded-[2.4rem] border border-primary/5 backdrop-blur-3xl relative">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[80px] -z-10 group-hover:scale-110 transition-transform" />
@@ -255,17 +265,16 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-              {visibleClientes.map((c) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {visibleClientes.map((c: any) => {
                 const tel = normalizePhone(c.telefone);
                 const stats = customerStats[tel] || { count: 0, spent: 0, lastOrder: null };
                 const rank = getClientRank(stats.count);
                 const clientOrders = pedidos.filter(p => normalizePhone(p.cliente_telefone) === tel);
 
                 return (
-                  <div key={c.id} className="group relative rounded-[3.5rem] border border-primary/5 bg-muted/5 p-10 hover:border-primary/40 shadow-2xl transition-all duration-700 overflow-hidden flex flex-col gap-10">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[50px] -z-10 group-hover:bg-primary/10 transition-all duration-700" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 blur-[40px] -z-10" />
+                  <div key={c.id} className="group relative p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] bg-muted/10 border border-primary/5 hover:border-primary/30 transition-all shadow-xl overflow-hidden active:scale-[0.98]">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-[40px] -z-10 group-hover:bg-primary/20 transition-all" />
                     
                     {editingClienteId === c.id ? (
                       <div className="space-y-8 animate-in zoom-in duration-500 flex-1 flex flex-col justify-center">
@@ -298,7 +307,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                               </div>
                               <div className="flex-1 min-w-0 space-y-1">
                                   <h4 className="font-black text-lg uppercase truncate leading-none group-hover:text-primary transition-colors tracking-tight">{c.nome}</h4>
-                                  <p className="text-[11px] font-black text-muted-foreground opacity-40 tracking-[0.2em]">{formatPhoneMask(c.telefone)}</p>
+                                  <p className="text-[11px] font-black text-muted-foreground opacity-40 tracking-[0.2em] whitespace-nowrap">{formatPhoneMask(c.telefone)}</p>
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">

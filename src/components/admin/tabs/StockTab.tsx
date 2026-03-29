@@ -192,8 +192,8 @@ const StockTab = ({
 
   return (
     <div className="space-y-10">
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-2xl rounded-[2.5rem]">
-        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
+      <Card className="bg-card/20 backdrop-blur-md border-primary/10 shadow-2xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="bg-primary/5 py-6 md:py-8 border-b border-primary/10 px-6 md:px-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
@@ -216,31 +216,31 @@ const StockTab = ({
         </CardHeader>
 
         <CardContent className="p-0">
-          {/* Dashboard Superior Rápido (Consistente com Pedidos) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-8 md:p-10 pb-0">
+          {/* Dashboard Superior Mobile-Responsive */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6 md:p-10 pb-0">
              {[
                { label: 'Total Itens', val: storedProducts.length, color: 'text-primary' },
                { label: 'Uni. Ativas', val: storedProducts.reduce((acc, p) => acc + (p.stock || 0), 0), color: 'text-blue-500' },
-               { label: 'Esq. Crítico', val: storedProducts.filter(p => p.stock <= 5 && p.stock > 0).length, color: 'text-amber-500' },
+               { label: 'Est. Crítico', val: storedProducts.filter(p => p.stock <= 5 && p.stock > 0).length, color: 'text-amber-500' },
                { label: 'Esgotados', val: storedProducts.filter(p => p.stock === 0).length, color: 'text-destructive' }
              ].map((stat, i) => (
-                <div key={i} className="bg-muted/10 p-5 rounded-3xl border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all shadow-xl">
-                   <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 group-hover:text-primary transition-colors">{stat.label}</span>
-                   <span className={`text-2xl font-black ${stat.color}`}>{stat.val}</span>
+                <div key={i} className="bg-muted/10 p-5 rounded-2xl md:rounded-3xl border border-primary/5 flex flex-col items-center justify-center group hover:bg-muted/20 transition-all shadow-xl">
+                   <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1 group-hover:text-primary transition-colors text-center">{stat.label}</span>
+                   <span className={`text-xl md:text-2xl font-black ${stat.color}`}>{stat.val}</span>
                 </div>
              ))}
           </div>
 
-          <div className="p-10 space-y-10">
+          <div className="p-6 md:p-10 space-y-8 md:space-y-10">
             {/* Listagem Mobile */}
-            <div className="grid grid-cols-1 gap-6 md:hidden">
+            <div className="grid grid-cols-1 gap-4 md:hidden">
               {visibleStock.map((p) => {
                 const isExpanded = expandedProductId === p.id;
                 const sortedSizes = sortSizes(p.sizes || []);
                 return (
                   <div 
                     key={p.id} 
-                    className={`p-8 rounded-[2.5rem] bg-muted/5 border border-primary/10 transition-all ${isExpanded ? 'bg-primary/5 border-primary shadow-2xl scale-[1.02]' : 'hover:border-primary/20 shadow-xl'}`}
+                    className={`p-6 rounded-[2rem] bg-muted/5 border border-primary/10 transition-all ${isExpanded ? 'bg-primary/5 border-primary shadow-2xl scale-[1.02]' : 'hover:border-primary/20 shadow-xl'}`}
                     onClick={() => setExpandedProductId(isExpanded ? null : p.id!)}
                   >
                     <div className="flex items-center gap-6">

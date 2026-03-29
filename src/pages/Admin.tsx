@@ -183,17 +183,17 @@ const Admin = () => {
         )}
       />
       
-      <main className="flex-1 container mx-auto px-4 py-8 mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold">Painel Administrativo</h1>
+      <main className="flex-1 container mx-auto px-4 py-6 md:py-8 mb-16 md:mb-12 max-w-7xl">
+        <div className="flex items-center justify-between mb-8 md:mb-10">
+          <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel Elite</h1>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex justify-center items-center p-1.5 bg-muted/40 border-primary/10 rounded-2xl shadow-xl mb-8 relative max-w-2xl mx-auto gap-1">
-            <TabsTrigger value="pedidos" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">PEDIDOS</TabsTrigger>
-            <TabsTrigger value="catalogo" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CATÁLOGO</TabsTrigger>
-            <TabsTrigger value="clientes" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CLIENTES</TabsTrigger>
-            <TabsTrigger value="config" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CONFIGURAÇÕES</TabsTrigger>
+          <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-center items-center p-1.5 bg-muted/20 border border-primary/5 rounded-2xl shadow-2xl mb-12 relative max-w-4xl mx-auto gap-1">
+            <TabsTrigger value="pedidos" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">PEDIDOS</TabsTrigger>
+            <TabsTrigger value="catalogo" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">GESTÃO</TabsTrigger>
+            <TabsTrigger value="clientes" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CRM</TabsTrigger>
+            <TabsTrigger value="config" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">SETUP</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pedidos" className="mt-6">
@@ -297,10 +297,10 @@ const Admin = () => {
 
       {/* Floating Action Button for New Order */}
       {activeTab !== 'config' && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 md:left-auto md:right-8 md:translate-x-0 z-50 w-[calc(100%-3rem)] md:w-auto">
           <Button
             size="lg"
-            className="rounded-full shadow-2xl h-14 px-6 gap-2 font-black uppercase tracking-widest animate-in slide-in-from-bottom-4 duration-500"
+            className="w-full md:w-auto rounded-2xl md:rounded-full shadow-[0_0_40px_rgba(var(--primary),0.3)] h-16 md:h-18 px-8 gap-3 font-black uppercase tracking-[0.2em] md:tracking-[0.3em] active:scale-95 transition-all animate-in slide-in-from-bottom-8 duration-700 bg-primary text-black border-4 border-black/10"
             onClick={() => setNewPedidoOpen(true)}
           >
             Novo Pedido
