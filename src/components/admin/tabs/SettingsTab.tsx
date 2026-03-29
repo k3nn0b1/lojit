@@ -9,7 +9,7 @@ import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { hexToHSL, hslStringToHex } from "@/lib/colors";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { formatPhoneMask } from "@/lib/utils";
-import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save, CreditCard, Trash2, Plus, Search, Wallet, MapPin, Truck, ExternalLink, TrendingUp } from "lucide-react";
+import { Loader2, Upload, Instagram, Settings, Layout, Palette, Phone, Globe, Save, CreditCard, Trash2, Plus, Search, Wallet, MapPin, Truck, ExternalLink, TrendingUp, X, Pencil } from "lucide-react";
 import { WhatsappIcon } from "../../icons/WhatsappIcon";
 import { YoutubeIcon } from "../../icons/YoutubeIcon";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +36,7 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
   const [newFormaName, setNewFormaName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchFormas();
@@ -53,25 +54,42 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
     setLoading(false);
   };
 
-  const handleAdd = async () => {
-    if (!newFormaName.trim()) return;
+  const handleSave = async () => {
+    const name = newFormaName.trim().toUpperCase();
+    if (!name) return;
     setAdding(true);
     
-    const { data, error } = await supabase
-      .from("formas_pagamento")
-      .insert({
-        name: newFormaName.trim(),
-        tenant_id: tenantId
-      })
-      .select()
-      .single();
+    if (editingId) {
+      const { error } = await supabase
+        .from("formas_pagamento")
+        .update({ name })
+        .eq("id", editingId);
 
-    if (error) {
-      toast.error("Erro ao adicionar forma de pagamento");
+      if (error) {
+        toast.error("Erro ao atualizar modalidade");
+      } else {
+        setFormas(prev => prev.map(f => f.id === editingId ? { ...f, name } : f).sort((a, b) => a.name.localeCompare(b.name)));
+        toast.success("Modalidade atualizada!");
+        setEditingId(null);
+        setNewFormaName("");
+      }
     } else {
-      setFormas(prev => [...prev, data as FormaPagamento].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewFormaName("");
-      toast.success("Forma de pagamento adicionada!");
+      const { data, error } = await supabase
+        .from("formas_pagamento")
+        .insert({
+          name,
+          tenant_id: tenantId
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast.error("Erro ao adicionar forma de pagamento");
+      } else {
+        setFormas(prev => [...prev, data as FormaPagamento].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewFormaName("");
+        toast.success("Forma de pagamento adicionada!");
+      }
     }
     setAdding(false);
   };
@@ -113,26 +131,38 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
           </div>
        </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-6 rounded-[2.5rem] bg-muted/10 border border-primary/5 shadow-2xl">
-          <div className="md:col-span-9 space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-primary/60 ml-2">Label de Identificação (Ex: PIX, CARTÃO...)</Label>
+        <div className="grid grid-cols-1 gap-4 p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-muted/10 border border-primary/5 shadow-2xl">
+          <div className="space-y-1.5 flex-1">
+            <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-primary/60 ml-2">
+              {editingId ? "Editando Nome" : "Label de Identificação (Ex: PIX, CARTÃO...)"}
+            </Label>
             <Input 
               placeholder="Digite aqui..." 
               value={newFormaName}
               onChange={(e) => setNewFormaName(e.target.value)}
-              className="h-14 bg-background border-primary/10 rounded-2xl px-6 text-sm font-black focus:ring-primary/20 shadow-xl"
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              className="h-12 md:h-14 bg-background border-primary/10 rounded-xl md:rounded-2xl px-6 text-xs md:text-sm font-black focus:ring-primary/20 shadow-xl"
+              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             />
           </div>
-          <div className="md:col-span-3 flex items-end">
-            <Button 
-              onClick={handleAdd}
-              disabled={adding || !newFormaName.trim()}
-              className="w-full h-14 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-            >
-              {adding ? "Processando..." : <><Plus className="w-5 h-5 mr-3" /> Adicionar</>}
-            </Button>
-          </div>
+                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+               />
+             </div>
+             <div className="flex gap-2 min-w-fit">
+               <Button 
+                 onClick={handleSave}
+                 disabled={adding || !newFormaName.trim()}
+                 className={`flex-1 md:flex-none h-12 md:h-14 px-8 font-black uppercase tracking-widest text-[9px] md:text-[10px] rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 ${
+                    editingId ? "bg-green-500 hover:bg-green-600 text-black" : "bg-primary text-black shadow-xl shadow-primary/20"
+                 }`}
+               >
+                 {adding ? "..." : editingId ? <><Save className="w-4 h-4" /> Salvar</> : <><Plus className="w-4 h-4" /> Adicionar</>}
+               </Button>
+               {editingId && (
+                 <Button variant="ghost" onClick={() => { setEditingId(null); setNewFormaName(""); }} className="h-12 md:h-14 w-12 md:w-14 rounded-xl md:rounded-2xl opacity-40 text-foreground border border-white/10">
+                    <X className="w-5 h-5" />
+                 </Button>
+               )}
+             </div>
        </div>
 
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-10">
@@ -150,14 +180,24 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
                        <span className="text-[9px] font-black text-muted-foreground opacity-40 uppercase">Ativo no Sistema</span>
                     </div>
                  </div>
-                 <Button 
-                   variant="ghost" 
-                   size="icon" 
-                   onClick={() => handleDelete(f.id)}
-                   className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
-                 >
-                   <Trash2 className="w-4 h-4" />
-                 </Button>
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => { setEditingId(f.id); setNewFormaName(f.name); }}
+                      className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleDelete(f.id)}
+                      className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
               </div>
             ))
           ) : (
