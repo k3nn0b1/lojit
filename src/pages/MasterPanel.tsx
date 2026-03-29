@@ -535,7 +535,12 @@ export default function MasterPanel() {
                                         const limit = planConfigs.find(pc => pc.plan_id === p)?.max_products || 30;
                                         setNewMaxProducts(limit);
                                     }}
-                                    className={`h-10 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${newTenantPlan === p ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20' : 'bg-black/40 border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}
+                                    className={`h-10 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all shadow-xl`}
+                                    style={{ 
+                                        backgroundColor: newTenantPlan === p ? themeColor : "rgba(0,0,0,0.4)",
+                                        borderColor: newTenantPlan === p ? themeColor : "rgba(255,255,255,0.05)",
+                                        color: newTenantPlan === p ? "#000" : "rgba(255,255,255,0.4)"
+                                    }}
                                 >
                                     {p}
                                 </button>
@@ -877,10 +882,15 @@ export default function MasterPanel() {
                                         if (config) setEditMaxProducts(config.max_products);
                                     }
                                 }}
-                                className={`h-14 rounded-xl flex flex-col items-center justify-center transition-all border ${editPlan === p ? 'bg-primary text-black border-primary shadow-xl shadow-primary/30' : 'bg-black/50 border-zinc-800 text-zinc-500 hover:border-zinc-600'}`}
+                                className={`h-14 rounded-xl flex flex-col items-center justify-center transition-all border shadow-xl shadow-primary/30`}
+                                style={{ 
+                                    backgroundColor: editPlan === p ? themeColor : "rgba(0,0,0,0.4)",
+                                    borderColor: editPlan === p ? themeColor : "rgba(255,255,255,0.05)",
+                                    color: editPlan === p ? "#000" : "rgba(255,255,255,0.4)"
+                                }}
                             >
-                                <span className="text-[10px] font-black uppercase tracking-widest">{p}</span>
-                                {p !== 'business' && <span className="text-[8px] font-bold opacity-60">Limit: {planConfigs.find(pc => pc.plan_id === p)?.max_products}</span>}
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${editPlan === p ? '' : 'opacity-60'}`}>{p}</span>
+                                {p !== 'business' && <span className={`text-[8px] font-bold ${editPlan === p ? 'text-black/60' : 'opacity-30'}`}>Limit: {planConfigs.find(pc => pc.plan_id === p)?.max_products}</span>}
                             </button>
                         ))}
                     </div>
