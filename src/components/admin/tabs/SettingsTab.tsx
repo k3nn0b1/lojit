@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge as UI_Badge } from "@/components/ui/badge";
+import DeliveryTab from "./DeliveryTab";
 
 interface SettingsTabProps {
   tenantId: string;
@@ -307,6 +308,9 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
           <TabsTrigger value="pagamento" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Pagamento
           </TabsTrigger>
+          <TabsTrigger value="entrega" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
+            Entrega
+          </TabsTrigger>
           <TabsTrigger value="outros" className="rounded-xl px-2 md:px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-black font-black uppercase tracking-widest text-[9px] md:text-[10px]">
             Avançado
           </TabsTrigger>
@@ -535,6 +539,15 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                <div className="space-y-8">
                   <PaymentManagement tenantId={tenantId} />
                </div>
+            </TabsContent>
+
+            {/* Aba Entrega */}
+            <TabsContent value="entrega" className="p-0 m-0 animate-in fade-in slide-in-from-top-4 duration-500">
+               <DeliveryTab 
+                 tenantId={tenantId} 
+                 formData={formData}
+                 setFormData={setFormData}
+               />
             </TabsContent>
 
             {/* Aba Avançado */}

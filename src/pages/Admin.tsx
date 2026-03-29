@@ -34,6 +34,7 @@ import NewOrderModal from "@/components/admin/modals/NewOrderModal";
 const Admin = () => {
   const { tenantId, isReady, loading: tenantLoading } = useTenant();
   const [activeTab, setActiveTab] = useState("pedidos");
+  const [activeCatalogTab, setActiveCatalogTab] = useState("products");
   
   // Shared States
   const [storedProducts, setStoredProducts] = useState<AdminProduct[]>([]);
@@ -188,17 +189,11 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex justify-start lg:justify-center overflow-x-auto lg:overflow-x-visible items-center flex-nowrap p-1 bg-muted border border-border shadow-md mb-2 relative">
-            <TabsTrigger value="pedidos" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PEDIDOS</TabsTrigger>
-            <TabsTrigger value="products" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PRODUTOS</TabsTrigger>
-            <TabsTrigger value="stock" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">ESTOQUE</TabsTrigger>
-            <TabsTrigger value="sizes" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">TAMANHOS</TabsTrigger>
-            <TabsTrigger value="images" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">IMAGENS</TabsTrigger>
-            <TabsTrigger value="clientes" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CLIENTES</TabsTrigger>
-            <TabsTrigger value="categories" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CATEGORIAS</TabsTrigger>
-            <TabsTrigger value="colors" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CORES</TabsTrigger>
-            <TabsTrigger value="delivery" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">ENTREGA</TabsTrigger>
-            <TabsTrigger value="config" className="flex-none py-2.5 px-6 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CONFIGURAÇÕES</TabsTrigger>
+          <TabsList className="w-full h-auto flex justify-center items-center p-1.5 bg-muted/40 border-primary/10 rounded-2xl shadow-xl mb-8 relative max-w-2xl mx-auto gap-1">
+            <TabsTrigger value="pedidos" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">PEDIDOS</TabsTrigger>
+            <TabsTrigger value="catalogo" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CATÁLOGO</TabsTrigger>
+            <TabsTrigger value="clientes" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CLIENTES</TabsTrigger>
+            <TabsTrigger value="config" className="flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CONFIGURAÇÕES</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pedidos" className="mt-6">
@@ -213,63 +208,86 @@ const Admin = () => {
             />
           </TabsContent>
 
-          <TabsContent value="products" className="mt-6">
-            <ProductsTab 
-              tenantId={tenantId}
-              storedProducts={storedProducts}
-              setStoredProducts={setStoredProducts}
-              categories={categories}
-              setCategories={setCategories}
-              globalSizes={globalSizes}
-              setGlobalSizes={setGlobalSizes}
-              globalColors={globalColors}
-              setGlobalColors={setGlobalColors}
-              uploadToCloudinary={uploadToCloudinary}
-              IS_SUPABASE_READY={IS_SUPABASE_READY}
-              setActiveTab={setActiveTab}
-            />
-          </TabsContent>
+          <TabsContent value="catalogo" className="mt-0 space-y-6">
+            <Tabs value={activeCatalogTab} onValueChange={setActiveCatalogTab} className="w-full">
+              <div className="flex justify-center mb-6">
+                 <TabsList className="bg-muted/20 p-1 rounded-xl border border-primary/5 h-auto overflow-x-auto lg:overflow-x-visible items-center flex-nowrap py-1">
+                    <TabsTrigger value="products" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Produtos</TabsTrigger>
+                    <TabsTrigger value="stock" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Estoque</TabsTrigger>
+                    <TabsTrigger value="sizes" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Tamanhos</TabsTrigger>
+                    <TabsTrigger value="categories" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Categorias</TabsTrigger>
+                    <TabsTrigger value="colors" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Cores</TabsTrigger>
+                    <TabsTrigger value="images" className="py-2 px-4 whitespace-nowrap rounded-lg text-[9px] font-black uppercase tracking-widest data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Imagens</TabsTrigger>
+                 </TabsList>
+              </div>
 
-          <TabsContent value="stock" className="mt-6">
-            <StockTab 
-              tenantId={tenantId}
-              storedProducts={storedProducts}
-              setStoredProducts={setStoredProducts}
-              globalSizes={globalSizes}
-              globalColors={globalColors}
-            />
-          </TabsContent>
+              <TabsContent value="products">
+                <ProductsTab 
+                  tenantId={tenantId}
+                  storedProducts={storedProducts}
+                  setStoredProducts={setStoredProducts}
+                  categories={categories}
+                  setCategories={setCategories}
+                  globalSizes={globalSizes}
+                  setGlobalSizes={setGlobalSizes}
+                  globalColors={globalColors}
+                  setGlobalColors={setGlobalColors}
+                  uploadToCloudinary={uploadToCloudinary}
+                  IS_SUPABASE_READY={IS_SUPABASE_READY}
+                  setActiveTab={(tab) => {
+                    if (['products', 'stock', 'sizes', 'categories', 'colors', 'images'].includes(tab)) {
+                      setActiveCatalogTab(tab);
+                      setActiveTab('catalogo');
+                    } else {
+                      setActiveTab(tab);
+                    }
+                  }}
+                />
+              </TabsContent>
 
-          <TabsContent value="sizes" className="mt-6">
-            <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-          </TabsContent>
+              <TabsContent value="stock">
+                <StockTab 
+                  tenantId={tenantId}
+                  storedProducts={storedProducts}
+                  setStoredProducts={setStoredProducts}
+                  globalSizes={globalSizes}
+                  globalColors={globalColors}
+                />
+              </TabsContent>
 
-          <TabsContent value="categories" className="mt-6">
-            <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-          </TabsContent>
+              <TabsContent value="sizes">
+                <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+              </TabsContent>
 
-          <TabsContent value="colors" className="mt-6">
-            <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-          </TabsContent>
+              <TabsContent value="categories">
+                <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+              </TabsContent>
 
-          <TabsContent value="images" className="mt-6">
-            <ImagesTab 
-              tenantId={tenantId}
-              storedProducts={storedProducts} 
-              setStoredProducts={setStoredProducts}
-              uploadToCloudinary={uploadToCloudinary}
-              removeFromCloudinary={removeFromCloudinary}
-              IS_SUPABASE_READY={IS_SUPABASE_READY}
-            />
+              <TabsContent value="colors">
+                <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+              </TabsContent>
+
+              <TabsContent value="images">
+                <ImagesTab 
+                  tenantId={tenantId}
+                  storedProducts={storedProducts} 
+                  setStoredProducts={setStoredProducts}
+                  uploadToCloudinary={uploadToCloudinary}
+                  removeFromCloudinary={removeFromCloudinary}
+                  IS_SUPABASE_READY={IS_SUPABASE_READY}
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="clientes" className="mt-6">
-            <CustomersTab tenantId={tenantId} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+            <CustomersTab 
+              tenantId={tenantId} 
+              IS_SUPABASE_READY={IS_SUPABASE_READY} 
+              pedidos={pedidos}
+            />
           </TabsContent>
 
-          <TabsContent value="delivery" className="mt-6">
-            <DeliveryTab tenantId={tenantId} />
-          </TabsContent>
 
           <TabsContent value="config" className="mt-6">
             <SettingsTab tenantId={tenantId} />
