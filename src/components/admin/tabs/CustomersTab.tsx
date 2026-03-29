@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Pedido } from "@/lib/types";
+import { Pedido, Cliente } from "@/lib/types";
 
 interface CustomersTabProps {
   tenantId: string;
@@ -45,7 +45,7 @@ interface CustomersTabProps {
 }
 
 const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProps) => {
-  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clientesQuery, setClientesQuery] = useState("");
   const [filterProfile, setFilterProfile] = useState("todos");
   const [clienteNome, setClienteNome] = useState("");
@@ -68,7 +68,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
-      if (!error && data) setClientes(data);
+      if (!error && data) setClientes(data as Cliente[]);
       setLoading(false);
     };
     
@@ -256,7 +256,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
            </div>
 
             <div className="space-y-3">
-              {visibleClientes.map((c: any) => {
+              {visibleClientes.map((c: Cliente) => {
                 const tel = normalizePhone(c.telefone);
                 const stats = customerStats[tel] || { count: 0, spent: 0, lastOrder: null };
                 const rank = getClientRank(stats.count);
@@ -275,7 +275,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                                    <Input value={editingClienteTelefone} onChange={(e) => setEditingClienteTelefone(formatPhoneMask(e.target.value))} className="h-10 text-[10px] font-black rounded-lg bg-background/50 border-primary/10" />
                                 </div>
                                 <div className="md:col-span-3 flex gap-2 pt-4">
-                                   <Button size="sm" onClick={() => handleSaveEdit(c.id)} className="flex-1 bg-primary text-black font-black uppercase text-[8px] h-10 rounded-lg"><Check className="w-3.5 h-3.5 mr-1" /> Salvar</Button>
+                                   <Button size="sm" onClick={() => c.id !== undefined && handleSaveEdit(c.id)} className="flex-1 bg-primary text-black font-black uppercase text-[8px] h-10 rounded-lg"><Check className="w-3.5 h-3.5 mr-1" /> Salvar</Button>
                                    <Button size="sm" variant="ghost" onClick={() => setEditingClienteId(null)} className="flex-1 bg-destructive/10 text-destructive font-black uppercase text-[8px] h-10 rounded-lg hover:bg-destructive hover:text-white"><X className="w-3.5 h-3.5" /></Button>
                                 </div>
                              </div>
@@ -398,7 +398,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                             variant="ghost" 
                             size="icon" 
                             className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/5 hover:bg-primary/20 transition-all"
-                            onClick={() => { setEditingClienteId(c.id); setEditingClienteNome(c.nome); setEditingClienteTelefone(c.telefone); }}
+                            onClick={() => { if (c.id !== undefined) setEditingClienteId(c.id); setEditingClienteNome(c.nome); setEditingClienteTelefone(c.telefone); }}
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -421,7 +421,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                               </AlertDialogHeader>
                               <AlertDialogFooter className="mt-8 gap-3 justify-center">
                                 <AlertDialogCancel className="rounded-xl border-primary/10 px-6 h-12 uppercase font-black text-[10px] tracking-widest flex-1">Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleRemoveCliente(c.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl px-6 h-12 font-black uppercase text-[10px] tracking-widest text-white flex-1">Confirmar</AlertDialogAction>
+                                <AlertDialogAction onClick={() => c.id !== undefined && handleRemoveCliente(c.id)} className="bg-destructive hover:bg-destructive/90 rounded-xl px-6 h-12 font-black uppercase text-[10px] tracking-widest text-white flex-1">Confirmar</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>

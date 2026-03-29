@@ -83,8 +83,10 @@ export const normalizeProductStock = (p: any) => {
   return {
     ...p,
     stockBySize: stockBySizeObj,
-    stock: totalFromSizes !== undefined && totalFromSizes > 0
-      ? totalFromSizes
+    // Se stockBySize existe (mesmo zerado), ele é a fonte da verdade — alinhado com o trigger do banco.
+    // Fallback para p.stock apenas se stockBySize não existir no produto.
+    stock: stockBySizeObj !== undefined
+      ? (totalFromSizes ?? 0)
       : (typeof p.stock === 'number' ? p.stock : 0),
   };
 };

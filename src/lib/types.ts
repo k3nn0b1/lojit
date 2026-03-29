@@ -102,7 +102,7 @@ export interface FormaPagamento {
 
 // ── Cliente ───────────────────────────────────────────────
 export interface Cliente {
-  id?: string;
+  id?: number; // BIGSERIAL no banco — número inteiro
   nome: string;
   telefone: string;
   tenant_id: string;

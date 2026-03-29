@@ -115,8 +115,7 @@ const Admin = () => {
 
   useEffect(() => {
     if (isReady && tenantId) {
-      fetchPedidos();
-      fetchData();
+      fetchData(); // fetchData já chama fetchPedidos internamente
     }
   }, [isReady, tenantId]);
 
