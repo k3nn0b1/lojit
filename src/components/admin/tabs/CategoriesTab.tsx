@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Pencil, X, Loader2, PlusCircle, Tag, Search, Trash2 } from "lucide-react";
 import { parseSupabaseError } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
