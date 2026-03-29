@@ -95,6 +95,7 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
   };
 
   const handleDelete = async (id: number) => {
+    if (!confirm("Remover modalidade?")) return;
     const { error } = await supabase
       .from("formas_pagamento")
       .delete()
@@ -113,100 +114,99 @@ const PaymentManagement = ({ tenantId }: { tenantId: string }) => {
   );
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 md:space-y-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-primary/5">
            <div className="space-y-1">
-             <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-primary leading-tight">Meios de Pagamento</h3>
-             <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Configure as opções disponíveis no checkout</p>
+              <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-primary leading-tight">Meios de Pagamento</h3>
+              <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Configure as opções disponíveis no checkout</p>
            </div>
           
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-40" />
-            <Input 
-              placeholder="PESQUISAR..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-14 bg-background/50 border-primary/10 rounded-2xl pl-14 font-black uppercase text-xs focus:ring-primary/20 shadow-xl"
-            />
-          </div>
-       </div>
+           <div className="relative w-full md:w-80">
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 text-primary opacity-40" />
+             <Input 
+               placeholder="PESQUISAR..."
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               className="h-10 md:h-14 bg-background/50 border-primary/10 rounded-xl md:rounded-2xl pl-10 md:pl-14 font-black uppercase text-[10px] md:text-xs shadow-xl"
+             />
+           </div>
+        </div>
 
+        {/* Seção de Adição Slim Mobile */}
         <div className="grid grid-cols-1 gap-4 p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-muted/10 border border-primary/5 shadow-2xl">
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-primary/60 ml-2">
-              {editingId ? "Editando Nome" : "Label de Identificação (Ex: PIX, CARTÃO...)"}
-            </Label>
-            <Input 
-              placeholder="Digite aqui..." 
-              value={newFormaName}
-              onChange={(e) => setNewFormaName(e.target.value)}
-              className="h-12 md:h-14 bg-background border-primary/10 rounded-xl md:rounded-2xl px-6 text-xs md:text-sm font-black focus:ring-primary/20 shadow-xl"
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            />
-          </div>
+           <div className="space-y-2">
+             <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-primary/60 ml-1">
+               {editingId ? "Editando Nome" : "Label de Identificação (Ex: PIX, CARTÃO...)"}
+             </Label>
+             <div className="flex flex-col md:flex-row gap-3">
+               <Input 
+                 placeholder="Digite aqui..." 
+                 value={newFormaName}
+                 onChange={(e) => setNewFormaName(e.target.value)}
+                 className="h-12 md:h-14 bg-background border-primary/10 rounded-xl md:rounded-2xl px-6 text-xs md:text-sm font-black focus:ring-primary/20 shadow-xl"
                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                />
-             </div>
-             <div className="flex gap-2 min-w-fit">
-               <Button 
-                 onClick={handleSave}
-                 disabled={adding || !newFormaName.trim()}
-                 className={`flex-1 md:flex-none h-12 md:h-14 px-8 font-black uppercase tracking-widest text-[9px] md:text-[10px] rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 ${
-                    editingId ? "bg-green-500 hover:bg-green-600 text-black" : "bg-primary text-black shadow-xl shadow-primary/20"
-                 }`}
-               >
-                 {adding ? "..." : editingId ? <><Save className="w-4 h-4" /> Salvar</> : <><Plus className="w-4 h-4" /> Adicionar</>}
-               </Button>
-               {editingId && (
-                 <Button variant="ghost" onClick={() => { setEditingId(null); setNewFormaName(""); }} className="h-12 md:h-14 w-12 md:w-14 rounded-xl md:rounded-2xl opacity-40 text-foreground border border-white/10">
-                    <X className="w-5 h-5" />
+               <div className="flex gap-2 min-w-fit">
+                 <Button 
+                   onClick={handleSave}
+                   disabled={adding || !newFormaName.trim()}
+                   className={`flex-1 md:flex-none h-12 md:h-14 px-8 font-black uppercase tracking-widest text-[9px] md:text-[10px] rounded-xl md:rounded-2xl transition-all flex items-center justify-center gap-2 ${
+                      editingId ? "bg-green-500 hover:bg-green-600 text-black" : "bg-primary text-black shadow-xl shadow-primary/20"
+                   }`}
+                 >
+                   {adding ? "..." : editingId ? <><Save className="w-4 h-4" /> Salvar</> : <><Plus className="w-4 h-4" /> Adicionar</>}
                  </Button>
-               )}
+                 {editingId && (
+                   <Button variant="ghost" onClick={() => { setEditingId(null); setNewFormaName(""); }} className="h-12 md:h-14 w-12 md:w-14 rounded-xl md:rounded-2xl opacity-40 text-foreground border border-white/10">
+                      <X className="w-5 h-5" />
+                   </Button>
+                 )}
+               </div>
              </div>
-       </div>
+           </div>
+        </div>
 
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-10">
-          {loading ? (
-             Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-24 rounded-[2rem] bg-muted/5 animate-pulse" />)
-          ) : filteredFormas.length > 0 ? (
-            filteredFormas.map((f) => (
-              <div key={f.id} className="flex items-center justify-between p-6 rounded-[2rem] bg-muted/5 border border-primary/5 hover:border-primary/20 transition-all group hover:translate-y-[-4px] shadow-xl">
-                 <div className="flex items-center gap-6">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
-                       <Wallet className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                       <p className="text-sm font-black uppercase tracking-widest">{f.name}</p>
-                       <span className="text-[9px] font-black text-muted-foreground opacity-40 uppercase">Ativo no Sistema</span>
-                    </div>
-                 </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 pb-10">
+           {loading ? (
+              Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 md:h-24 rounded-[1.5rem] md:rounded-[2rem] bg-muted/5 animate-pulse" />)
+           ) : filteredFormas.length > 0 ? (
+             filteredFormas.map((f) => (
+               <div key={f.id} className="flex items-center justify-between p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-muted/5 border border-primary/5 hover:border-primary/20 transition-all group shadow-xl">
+                  <div className="flex items-center gap-4 md:gap-6">
+                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+                        <Wallet className="w-4 md:w-5 h-4 md:h-5 text-primary" />
+                     </div>
+                     <div className="min-w-0">
+                        <p className="text-[11px] md:text-xs font-black uppercase tracking-widest truncate max-w-[80px] sm:max-w-none">{f.name}</p>
+                        <span className="text-[7px] md:text-[9px] font-black text-muted-foreground opacity-40 uppercase">Ativo</span>
+                     </div>
+                  </div>
                   <div className="flex items-center gap-1">
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={() => { setEditingId(f.id); setNewFormaName(f.name); }}
-                      className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                      className="h-8 md:h-10 w-8 md:w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg md:rounded-xl transition-all"
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-3.5 md:w-4 h-3.5 md:h-4" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={() => handleDelete(f.id)}
-                      className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                      className="h-8 md:h-10 w-8 md:w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg md:rounded-xl transition-all"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 md:w-4 h-3.5 md:h-4" />
                     </Button>
                   </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-20 italic">
-               <CreditCard className="w-16 h-16 mb-4" />
-               <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma modalidade configurada</p>
-            </div>
-          )}
-       </div>
+               </div>
+             ))
+           ) : (
+             <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-20 italic">
+                <p className="text-[10px] font-black uppercase tracking-widest text-center">Nenhuma modalidade configurada</p>
+             </div>
+           )}
+        </div>
     </div>
   );
 };
