@@ -431,7 +431,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <div className="flex items-center gap-8 p-8 rounded-[2rem] bg-primary/5 border border-primary/10 max-w-fit mx-auto shadow-3xl animate-pulse-subtle">
                         <div className="flex items-center gap-3">
                            <TrendingUp className="w-5 h-5 text-primary" />
-                           <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">IA SUGGESTION (LOGO BASED):</span>
+                           <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">SUGESTÃO DA IA (BASEADO NO LOGO):</span>
                         </div>
                         <div className="flex gap-4">
                             {suggestedColors.map(color => (
@@ -452,9 +452,9 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                              <SelectItem value="solid" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Clássico Sólido</SelectItem>
                              <SelectItem value="bg1" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Mesh Gradient Profissional</SelectItem>
                              <SelectItem value="bg2" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Topographic Map Elite</SelectItem>
-                             <SelectItem value="bg4" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Dreamy Ethereal Effects</SelectItem>
-                             <SelectItem value="bg5" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Fluid Smoke Motion</SelectItem>
-                             <SelectItem value="bg7" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest">Neon Glow Ambience</SelectItem>
+                             <SelectItem value="bg4" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Efeitos Etéreos</SelectItem>
+                             <SelectItem value="bg5" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest mb-1">Movimento de Fumaça</SelectItem>
+                             <SelectItem value="bg7" className="rounded-xl py-4 font-black text-[10px] uppercase tracking-widest">Ambiente Neon</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>
@@ -491,7 +491,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                   <div className="space-y-8 p-10 rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10" />
-                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.4em] mb-6 flex items-center gap-3">Hero Section <ExternalLink className="w-3.5 h-3.5 opacity-30" /></h4>
+                    <h4 className="text-[12px] font-black uppercase text-primary tracking-[0.4em] mb-6 flex items-center gap-3">Seção de Destaque <ExternalLink className="w-3.5 h-3.5 opacity-30" /></h4>
                     <div className="space-y-4">
                         <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} placeholder="ENTRADA..." className="h-14 bg-background border-none rounded-2xl font-black px-6 shadow-xl" />
                         <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} placeholder="FOCO PRINCIPAL..." className="h-16 bg-background border-none rounded-2xl font-black text-primary text-xl px-8 shadow-2xl" />
@@ -539,7 +539,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <Settings className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Advanced Protocol</h3>
+                    <h3 className="font-black text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Configurações Avançadas</h3>
                     <p className="text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Institucional, Legendas e SEO Profundo</p>
                   </div>
                </div>

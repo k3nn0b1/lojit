@@ -97,7 +97,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
     if (count >= 5) return { label: "Ouro", color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20", icon: <Star className="w-4 h-4" /> };
     if (count >= 2) return { label: "Prata", color: "bg-slate-400/10 text-slate-400 border-slate-400/20", icon: <Trophy className="w-4 h-4" /> };
     if (count === 1) return { label: "Bronze", color: "bg-orange-600/10 text-orange-600 border-orange-600/20", icon: <Award className="w-4 h-4" /> };
-    return { label: "New Entry", color: "bg-muted/10 text-muted-foreground border-muted-foreground/20", icon: <UserPlus className="w-4 h-4" /> };
+    return { label: "Novo Cliente", color: "bg-muted/10 text-muted-foreground border-muted-foreground/20", icon: <UserPlus className="w-4 h-4" /> };
   };
 
   const clientesFiltered = clientes.filter((c) => {
@@ -244,7 +244,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                       <SelectItem value="ouro" className="text-[10px] font-black uppercase py-4">🥇 Patente Ouro (5+)</SelectItem>
                       <SelectItem value="prata" className="text-[10px] font-black uppercase py-4">🥈 Patente Prata (2+)</SelectItem>
                       <SelectItem value="bronze" className="text-[10px] font-black uppercase py-4">🥉 Patente Bronze (1)</SelectItem>
-                      <SelectItem value="novo" className="text-[10px] font-black uppercase py-4">❄️ Fresh Entry (0)</SelectItem>
+                      <SelectItem value="novo" className="text-[10px] font-black uppercase py-4">❄️ Clientes Pendentes (0)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -306,7 +306,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                                   {rank.label}
                                 </Badge>
                                {stats.count > 0 && (
-                                 <span className="text-[9px] font-black text-primary opacity-40 uppercase tracking-widest italic">{stats.count}X LOYALTY</span>
+                                 <span className="text-[9px] font-black text-primary opacity-40 uppercase tracking-widest italic">{stats.count}X FIDELIDADE</span>
                                )}
                             </div>
                           </div>
@@ -320,7 +320,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                                 </div>
                              </div>
                              <div className="bg-background/40 p-6 rounded-[2rem] border border-primary/5 flex flex-col gap-2 items-center justify-center shadow-inner group-hover:bg-primary/5 transition-colors">
-                                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] opacity-40">LTV TOTAL</span>
+                                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] opacity-40">TOTAL GASTO</span>
                                 <div className="flex items-center gap-3">
                                    <TrendingUp className="w-4 h-4 text-green-500" />
                                    <span className="text-xl font-black text-green-500">{formatBRL(stats.spent)}</span>
@@ -358,7 +358,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                                    <div className="grid grid-cols-2 gap-8">
                                       <div className="bg-muted/10 p-8 rounded-[2.5rem] border border-primary/10 flex flex-col items-center justify-center text-center shadow-inner">
                                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 opacity-40">MÉTRICA FREQUÊNCIA</p>
-                                         <p className="text-4xl font-black">{stats.count} <span className="text-xs font-medium text-muted-foreground opacity-40">ORDERS</span></p>
+                                         <p className="text-4xl font-black">{stats.count} <span className="text-xs font-medium text-muted-foreground opacity-40">COMPRAS</span></p>
                                       </div>
                                       <div className="bg-muted/10 p-8 rounded-[2.5rem] border border-primary/10 flex flex-col items-center justify-center text-center shadow-inner">
                                          <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4 opacity-40">CAPITAL INJETADO</p>
@@ -451,7 +451,7 @@ const CustomersTab = ({ tenantId, IS_SUPABASE_READY, pedidos }: CustomersTabProp
                             className="w-full h-16 rounded-[2rem] bg-green-500/5 hover:bg-green-500 text-green-500 hover:text-black font-black uppercase text-[11px] tracking-[0.3em] border border-green-500/10 hover:border-green-500/0 shadow-xl transition-all active:scale-95"
                             onClick={() => window.open(`https://wa.me/55${normalizePhone(c.telefone)}`, '_blank')}
                           >
-                            <MessageCircle className="w-6 h-6 mr-3" /> Firing Remarketing
+                            <MessageCircle className="w-6 h-6 mr-3" /> FIDELIZAR NO WHATSAPP
                           </Button>
                         </div>
                       </>
