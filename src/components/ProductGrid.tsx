@@ -124,7 +124,7 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
               </SheetHeader>
               
               <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
-                <Accordion type="multiple" defaultValue={["categories"]} className="w-full space-y-4">
+                <Accordion type="multiple" className="w-full space-y-4">
                   
                   {/* Categorias */}
                   <AccordionItem value="categories" className="border-zinc-800/10">
