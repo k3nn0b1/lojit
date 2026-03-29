@@ -1,20 +1,4 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Calendar, 
-  ChevronDown, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Clock,
-  Package, 
-  ShoppingBag, 
-  AlertTriangle, 
-  Layers,
-  Activity
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -33,6 +17,22 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { AdminProduct, Color, Pedido } from "@/lib/types";
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Users, 
+  ShoppingBag, 
+  DollarSign, 
+  ArrowUpRight, 
+  Layout, 
+  Calendar,
+  AlertTriangle,
+  Package,
+  Layers,
+  Clock
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface DashboardTabProps {
   tenantId: string;
@@ -51,7 +51,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
     ticket: 0,
     growth: 5.2,
     topProducts: [] as { id: number; name: string; image: string; amount: number; qty: number }[],
-    lowStock: [] as AdminProduct[],
+    lowStock: [] as (AdminProduct & { lastPurchase?: string })[],
     chartData: [] as { date: string; amount: number }[],
     paymentStats: [] as { method: string; amount: number; qty: number }[]
   });
@@ -111,10 +111,23 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
            .sort((a, b) => b.amount - a.amount)
            .slice(0, 5);
 
-        // Radar de Estoque (Produtos com estoque total < 5)
-        const lowStock = storedProducts.filter(p => (p.stock || 0) < 5).slice(0, 5);
+        // Radar de Estoque com Data da Última Venda
+        const lowStock = storedProducts
+           .filter(p => (p.stock || 0) < 5)
+           .slice(0, 5)
+           .map(p => {
+              const lastOrder = pedidos
+                 .filter(ord => ord.itens.some(item => item.product_id === p.id))
+                 .sort((a, b) => new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime())[0];
+              
+              const lastDate = lastOrder 
+                 ? new Date(lastOrder.data_criacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                 : 'Sem vendas';
 
-        // Dados do Gráfico (Últimos dias selecionados)
+              return { ...p, lastPurchase: lastDate };
+           });
+
+        // Dados do Gráfico
         const dateMap: Record<string, number> = {};
         concluded.forEach(p => {
            const d = new Date(p.data_criacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -128,7 +141,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
               const [db, mb] = b.date.split('/').map(Number);
               return ma === mb ? da - db : ma - mb;
            })
-           .slice(-15); // Mostrar últimos 15 dias de dados para clareza
+           .slice(-15);
 
         // Ranking de Métodos de Pagamento
         const payMap: Record<string, { amount: number; qty: number }> = {};
@@ -164,7 +177,6 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
   useEffect(() => {
     fetchStats();
 
-    // Sincronização Alpha Realtime (Etapa 5)
     if (!IS_SUPABASE_READY || !tenantId) return;
 
     const channel = supabase
@@ -178,7 +190,6 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
           filter: `tenant_id=eq.${tenantId}`
         },
         () => {
-          // Atualiza as métricas silenciosamente quando algo muda no banco
           fetchStats();
         }
       )
@@ -226,56 +237,48 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
 
   const periodLabels = {
     today: "Hoje",
-    "7d": "Últimos 7 Dias",
-    "30d": "Últimos 30 Dias",
-    all: "Todo o Período"
+    "7d": "Últimos 7 dias",
+    "30d": "Últimos 30 dias",
+    all: "Todo período"
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-top-6 duration-700">
-      {/* Header de Comando */}
-      <Card className="bg-card/20 backdrop-blur-md border-primary/10 overflow-hidden shadow-3xl rounded-[2.5rem]">
-        <CardHeader className="bg-primary/5 py-8 border-b border-primary/10 px-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl font-black uppercase tracking-[0.2em] text-primary flex items-center gap-4">
-                <BarChart3 className="w-8 h-8" /> Central de Inteligência
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <Card className="bg-background/20 backdrop-blur-xl border-white/5 rounded-[3rem] shadow-3xl overflow-hidden border-none p-2">
+        <CardHeader className="p-10 flex flex-row items-center justify-between">
+           <div>
+              <CardTitle className="text-3xl font-black tracking-tighter uppercase mb-2">
+                 Relatórios <span className="text-primary italic">Alpha</span>
               </CardTitle>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Métricas comerciais e análise sistemática de performance</p>
-            </div>
-
-            {/* Seletor de Período Premium */}
-            <div className="flex items-center gap-2 bg-background/50 p-1.5 rounded-2xl border border-primary/10 shadow-inner">
-              {(Object.keys(periodLabels) as Period[]).map((p) => (
-                <Button
-                  key={p}
-                  variant="ghost"
-                  onClick={() => setPeriod(p)}
-                  className={`h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${
-                    period === p 
-                    ? "bg-primary text-black shadow-lg shadow-primary/20 scale-105" 
-                    : "text-muted-foreground hover:text-primary hover:bg-primary/5"
-                  }`}
-                >
-                  {periodLabels[p]}
-                </Button>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.3em]">
+                 Inteligência de Mercado • {periodLabels[period]}
+              </p>
+           </div>
+           
+           <div className="flex items-center gap-2 p-1.5 bg-background/40 backdrop-blur-xl border border-white/5 rounded-2xl">
+              {(['today', '7d', '30d', 'all'] as Period[]).map((p) => (
+                 <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                       period === p ? 'bg-primary text-background shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-white/5'
+                    }`}
+                 >
+                    {p === 'today' ? '24h' : p === '7d' ? '7d' : p === '30d' ? '30d' : 'Geral'}
+                 </button>
               ))}
-            </div>
-          </div>
+           </div>
         </CardHeader>
 
         <CardContent className="p-10">
            {loading ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-40 rounded-[2rem] border border-dashed border-primary/10 bg-primary/5 animate-pulse flex items-center justify-center">
-                     <span className="text-[10px] uppercase font-black tracking-widest opacity-20 text-primary">Sincronizando...</span>
-                  </div>
-                ))}
+             <div className="py-40 text-center space-y-4">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto opacity-20" />
+                <p className="text-[10px] uppercase font-black tracking-widest text-primary opacity-50 animate-pulse">Sincronizando Dados...</p>
              </div>
            ) : (
              <>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-white">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   <StatsCard 
                      title="Faturamento Bruto" 
                      value={formatBRL(stats.revenue)} 
@@ -310,32 +313,31 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                   />
                </div>
 
-               {/* Gráfico de Fluxo de Caixa */}
-               <div className="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-10">
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-14">
                   <div className="lg:col-span-8 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
-                     <div className="flex items-center justify-between mb-2">
-                        <div className="space-y-1">
+                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                     <div className="flex items-center justify-between mb-8">
+                        <div>
                            <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground flex items-center gap-3">
-                              <Activity className="w-5 h-5 text-primary" /> Fluxo de Caixa Digital
+                              <TrendingUp className="w-5 h-5 text-primary" /> Fluxo de Caixa Digital
                            </h5>
-                           <p className="text-[9px] text-muted-foreground uppercase opacity-60">Histórico de liquidez base dia</p>
                         </div>
                         <div className="text-right">
-                           <p className="text-[20px] font-black text-primary tracking-tighter">{formatBRL(stats.revenue)}</p>
-                           <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Total no Período</p>
+                           <p className="text-2xl font-black text-primary">{formatBRL(stats.revenue)}</p>
+                           <p className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">PERÍODO SELECIONADO</p>
                         </div>
                      </div>
                      
-                     <div className="h-64 w-full">
+                     <div className="h-[350px] w-full mt-10">
                         <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                           <AreaChart data={stats.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                               <defs>
-                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#23e7e3" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#23e7e3" stopOpacity={0}/>
-                                 </linearGradient>
+                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#23e7e3" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#23e7e3" stopOpacity={0}/>
+                                </linearGradient>
                               </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#23e7e3" opacity={0.05} vertical={false} />
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
                               <XAxis 
                                  dataKey="date" 
                                  stroke="#23e7e3" 
@@ -343,7 +345,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                                  fontSize={10} 
                                  tickLine={false} 
                                  axisLine={false}
-                                 tick={{ fill: '#23e7e3', fontWeight: 'bold' }}
+                                 dy={10}
                               />
                               <YAxis 
                                  stroke="#23e7e3" 
@@ -373,14 +375,14 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                   </div>
 
                   {/* Inteligência de Faturamento por Método */}
-                  <div className="lg:col-span-4 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                  <div className="lg:col-span-4 space-y-8 bg-muted/5 border border-primary/10 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col justify-center">
                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10" />
                      <h5 className="text-[12px] font-black uppercase tracking-[0.3em] text-foreground flex items-center gap-3 mb-6">
                          <Layers className="w-5 h-5 text-primary" /> Performance de Pagamento
                      </h5>
                      <div className="space-y-8">
                         {stats.paymentStats.map((p) => (
-                           <div key={p.method} className="space-y-3 p-4 bg-background/40 rounded-[2rem] border border-white/5 hover:border-primary/20 transition-all">
+                           <div key={p.method} className="space-y-3 p-6 bg-background/40 rounded-[2rem] border border-white/5 hover:border-primary/20 transition-all shadow-inner">
                               <div className="flex justify-between items-center mb-1">
                                  <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] font-black uppercase text-primary">
@@ -423,7 +425,6 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                   </div>
                </div>
 
-               {/* Seção de Inteligência Complementar */}
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mt-14">
                   {/* Top 5 Produtos */}
                   <div className="space-y-6">
@@ -461,7 +462,7 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      </div>
                   </div>
 
-                  {/* Radar de Estoque Crítico */}
+                  {/* Radar de Estoque Crítico - Design Alpha */}
                   <div className="space-y-6">
                      <div className="flex items-center gap-4 px-2">
                         <AlertTriangle className="w-5 h-5 text-destructive" />
@@ -469,21 +470,26 @@ const DashboardTab = ({ tenantId, IS_SUPABASE_READY, storedProducts }: Dashboard
                      </div>
                      <div className="space-y-4">
                         {stats.lowStock.map((p) => (
-                           <div key={p.id} className="bg-destructive/5 border border-destructive/10 rounded-2xl p-4 flex items-center gap-4 group">
-                              <div className="w-12 h-12 rounded-xl bg-destructive/10 flex-shrink-0 flex items-center justify-center text-destructive border border-destructive/20">
-                                 <Package className="w-6 h-6" />
+                           <div key={p.id} className="bg-destructive/5 border border-destructive/10 rounded-3xl p-6 flex items-center justify-between group hover:bg-destructive/10 transition-all">
+                              <div className="flex items-center gap-5 min-w-0">
+                                 <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex-shrink-0 flex items-center justify-center text-destructive border border-destructive/20 shadow-inner">
+                                    <Package className="w-7 h-7" />
+                                 </div>
+                                 <div className="min-w-0">
+                                    <p className="text-[11px] font-black uppercase tracking-widest truncate text-foreground">{p.name}</p>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                       <span className="text-[9px] px-2 py-0.5 bg-destructive/20 text-destructive rounded-full font-black uppercase tracking-tighter">Estoque: {p.stock || 0}</span>
+                                       <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest opacity-60">Última venda: {p.lastPurchase}</span>
+                                    </div>
+                                 </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                 <p className="text-[10px] font-black uppercase tracking-widest truncate">{p.name}</p>
-                                 <p className="text-[9px] text-destructive/60 uppercase font-black tracking-widest mt-1">ESTOQUE ATUAL: {p.stock || 0} UNIDADES</p>
+                              <div className="pr-2">
+                                 <div className="w-2 h-2 rounded-full bg-destructive animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                               </div>
-                              <Button variant="ghost" className="h-10 px-4 rounded-xl bg-destructive/10 text-destructive text-[9px] font-black uppercase tracking-widest hover:bg-destructive hover:text-white transition-all">
-                                 Repor
-                              </Button>
                            </div>
                         ))}
                         {stats.lowStock.length === 0 && (
-                           <div className="py-20 text-center opacity-20 border border-dashed border-green-500/20 rounded-3xl">
+                           <div className="py-20 text-center opacity-20 border border-dashed border-green-500/20 rounded-[3rem]">
                               <p className="text-[10px] uppercase font-black tracking-widest text-green-500">Fluxo de Inventário Estável</p>
                            </div>
                         )}
