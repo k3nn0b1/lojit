@@ -24,6 +24,7 @@ import SizesTab from "@/components/admin/tabs/SizesTab";
 import CategoriesTab from "@/components/admin/tabs/CategoriesTab";
 import ColorsTab from "@/components/admin/tabs/ColorsTab";
 import CustomersTab from "@/components/admin/tabs/CustomersTab";
+import DashboardTab from "@/components/admin/tabs/DashboardTab";
 import SettingsTab from "@/components/admin/tabs/SettingsTab";
 import DeliveryTab from "@/components/admin/tabs/DeliveryTab";
 
@@ -191,6 +192,7 @@ const Admin = () => {
             <TabsTrigger value="pedidos" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">PEDIDOS</TabsTrigger>
             <TabsTrigger value="catalogo" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">GESTÃO</TabsTrigger>
             <TabsTrigger value="clientes" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CRM</TabsTrigger>
+            <TabsTrigger value="dashboard" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">RELATÓRIOS</TabsTrigger>
             <TabsTrigger value="config" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">SETUP</TabsTrigger>
           </TabsList>
 
@@ -281,6 +283,13 @@ const Admin = () => {
               tenantId={tenantId} 
               IS_SUPABASE_READY={IS_SUPABASE_READY} 
               pedidos={pedidos}
+            />
+          </TabsContent>
+
+          <TabsContent value="dashboard" className="mt-6">
+            <DashboardTab 
+              tenantId={tenantId} 
+              IS_SUPABASE_READY={IS_SUPABASE_READY} 
             />
           </TabsContent>
 
