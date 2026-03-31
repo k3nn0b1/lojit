@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Info, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Info, X, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
@@ -161,7 +161,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         className="h-full"
       >
         <Card 
-          className="group overflow-hidden border-border/50 bg-card/90 backdrop-blur-none md:backdrop-blur-xl hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
+          className="group overflow-hidden border-white/5 bg-[#121214]/80 backdrop-blur-sm lg:backdrop-blur-md hover:border-primary/40 transition-all duration-500 hover:shadow-[0_20px_60px_-20px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
         >
         <div 
           className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
@@ -233,217 +233,141 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         <CardFooter className="p-3 md:p-5 pt-0 mt-auto">
           <Button
             onClick={() => setIsDetailsOpen(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black transition-smooth h-10 md:h-12 text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-primary/20"
+            className="w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] font-black transition-all hover:scale-[1.02] active:scale-[0.98] h-10 md:h-12 text-xs md:text-[10px] uppercase tracking-[0.2em] rounded-xl md:rounded-2xl shadow-lg shadow-primary/20"
             size="lg"
             disabled={isSoldOut}
           >
-            <ShoppingCart className="w-3 h-3 md:w-4 md:h-4 mr-2" />
+            <ShoppingCart className="w-3.5 h-3.5 mr-2" />
             COMPRAR
           </Button>
         </CardFooter>
       </Card>
     </motion.div>
   </div>
-
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-card border-primary/20 sm:rounded-lg h-[92vh] md:h-auto md:max-h-[90vh] flex flex-col">
-          {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              {/* Image Section */}              <div className="relative aspect-[4/5] md:aspect-auto bg-white/5 group overflow-hidden touch-none flex items-center justify-center">
-                <AnimatePresence initial={false}>
-                  <motion.div
-                    key={currentPhotoIndex}
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={1}
-                    onDragEnd={(_, info) => {
-                      const swipeThreshold = 50;
-                      if (info.offset.x > swipeThreshold) {
-                        prevPhoto();
-                      } else if (info.offset.x < -swipeThreshold) {
-                        nextPhoto();
-                      }
-                    }}
-                    className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
-                  >
-                    {productPhotos.length > 0 && (
-                      productPhotos[currentPhotoIndex]?.publicId ? (
-                        <AdvancedImage
-                          cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
-                          alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                          className="w-full h-full object-contain pointer-events-none"
-                        />
-                      ) : (
-                        <img
-                          src={productPhotos[currentPhotoIndex]?.url}
-                          alt={`${product.name} - Foto ${currentPhotoIndex + 1}`}
-                          className="w-full h-full object-contain pointer-events-none"
-                        />
-                      )
-                    )}
-                    {productPhotos.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-full w-full bg-muted/20">
-                         <span className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-40">Sem imagem</span>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-                
-                {productPhotos.length > 1 && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hidden md:flex items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20 hover:bg-primary transition-all active:scale-90 z-20"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                    
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                      {productPhotos.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setCurrentPhotoIndex(i)}
-                          className={`h-2 rounded-full transition-all ${
-                            currentPhotoIndex === i ? "w-6 bg-primary" : "w-2 bg-white/50"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+        <DialogContent className="max-w-[500px] w-[95vw] p-8 overflow-hidden bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col gap-0 animate-in zoom-in duration-500">
+          {/* Botão Fechar Customizado */}
+          <button
+            onClick={() => setIsDetailsOpen(false)}
+            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 transition-colors z-50"
+          >
+            <X size={20} />
+          </button>
 
-                {isSoldOut && (
-                  <Badge className="absolute top-4 left-4 bg-destructive text-destructive-foreground text-lg px-4 py-1 z-30">Esgotado</Badge>
-                )}
+          {/* Topo: Imagem e Info básica */}
+          <div className="flex flex-col md:flex-row gap-6 mb-8 mt-4 md:mt-0">
+            {/* Imagem do Produto */}
+            <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPhotoIndex}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.05 }}
+                  className="w-full h-full"
+                >
+                  {productPhotos[currentPhotoIndex]?.publicId ? (
+                    <AdvancedImage
+                      cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                      alt={product.name}
+                      className="w-full h-full object-cover rounded-[2rem] shadow-xl"
+                    />
+                  ) : (
+                    <img
+                      src={productPhotos[currentPhotoIndex]?.url || product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover rounded-[2rem] shadow-xl"
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              
+              {productPhotos.length > 1 && (
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                  {productPhotos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPhotoIndex(i)}
+                      className={`h-1 rounded-full transition-all ${
+                        currentPhotoIndex === i ? "w-4 bg-primary" : "w-1.5 bg-white/20"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Info Principal */}
+            <div className="flex flex-col pt-2 order-1 md:order-2">
+              <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase mb-1">
+                {product.category}
+              </span>
+              <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-2 uppercase">
+                {product.name}
+              </h2>
+              <div className="text-3xl font-medium text-white mb-6">
+                {formatBRL(product.price)}
               </div>
 
-              {/* Content Section */}
-              <div className="p-6 md:p-8 flex flex-col">
-                <DialogHeader className="text-left space-y-2 mb-6">
-                  <Badge variant="outline" className="w-fit text-primary border-primary/30 uppercase tracking-[0.2em] text-[10px]">{product.category}</Badge>
-                  <DialogTitle className="text-xl md:text-3xl font-display leading-tight">{product.name}</DialogTitle>
-                  <div className="text-2xl font-bold text-primary">{formatBRL(product.price)}</div>
-                </DialogHeader>
-
-                <div className="space-y-6">
-                  {product.description && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Sobre este produto</h4>
-                      <p className="text-sm text-muted-foreground/80 leading-relaxed whitespace-pre-wrap">{product.description}</p>
-                    </div>
-                  )}
-                  
-                  {product.colors && product.colors.length > 0 && (
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Escolha sua cor</h4>
-                      <div className="flex flex-wrap gap-3">
-                        {product.colors.map((c) => (
-                          <button
-                            key={c.name}
-                            onClick={() => setSelectedColor(c.name)}
-                            className={`group relative flex flex-col items-center gap-2 transition-all p-1 rounded-xl border-2 ${
-                              selectedColor === c.name 
-                                ? "border-primary bg-primary/10 shadow-lg scale-110" 
-                                : "border-background/50 bg-background/50 hover:border-primary/30"
-                            }`}
-                            title={c.name}
-                          >
-                            <div 
-                              className="w-10 h-10 rounded-full border border-white/20 shadow-inner overflow-hidden"
-                              style={{ backgroundColor: c.hex }}
-                            >
-                              <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent" />
-                            </div>
-                            <span className={`text-[9px] font-black uppercase tracking-tighter ${selectedColor === c.name ? "text-primary" : "text-muted-foreground"}`}>
-                              {c.name}
-                            </span>
-                            {selectedColor === c.name && (
-                              <motion.div 
-                                layoutId="color-ring"
-                                className="absolute inset-0 border-2 border-primary rounded-xl"
-                                initial={false}
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                              />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {!isSoldOut && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">{settings?.product_size_label || "Escolha seu tamanho"}</h4>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {displaySizes.map((size) => {
-                          const key = size.trim();
-                          const qty = product.stockBySize ? Number(product.stockBySize[key] ?? product.stockBySize[size] ?? 0) : undefined;
-                          const isSelected = selectedSize === key;
-                          
-                          return (
-                            <div key={key} className="flex flex-col items-center gap-1.5">
-                              <button
-                                onClick={() => setSelectedSize(key)}
-                                className={`min-w-[3.5rem] h-11 flex items-center justify-center rounded-xl border-2 transition-all font-black text-xs px-3 leading-tight text-center ${
-                                  isSelected
-                                    ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
-                                    : "border-border hover:border-primary/50 bg-background/50 text-foreground opacity-70"
-                                }`}
-                              >
-                                {key}
-                              </button>
-                              <span className="text-[9px] text-muted-foreground font-bold">{qty ?? 0} un</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-bold uppercase tracking-wider">
+                  <Package className="w-4 h-4 text-primary" />
+                  <span>
+                    {(product.stockBySize ? Object.values(product.stockBySize).reduce((a, b) => Number(a) + Number(b), 0) : product.stock) || 0} unidades disponíveis
+                  </span>
                 </div>
+                
+                {displaySizes.length > 0 && (
+                   <div className="flex flex-wrap gap-2">
+                      {displaySizes.map((size) => (
+                        <button 
+                          key={size}
+                          onClick={() => setSelectedSize(size.trim())}
+                          className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
+                            selectedSize === size.trim() 
+                              ? "bg-primary/20 border-primary text-primary" 
+                              : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                   </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Sticky Footer for Add to Cart Button */}
-          <div className="p-4 md:p-8 border-t border-border/50 bg-card/95 backdrop-blur-md z-30 shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
-            <Button
-              onClick={handleAddToCart}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-smooth h-14 text-lg"
-              size="lg"
-              disabled={
-                hasStockBySize
-                  ? Number(product.stockBySize?.[selectedSize] ?? 0) <= 0
-                  : (product.stock !== undefined && product.stock <= 0)
-              }
-            >
-              <ShoppingCart className="w-5 h-5 mr-3" />
-              ADICIONAR AO CARRINHO
-            </Button>
-          </div>
+          {/* Divisor Sutil */}
+          <div className="h-[1px] w-full bg-white/5 mb-6" />
 
-          {/* Custom Close Button - Fixed Position */}
-          <button
-            onClick={() => setIsDetailsOpen(false)}
-            className="absolute right-4 top-4 z-50 rounded-full h-11 w-11 flex items-center justify-center bg-background border-2 border-primary/20 text-foreground hover:bg-primary hover:text-white transition-all shadow-xl active:scale-90 group md:bg-background/20 md:backdrop-blur-md md:text-white md:border-white/20"
-            aria-label="Voltar"
-          >
-            <X className="h-6 w-6 stroke-[3]" />
-          </button>
+          {/* Descrição */}
+          {product.description && (
+            <div className="mb-8">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/50 mb-3 ml-1">Sobre este produto</h4>
+              <p className="text-zinc-400 text-sm italic leading-relaxed pl-1">
+                "{product.description}"
+              </p>
+            </div>
+          )}
+
+          {/* Botão Adicionar ao Carrinho */}
+          <div className="space-y-4">
+            <button 
+              onClick={handleAddToCart}
+              disabled={isSoldOut}
+              className="group w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_10px_30px_-5px_rgba(var(--primary),0.4)] disabled:opacity-50 disabled:grayscale"
+            >
+              <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
+              Adicionar ao Carrinho
+            </button>
+            <p className="text-center text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
+              Pagamento via Pix ou Cartão na Entrega
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
+
     </>
   );
 };

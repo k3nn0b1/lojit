@@ -69,6 +69,9 @@ const BackgroundManager: React.FC<BackgroundManagerProps> = ({ forceType }) => {
         className="fixed inset-0 z-[-20] overflow-hidden pointer-events-none bg-background"
       >
         {renderBackground()}
+        {/* Glow Central Inspirado no Snippet */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/15 blur-[120px] rounded-full opacity-60" />
+        
         {/* Overlay que cobre a tela toda permanentemente, sem causar scroll extra */}
         <div 
           className="absolute inset-0 pointer-events-none"
