@@ -15,6 +15,7 @@ import {
 import { uploadToCloudinary, removeFromCloudinary } from "@/lib/cloudinary";
 import { AdminProduct, Pedido, Color } from "@/lib/types";
 import { useTenant } from "@/hooks/use-tenant";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Tab Components
@@ -34,6 +35,7 @@ import NewOrderModal from "@/components/admin/modals/NewOrderModal";
 
 const Admin = () => {
   const { tenant, tenantId, isReady, loading: tenantLoading } = useTenant();
+  const { settings } = useStoreSettings();
   const [activeTab, setActiveTab] = useState("pedidos");
   const [activeCatalogTab, setActiveCatalogTab] = useState("products");
   
@@ -179,10 +181,7 @@ const Admin = () => {
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mb-16 md:mb-12 max-w-7xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 md:mb-14">
           <div className="flex items-center gap-4 shrink-0 justify-center lg:justify-start">
-             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl md:rounded-2xl flex items-center justify-center p-2 shadow-inner">
-               <img src="/favicon.png" alt="Lojit Logo" className="w-full h-full object-contain" />
-             </div>
-             <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel Elite</h1>
+             <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel {settings?.store_name || "Lojit"}</h1>
           </div>
           
           <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
