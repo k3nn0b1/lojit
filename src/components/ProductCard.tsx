@@ -173,7 +173,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              drag={!isMobile && productPhotos.length > 1 ? "x" : false}
+              drag={productPhotos.length > 1 ? "x" : false}
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.5}
               onDragEnd={(_, info) => {
@@ -185,7 +185,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 }
               }}
               onClick={() => setIsDetailsOpen(true)}
-              className="w-full h-full absolute inset-0"
+              className="w-full h-full absolute inset-0 cursor-grab active:cursor-grabbing"
             >
               {productPhotos[currentPhotoIndex]?.publicId ? (
                 <AdvancedImage
@@ -216,6 +216,24 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               {product.category}
             </Badge>
           </div>
+
+          {/* Indicadores de página (Pontinhos do Slider) */}
+          {productPhotos.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 p-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10">
+              {productPhotos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentPhotoIndex(i);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    currentPhotoIndex === i ? "w-4 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]" : "w-1.5 bg-white/40 hover:bg-white/80"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <CardContent className="p-3 md:p-5 flex-grow flex flex-col space-y-2">
@@ -245,125 +263,139 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     </motion.div>
   </div>
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-[500px] w-[95vw] p-8 overflow-y-auto bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col gap-0 animate-in zoom-in duration-500 scrollbar-hide max-h-[90vh]">
-          {/* Botão Fechar Customizado */}
+        <DialogContent className="max-w-[500px] w-[95vw] p-0 overflow-hidden bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col animate-in zoom-in duration-500 max-h-[90vh]">
+          {/* Botão Fechar Customizado - Fixo no topo esquerdo */}
           <button
             onClick={() => setIsDetailsOpen(false)}
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 transition-colors z-50"
+            className="absolute top-6 left-6 p-2 rounded-full bg-[#121214]/80 backdrop-blur-md border border-white/5 hover:bg-white/10 text-zinc-400 transition-all z-50 shadow-xl active:scale-95"
           >
             <X size={20} />
           </button>
 
-          {/* Topo: Imagem e Info básica */}
-          <div className="flex flex-col md:flex-row gap-6 mb-8 mt-4 md:mt-0">
-            {/* Imagem do Produto */}
-            <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentPhotoIndex}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.05 }}
-                  className="w-full h-full"
-                >
-                  {productPhotos[currentPhotoIndex]?.publicId ? (
-                    <AdvancedImage
-                      cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
-                      alt={product.name}
-                      className="w-full h-full object-cover rounded-[2rem] shadow-xl"
-                    />
-                  ) : (
-                    <img
-                      src={productPhotos[currentPhotoIndex]?.url || product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover rounded-[2rem] shadow-xl"
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-              
-              {productPhotos.length > 1 && (
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                  {productPhotos.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPhotoIndex(i)}
-                      className={`h-1 rounded-full transition-all ${
-                        currentPhotoIndex === i ? "w-4 bg-primary" : "w-1.5 bg-white/20"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Info Principal */}
-            <div className="flex flex-col pt-2 order-1 md:order-2">
-              <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase mb-1">
-                {product.category}
-              </span>
-              <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-2 uppercase">
-                {product.name}
-              </h2>
-              <div className="text-3xl font-medium text-white mb-6">
-                {formatBRL(product.price)}
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-bold uppercase tracking-wider">
-                  <Package className="w-4 h-4 text-primary" />
-                  <span>
-                    {product.stockBySize 
-                      ? (Number(product.stockBySize[selectedSize] ?? product.stockBySize[selectedSize.trim()] ?? 0))
-                      : (product.stock || 0)
-                    } unidades disponíveis
-                  </span>
-                </div>
+          {/* Container com Scroll */}
+          <div className="flex-1 overflow-y-auto p-8 pt-20 scrollbar-hide">
+            {/* Topo: Imagem e Info básica */}
+            <div className="flex flex-col md:flex-row gap-6 mb-8">
+              {/* Imagem do Produto */}
+              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentPhotoIndex}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    className="w-full h-full touch-pan-y cursor-grab active:cursor-grabbing"
+                    drag={productPhotos.length > 1 ? "x" : false}
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.5}
+                    onDragEnd={(_, info) => {
+                      const swipeThreshold = 30;
+                      if (info.offset.x > swipeThreshold) {
+                        prevPhoto();
+                      } else if (info.offset.x < -swipeThreshold) {
+                        nextPhoto();
+                      }
+                    }}
+                  >
+                    {productPhotos[currentPhotoIndex]?.publicId ? (
+                      <AdvancedImage
+                        cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-[2rem] shadow-xl pointer-events-none"
+                      />
+                    ) : (
+                      <img
+                        src={productPhotos[currentPhotoIndex]?.url || product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-[2rem] shadow-xl pointer-events-none"
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
                 
-                {displaySizes.length > 0 && (
-                   <div className="flex flex-wrap gap-2">
-                      {displaySizes.map((size) => (
-                        <button 
-                          key={size}
-                          onClick={() => setSelectedSize(size.trim())}
-                          className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
-                            selectedSize === size.trim() 
-                              ? "bg-primary/20 border-primary text-primary" 
-                              : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                   </div>
+                {productPhotos.length > 1 && (
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                    {productPhotos.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPhotoIndex(i)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          currentPhotoIndex === i ? "w-4 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]" : "w-1.5 bg-white/20 hover:bg-white/40"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {/* Info Principal */}
+              <div className="flex flex-col pt-2 order-1 md:order-2">
+                <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase mb-1">
+                  {product.category}
+                </span>
+                <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-2 uppercase">
+                  {product.name}
+                </h2>
+                <div className="text-3xl font-medium text-white mb-6">
+                  {formatBRL(product.price)}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-bold uppercase tracking-wider">
+                    <Package className="w-4 h-4 text-primary" />
+                    <span>
+                      {product.stockBySize 
+                        ? (Number(product.stockBySize[selectedSize] ?? product.stockBySize[selectedSize.trim()] ?? 0))
+                        : (product.stock || 0)
+                      } unidades disponíveis
+                    </span>
+                  </div>
+                  
+                  {displaySizes.length > 0 && (
+                     <div className="flex flex-wrap gap-2">
+                        {displaySizes.map((size) => (
+                          <button 
+                            key={size}
+                            onClick={() => setSelectedSize(size.trim())}
+                            className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
+                              selectedSize === size.trim() 
+                                ? "bg-primary/20 border-primary text-primary" 
+                                : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                     </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Divisor Sutil */}
-          <div className="h-[1px] w-full bg-white/5 mb-6" />
+            {/* Divisor Sutil */}
+            <div className="h-[1px] w-full bg-white/5 mb-6" />
 
-          {/* Descrição */}
-          {product.description && (
-            <div className="mb-8">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/50 mb-3 ml-1">Sobre este produto</h4>
-              <p className="text-zinc-400 text-sm italic leading-relaxed pl-1 whitespace-pre-wrap">
-                "{product.description}"
-              </p>
+            {/* Descrição */}
+            {product.description && (
+              <div className="mb-8">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mb-3 ml-1 opacity-90">Sobre este produto</h4>
+                <p className="text-zinc-400 text-sm italic leading-relaxed pl-1 whitespace-pre-wrap">
+                  "{product.description}"
+                </p>
+              </div>
+            )}
+
+            {/* Botão Adicionar ao Carrinho */}
+            <div className="pb-4">
+              <button 
+                onClick={handleAddToCart}
+                disabled={isSoldOut}
+                className="group w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_10px_30px_-5px_rgba(var(--primary),0.4)] disabled:opacity-50 disabled:grayscale"
+              >
+                <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
+                Adicionar ao Carrinho
+              </button>
             </div>
-          )}
-
-          {/* Botão Adicionar ao Carrinho */}
-          <div className="space-y-4">
-            <button 
-              onClick={handleAddToCart}
-              disabled={isSoldOut}
-              className="group w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_10px_30px_-5px_rgba(var(--primary),0.4)] disabled:opacity-50 disabled:grayscale"
-            >
-              <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
-              Adicionar ao Carrinho
-            </button>
           </div>
         </DialogContent>
       </Dialog>
