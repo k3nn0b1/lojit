@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Info, X, ChevronLeft, ChevronRight, Package } from "lucide-react";
+import { Info, X, ChevronLeft, ChevronRight, Package, ZoomIn } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 
@@ -308,14 +308,14 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             {/* Topo: Imagem e Info básica */}
             <div className="flex flex-col md:flex-row gap-6 mb-8">
               {/* Imagem do Produto */}
-              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1 overflow-hidden rounded-2xl md:rounded-[1.5rem]">
+              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1 overflow-hidden rounded-2xl md:rounded-[1.5rem] group">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentPhotoIndex}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 1.05 }}
-                    className="w-full h-full touch-pan-y cursor-grab active:cursor-grabbing"
+                    className="w-full h-full touch-pan-y"
                     drag={productPhotos.length > 1 ? "x" : false}
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={0.5}
@@ -332,17 +332,22 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                       <AdvancedImage
                         cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
                         alt={product.name}
-                        className="w-full h-full object-cover shadow-xl pointer-events-none"
+                        className="w-full h-full object-cover shadow-xl pointer-events-none transition-transform duration-500 group-hover:scale-110"
                       />
                     ) : (
                       <img
                         src={productPhotos[currentPhotoIndex]?.url || product.image}
                         alt={product.name}
-                        className="w-full h-full object-cover shadow-xl pointer-events-none"
+                        className="w-full h-full object-cover shadow-xl pointer-events-none transition-transform duration-500 group-hover:scale-110"
                       />
                     )}
                   </motion.div>
                 </AnimatePresence>
+                
+                {/* Lupa overlay no Hover */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-20">
+                  <ZoomIn className="w-8 h-8 text-white/80 drop-shadow-md transform scale-50 group-hover:scale-100 transition-transform duration-300" />
+                </div>
                 
                 {productPhotos.length > 1 && (
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 p-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
