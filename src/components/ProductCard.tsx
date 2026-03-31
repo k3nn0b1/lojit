@@ -85,6 +85,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -308,7 +309,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             {/* Topo: Imagem e Info básica */}
             <div className="flex flex-col md:flex-row gap-6 mb-8">
               {/* Imagem do Produto */}
-              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1 overflow-hidden rounded-2xl md:rounded-[1.5rem] group">
+              <div 
+                className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1 overflow-hidden rounded-2xl md:rounded-[1.5rem] group cursor-zoom-in"
+                onClick={() => setIsLightboxOpen(true)}
+              >
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentPhotoIndex}
@@ -441,6 +445,91 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 </>
               )}
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Lightbox / Fullscreen Image Viewer */}
+      <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
+        <DialogContent className="max-w-[100vw] h-[100dvh] md:max-w-[90vw] md:h-[90vh] p-0 bg-transparent border-none shadow-none flex items-center justify-center overflow-hidden">
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-4 right-4 z-50 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-all border border-white/20 active:scale-95"
+          >
+            <X size={24} />
+          </button>
+          
+          <div className="relative w-full h-full flex items-center justify-center">
+            {productPhotos.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); prevPhoto(); }}
+                  className="absolute left-4 z-50 p-3 md:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-all border border-white/20 active:scale-95"
+                >
+                  <ChevronLeft size={28} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); nextPhoto(); }}
+                  className="absolute right-4 z-50 p-3 md:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-all border border-white/20 active:scale-95"
+                >
+                  <ChevronRight size={28} />
+                </button>
+              </>
+            )}
+            
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`lightbox-${currentPhotoIndex}`}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 1.05, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="w-full h-full flex items-center justify-center p-4 md:p-12 cursor-default"
+                drag={productPhotos.length > 1 ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.8}
+                onDragEnd={(_, info) => {
+                  const swipeThreshold = 50;
+                  if (info.offset.x > swipeThreshold) {
+                    prevPhoto();
+                  } else if (info.offset.x < -swipeThreshold) {
+                    nextPhoto();
+                  }
+                }}
+              >
+                {productPhotos[currentPhotoIndex]?.publicId ? (
+                  <AdvancedImage
+                    cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
+                    alt={product.name}
+                    className="max-w-full max-h-full object-contain drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] select-none pointer-events-none"
+                  />
+                ) : (
+                  <img
+                    src={productPhotos[currentPhotoIndex]?.url || product.image}
+                    alt={product.name}
+                    className="max-w-full max-h-full object-contain drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] select-none pointer-events-none"
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+            
+            {/* Pontinhos */}
+            {productPhotos.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-50 p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
+                {productPhotos.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPhotoIndex(i);
+                    }}
+                    className={`h-2 rounded-full transition-all ${
+                      currentPhotoIndex === i ? "w-6 bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]" : "w-2 bg-white/50 hover:bg-white"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
