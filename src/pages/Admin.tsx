@@ -176,41 +176,49 @@ const Admin = () => {
 
   return (
     <div className="flex-1 flex flex-col relative w-full min-h-screen bg-background">
-      <Header
-        showCart={false}
-        rightAction={(
-          <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" onClick={handleLogout}>Sair</Button>
-        )}
-      />
-      
-      <main className="flex-1 container mx-auto px-4 py-6 md:py-8 mb-16 md:mb-12 max-w-7xl">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 md:mb-14">
-          <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary shrink-0">Painel Elite</h1>
+      <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mb-16 md:mb-12 max-w-7xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 md:mb-14">
+          <div className="flex items-center gap-4 shrink-0 justify-center lg:justify-start">
+             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-xl md:rounded-2xl flex items-center justify-center p-2 shadow-inner">
+               <img src="/favicon.png" alt="Lojit Logo" className="w-full h-full object-contain" />
+             </div>
+             <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel Elite</h1>
+          </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-            <TabsList className="w-full md:w-auto h-auto flex flex-wrap md:flex-nowrap justify-center items-center p-1 bg-muted/20 border border-white/5 rounded-xl md:rounded-2xl shadow-2xl gap-1">
-              <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
-                <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                PEDIDOS
-              </TabsTrigger>
-              <TabsTrigger value="catalogo" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
-                <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                GESTÃO
-              </TabsTrigger>
-              <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
-                <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                CRM
-              </TabsTrigger>
-              <TabsTrigger value="dashboard" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
-                <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                RELATÓRIOS
-              </TabsTrigger>
-              <TabsTrigger value="config" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
-                <Settings2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                SETUP
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+               <TabsList className="w-full md:w-auto h-auto flex flex-wrap md:flex-nowrap justify-center items-center p-1 bg-muted/20 border border-white/5 rounded-xl md:rounded-2xl shadow-2xl gap-1">
+                 <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                   <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                   PEDIDOS
+                 </TabsTrigger>
+                 <TabsTrigger value="catalogo" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                   <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                   GESTÃO
+                 </TabsTrigger>
+                 <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                   <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                   CRM
+                 </TabsTrigger>
+                 <TabsTrigger value="dashboard" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                   <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                   RELATÓRIOS
+                 </TabsTrigger>
+                 <TabsTrigger value="config" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                   <Settings2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                   SETUP
+                 </TabsTrigger>
+               </TabsList>
+             </Tabs>
+
+             <Button 
+                variant="outline" 
+                className="w-full md:w-auto h-12 md:h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive uppercase font-black text-[10px] tracking-widest rounded-xl" 
+                onClick={handleLogout}
+             >
+                Sair
+             </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
