@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, ShoppingBag, LayoutGrid, Users, BarChart3, Settings2 } from "lucide-react";
+import { RefreshCw, ShoppingBag, LayoutGrid, Users, BarChart3, Settings2, LogOut } from "lucide-react";
 import {
   parseSupabaseError,
   normalizeProductStock,
@@ -178,10 +178,22 @@ const Admin = () => {
 
   return (
     <div className="flex-1 flex flex-col relative w-full min-h-screen bg-background">
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12 mb-16 md:mb-12 max-w-7xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10 md:mb-14">
-          <div className="flex items-center gap-4 shrink-0 justify-center lg:justify-start">
-             <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel {settings?.store_name || "Lojit"}</h1>
+      <main className="flex-1 container mx-auto px-4 py-6 md:py-12 mb-16 md:mb-12 max-w-7xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6 mb-8 md:mb-14">
+          
+          {/* Header Mobile Otimizado (Titulo na esquerda + Logout na direita) */}
+          <div className="flex items-center justify-between w-full lg:w-auto shrink-0">
+             <h1 className="text-base sm:text-lg md:text-3xl font-black uppercase tracking-[0.1em] md:tracking-[0.2em] text-primary truncate max-w-[80%]">Painel {settings?.store_name || "Lojit"}</h1>
+             
+             {/* Logout Icon on Mobile */}
+             <Button 
+                variant="outline" 
+                size="icon"
+                className="lg:hidden h-10 w-10 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl shrink-0 transition-colors" 
+                onClick={handleLogout}
+             >
+                <LogOut className="w-4 h-4" />
+             </Button>
           </div>
           
           <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
@@ -210,9 +222,10 @@ const Admin = () => {
                </TabsList>
              </Tabs>
 
+             {/* Logout Text Button on Desktop */}
              <Button 
                 variant="outline" 
-                className="w-full md:w-auto h-12 md:h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive uppercase font-black text-[10px] tracking-widest rounded-xl" 
+                className="hidden lg:flex w-full md:w-auto h-12 md:h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive uppercase font-black text-[10px] tracking-widest rounded-xl transition-colors" 
                 onClick={handleLogout}
              >
                 Sair
