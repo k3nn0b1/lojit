@@ -226,7 +226,7 @@ const AppContent = () => {
   // Se é o painel master, renderizar rotas do master
   if (isMaster) {
     return (
-      <div className="relative min-h-screen flex flex-col">
+      <div className="relative min-h-screen flex flex-col overflow-x-hidden w-full max-w-[100vw]">
         <BackgroundManager forceType="bg4" />
         <BrowserRouter>
           <Suspense fallback={
@@ -269,7 +269,7 @@ const AppContent = () => {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col">
+    <div className="relative min-h-screen flex flex-col overflow-x-hidden w-full max-w-[100vw]">
       <BackgroundManager />
       <BrowserRouter>
         <Suspense fallback={

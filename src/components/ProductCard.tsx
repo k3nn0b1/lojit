@@ -251,8 +251,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         <CardFooter className="p-3 md:p-5 pt-0 mt-auto">
           <Button
             onClick={() => setIsDetailsOpen(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] font-black transition-all hover:scale-[1.02] active:scale-[0.98] h-10 md:h-12 text-xs md:text-[10px] uppercase tracking-[0.2em] rounded-xl md:rounded-2xl shadow-lg shadow-primary/20"
-            size="lg"
+            className="w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] font-black transition-all hover:scale-[1.02] active:scale-[0.98] h-10 md:h-12 text-[10px] uppercase tracking-wider rounded-xl md:rounded-2xl shadow-lg shadow-primary/20 px-2"
             disabled={isSoldOut}
           >
             {isSoldOut ? (
@@ -269,7 +268,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     </motion.div>
   </div>
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-[500px] w-[92vw] p-0 overflow-hidden bg-[#121214] border border-white/10 rounded-2xl md:rounded-3xl shadow-2xl flex flex-col animate-in zoom-in duration-500 max-h-[85svh]">
+        <DialogContent className="max-w-[500px] w-[92vw] p-0 overflow-hidden bg-[#121214] border border-white/10 rounded-2xl md:rounded-3xl shadow-2xl flex flex-col animate-in zoom-in duration-500 max-h-[90svh]">
           {/* Botão Fechar Customizado - Fixo no topo direito */}
           <button
             onClick={() => setIsDetailsOpen(false)}
@@ -320,13 +319,16 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 </AnimatePresence>
                 
                 {productPhotos.length > 1 && (
-                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30 p-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
                     {productPhotos.map((_, i) => (
                       <button
                         key={i}
-                        onClick={() => setCurrentPhotoIndex(i)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentPhotoIndex(i);
+                        }}
                         className={`h-1.5 rounded-full transition-all ${
-                          currentPhotoIndex === i ? "w-4 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]" : "w-1.5 bg-white/20 hover:bg-white/40"
+                          currentPhotoIndex === i ? "w-4 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]" : "w-1.5 bg-white/40 hover:bg-white/80"
                         }`}
                       />
                     ))}
