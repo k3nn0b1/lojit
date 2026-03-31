@@ -429,7 +429,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               <div className="mb-2">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mb-3 ml-1 opacity-90">Sobre este produto</h4>
                 <p className="text-zinc-400 text-sm italic leading-relaxed pl-1 whitespace-pre-wrap">
-                  "{product.description}"
+                  {product.description}
                 </p>
               </div>
             )}
