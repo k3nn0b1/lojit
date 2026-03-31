@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 // Cloudinary
 import { AdvancedImage } from "@cloudinary/react";
@@ -83,6 +83,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -155,16 +157,18 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     <>
     <div className="h-full">
       <motion.div
-        whileHover={{ scale: 1.02, y: -5 }}
+        whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         className="h-full"
       >
         <Card 
-          className="group overflow-hidden border-white/5 bg-[#121214]/80 backdrop-blur-sm lg:backdrop-blur-md hover:border-primary/40 transition-all duration-500 hover:shadow-[0_20px_60px_-20px_rgba(var(--primary),0.3)] flex flex-col h-full rounded-2xl md:rounded-[2.5rem]"
+          className="group relative flex flex-col bg-[#111111] rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/5 transition-all duration-500 hover:border-primary/30 hover:shadow-[0_0_30px_rgba(var(--primary),0.15)] h-full w-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
         <div 
-          className={`relative aspect-square overflow-hidden bg-muted shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
+          className={`relative aspect-square overflow-hidden bg-[#0a0a0a] shrink-0 cursor-pointer group ${isMobile ? "touch-pan-y" : "touch-none"}`}
         >
           <AnimatePresence initial={false}>
             <motion.div
@@ -193,7 +197,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   alt={product.name}
                   width={400}
                   height={400}
-                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
+                  className={`w-full h-full object-cover transition-transform duration-700 ease-out pointer-events-none ${isHovered ? 'scale-110 blur-[4px]' : 'scale-100'}`}
                 />
               ) : (
                 <img
@@ -202,19 +206,30 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   width={400}
                   height={400}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-110 pointer-events-none"
+                  className={`w-full h-full object-cover transition-transform duration-700 ease-out pointer-events-none ${isHovered ? 'scale-110 blur-[4px]' : 'scale-100'}`}
                 />
               )}
             </motion.div>
           </AnimatePresence>
 
-          <div className="absolute top-2 left-2 flex flex-col gap-1 z-30">
+          <div className="absolute top-3 left-3 flex flex-col gap-1 z-30">
             {isSoldOut && (
               <Badge className="bg-destructive text-destructive-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">Esgotado</Badge>
             )}
-            <Badge className="bg-primary/90 text-primary-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">
-              {product.category}
-            </Badge>
+          </div>
+
+          <div className="absolute top-3 right-3 z-30 px-2 py-1 rounded bg-white/10 backdrop-blur-md text-[9px] text-gray-300 font-medium tracking-wider border border-white/5 uppercase">
+            {product.category}
+          </div>
+
+          {/* Descrição do Produto no Hover */}
+          <div className={`absolute inset-0 bg-black/70 flex flex-col items-center justify-center transition-opacity duration-300 text-center px-6 pointer-events-none z-20 ${isHovered && !isMobile ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm transform transition-transform duration-500 w-[90%] mx-auto ${isHovered ? 'translate-y-0' : 'translate-y-2'}`}>
+              <p className="text-primary text-[10px] font-black tracking-[0.2em] uppercase mb-2">Detalhes</p>
+              <p className="text-gray-200 text-xs leading-relaxed font-medium line-clamp-4">
+                {product.description || "Nenhuma descrição disponível."}
+              </p>
+            </div>
           </div>
 
           {/* Indicadores de página (Pontinhos do Slider) */}
@@ -236,34 +251,46 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           )}
         </div>
 
-        <CardContent className="p-3 md:p-5 flex-grow flex flex-col space-y-2">
-          <h3 className="font-display text-sm md:text-lg text-foreground line-clamp-2 leading-tight uppercase font-black h-[2.5rem] md:h-[3rem]">
+        <div className="p-4 md:p-5 flex flex-col flex-grow bg-[#111111]">
+          <h3 className="text-gray-400 text-sm font-medium mb-1 transition-colors group-hover:text-gray-200 uppercase line-clamp-2 h-[2.5rem]">
             {product.name}
           </h3>
           
-          <div className="flex items-center justify-between mt-auto">
-            <span className="text-lg md:text-2xl font-black text-primary drop-shadow-[0_0_10px_rgba(var(--primary),0.2)]">
-              {formatBRL(product.price)}
-            </span>
+          <div className="mt-auto mb-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-primary text-xl md:text-2xl font-black tracking-tight leading-none drop-shadow-[0_0_10px_rgba(var(--primary),0.2)]">
+                {formatBRL(product.price)}
+              </span>
+            </div>
           </div>
-        </CardContent>
 
-        <CardFooter className="p-3 md:p-5 pt-0 mt-auto">
-          <Button
+          <button 
             onClick={() => setIsDetailsOpen(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] font-black transition-all hover:scale-[1.02] active:scale-[0.98] h-10 md:h-12 text-[10px] uppercase tracking-wider rounded-xl md:rounded-2xl shadow-lg shadow-primary/20 px-2"
             disabled={isSoldOut}
+            className={`relative overflow-hidden w-full h-11 md:h-12 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${
+              isAdded 
+              ? 'bg-green-500 text-white' 
+              : isHovered 
+                ? 'bg-primary text-[#0a0a0b] shadow-[0_0_20px_rgba(var(--primary),0.4)]' 
+                : 'bg-white/5 text-primary border border-primary/20'
+            }`}
           >
             {isSoldOut ? (
               "ESGOTADO"
+            ) : isAdded ? (
+              <>
+                <CheckCircle2 size={18} />
+                Adicionado
+              </>
             ) : (
               <>
-                <ShoppingCart className="w-3.5 h-3.5 mr-2" />
-                COMPRAR
+                <ShoppingCart size={18} className={isHovered ? 'animate-bounce' : ''} />
+                {isHovered ? "Comprar Agora" : "Comprar"}
               </>
             )}
-          </Button>
-        </CardFooter>
+            <div className={`absolute top-0 -left-[100%] w-1/2 h-full bg-white/20 skew-x-[-30deg] transition-all duration-700 pointer-events-none ${isHovered ? 'left-[150%]' : ''}`} />
+          </button>
+        </div>
       </Card>
     </motion.div>
   </div>
