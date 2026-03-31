@@ -57,7 +57,13 @@ const mockProducts: Product[] = [
 
 const Index = () => {
   useEffect(() => {
-    AOS.init({ duration: 800, once: true, offset: 40, easing: "ease-out-cubic" });
+    AOS.init({ 
+      duration: 800, 
+      once: true, 
+      offset: 40, 
+      easing: "ease-out-cubic",
+      disable: "mobile" // Prevent scroll lag recalculations on low-end devices
+    });
     AOS.refresh();
   }, []);
 
