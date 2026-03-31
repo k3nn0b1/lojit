@@ -62,7 +62,7 @@ const Index = () => {
       once: true, 
       offset: 40, 
       easing: "ease-out-cubic",
-      disable: "mobile" // Prevent scroll lag recalculations on low-end devices
+      disable: window.innerWidth < 768 // Disable completely on mobile screens to prevent scroll snap/lag
     });
     AOS.refresh();
   }, []);

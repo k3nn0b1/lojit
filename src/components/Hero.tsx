@@ -24,7 +24,7 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center scroll-mt-24 md:scroll-mt-32 pt-24 md:pt-32 pb-16 md:pb-20"
+      className="relative min-h-[100svh] overflow-hidden flex items-center justify-center scroll-mt-24 md:scroll-mt-32 pt-24 md:pt-32 pb-16 md:pb-20"
     >
       {/* Deep Glow Elements - Subtle highlight for the core content */}
       <div className="absolute top-1/4 -left-10 w-64 h-64 rounded-full bg-primary/5 blur-[120px] animate-pulse" />
