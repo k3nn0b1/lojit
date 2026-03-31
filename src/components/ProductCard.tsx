@@ -197,7 +197,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   alt={product.name}
                   width={400}
                   height={400}
-                  className={`w-full h-full object-cover transition-transform duration-700 ease-out pointer-events-none ${isHovered ? 'scale-110 blur-[4px]' : 'scale-100'}`}
+                  className="w-full h-full object-cover pointer-events-none"
                 />
               ) : (
                 <img
@@ -206,7 +206,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                   width={400}
                   height={400}
                   loading="lazy"
-                  className={`w-full h-full object-cover transition-transform duration-700 ease-out pointer-events-none ${isHovered ? 'scale-110 blur-[4px]' : 'scale-100'}`}
+                  className="w-full h-full object-cover pointer-events-none"
                 />
               )}
             </motion.div>
@@ -214,17 +214,16 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
 
           <div className="absolute top-3 left-3 flex flex-col gap-1 z-30">
             {isSoldOut && (
-              <Badge className="bg-destructive text-destructive-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">Esgotado</Badge>
+              <Badge className="bg-destructive text-destructive-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm mb-1">Esgotado</Badge>
             )}
-          </div>
-
-          <div className="absolute top-3 right-3 z-30 px-2 py-1 rounded bg-white/10 backdrop-blur-md text-[9px] text-gray-300 font-medium tracking-wider border border-white/5 uppercase">
-            {product.category}
+            <Badge className="bg-primary/90 text-primary-foreground text-[8px] md:text-[10px] uppercase font-black px-2 py-0.5 rounded-sm">
+              {product.category}
+            </Badge>
           </div>
 
           {/* Descrição do Produto no Hover */}
-          <div className={`absolute inset-0 bg-black/70 flex flex-col items-center justify-center transition-opacity duration-300 text-center px-6 pointer-events-none z-20 ${isHovered && !isMobile ? 'opacity-100' : 'opacity-0'}`}>
-            <div className={`bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm transform transition-transform duration-500 w-[90%] mx-auto ${isHovered ? 'translate-y-0' : 'translate-y-2'}`}>
+          <div className={`absolute inset-0 bg-black/80 flex flex-col items-center justify-center transition-opacity duration-300 text-center px-6 pointer-events-none z-20 ${isHovered && !isMobile ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`transform transition-transform duration-500 w-[90%] mx-auto ${isHovered ? 'translate-y-0' : 'translate-y-2'}`}>
               <p className="text-primary text-[10px] font-black tracking-[0.2em] uppercase mb-2">Detalhes</p>
               <p className="text-gray-200 text-xs leading-relaxed font-medium line-clamp-4">
                 {product.description || "Nenhuma descrição disponível."}

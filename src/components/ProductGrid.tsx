@@ -91,8 +91,10 @@ const ProductGrid = ({ products, onAddToCart }: ProductGridProps) => {
   };
 
   return (
-    <section id="products" className="min-h-screen pt-4 pb-16 md:pb-32" data-aos="fade-up">
-      <div className="container mx-auto px-4 md:px-8">
+    <section id="products" className="min-h-screen pt-8 pb-16 md:pb-32 relative" data-aos="fade-up">
+      {/* Background overlay com gradiente suave para escurecer o fundo sem corte seco */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/60 pointer-events-none -z-10" />
+      <div className="container mx-auto px-4 md:px-8 relative z-10">
         {/* Category Filter - Modal Version */}
         <div className="flex justify-between items-center mb-10 md:mb-16">
           <div className="flex flex-col">
