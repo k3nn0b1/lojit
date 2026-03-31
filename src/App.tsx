@@ -206,23 +206,6 @@ const AppContent = () => {
      );
   }
 
-  // Ainda resolvendo o tenant (apenas para lojas, não para o master)
-  if (tenantLoading && !isMaster) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-6">
-          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-primary font-bold text-xl tracking-[0.2em] animate-pulse">CARREGANDO</span>
-            <div className="h-1 w-32 bg-primary/20 rounded-full overflow-hidden">
-              <div className="h-full bg-primary animate-progress-loading" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Se é o painel master, renderizar rotas do master
   if (isMaster) {
     return (
@@ -255,14 +238,24 @@ const AppContent = () => {
     );
   }
 
-  // Bloqueia a exibição da LOJA até que o carregamento termine. 
+  // Bloqueia a exibição da LOJA até que o carregamento do Tenant e Settings finalize
   // O Master Panel ignora essa trava.
   if (!isMaster && (loading || !settings?.store_name)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-        <div className="flex flex-col items-center gap-4">
-           <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-           <p className="text-zinc-500 font-mono text-xs animate-pulse">CARREGANDO HUB LOJIT...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="flex flex-col items-center gap-6">
+           {/* Lojit Logo Pulsing Initial Loader inside React */}
+           <div className="relative w-16 h-16 flex justify-center items-center">
+             <div className="absolute inset-[-10px] bg-primary/20 blur-xl rounded-full animate-pulse" />
+             <img src="/favicon.png" alt="Lojit" className="w-full h-full object-contain animate-bounce relative z-10 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
+           </div>
+           
+           <div className="flex flex-col items-center gap-2">
+             <span className="text-primary font-bold text-lg tracking-[0.2em] animate-pulse">CARREGANDO HUB LOJIT</span>
+             <div className="h-1 w-32 bg-primary/10 rounded-full overflow-hidden">
+               <div className="h-full bg-primary animate-progress-loading" />
+             </div>
+           </div>
         </div>
       </div>
     );
