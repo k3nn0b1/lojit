@@ -68,6 +68,16 @@
     height: 6px;
   }
 
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }

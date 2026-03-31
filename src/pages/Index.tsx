@@ -65,6 +65,21 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      if (windowHeight === 0) return;
+      const progress = (totalScroll / windowHeight) * 100;
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Init
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
 
 
@@ -317,6 +332,14 @@ const Index = () => {
 
   return (
     <div className="flex-1 w-full relative bg-transparent flex flex-col">
+      {/* Mobile Scroll Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1 z-[100] md:hidden bg-black/20 backdrop-blur-sm pointer-events-none">
+        <div 
+          className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]"
+          style={{ width: `${scrollProgress}%`, transition: 'width 0.1s ease-out' }}
+        />
+      </div>
+
       <div className="relative z-10 flex flex-col flex-grow">
         <Header cartItemCount={cartItemCount} onCartClick={() => setIsCartOpen(true)} />
         <div className="flex-grow">
