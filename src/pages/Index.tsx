@@ -5,14 +5,15 @@ import ProductGrid from "@/components/ProductGrid";
 import Cart, { CartItem } from "@/components/Cart";
 import Footer from "@/components/Footer";
 import { Product } from "@/components/ProductCard";
+import { Check, Loader2, ArrowRight } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { formatBRL, normalizePhone, generateUUID, normalizeProductStock } from "@/lib/utils";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { useTenant } from "@/hooks/use-tenant";
-
 
 // Mock products data
 const mockProducts: Product[] = [
@@ -65,24 +66,14 @@ const Index = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const totalScroll = document.documentElement.scrollTop;
-      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      if (windowHeight === 0) return;
-      const progress = (totalScroll / windowHeight) * 100;
-      setScrollProgress(progress);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Init
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-
-
+  // Performance Optimization: Framer Motion for scroll tracking (bypasses React renders during scroll)
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   // Ordena produtos colocando esgotados (stock <= 0) por último e, dentro dos grupos, por id desc
   const sortProducts = (list: Product[]) => {
@@ -332,11 +323,11 @@ const Index = () => {
 
   return (
     <div className="flex-1 w-full relative bg-transparent flex flex-col">
-      {/* Mobile Scroll Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-1 z-[100] md:hidden bg-black/20 backdrop-blur-sm pointer-events-none">
-        <div 
-          className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]"
-          style={{ width: `${scrollProgress}%`, transition: 'width 0.1s ease-out' }}
+      {/* Mobile Scroll Progress Bar - Optmized with framer-motion to avoid re-rendering and lag */}
+      <div className="fixed top-0 left-0 w-full z-[100] md:hidden bg-transparent overflow-hidden pointer-events-none">
+        <motion.div 
+          className="h-[2px] bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]"
+          style={{ scaleX, transformOrigin: "0% 50%" }}
         />
       </div>
 
