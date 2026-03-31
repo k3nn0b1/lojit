@@ -255,29 +255,35 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             size="lg"
             disabled={isSoldOut}
           >
-            <ShoppingCart className="w-3.5 h-3.5 mr-2" />
-            COMPRAR
+            {isSoldOut ? (
+              "ESGOTADO"
+            ) : (
+              <>
+                <ShoppingCart className="w-3.5 h-3.5 mr-2" />
+                COMPRAR
+              </>
+            )}
           </Button>
         </CardFooter>
       </Card>
     </motion.div>
   </div>
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-[500px] w-[95vw] p-0 overflow-hidden bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col animate-in zoom-in duration-500 max-h-[90vh]">
-          {/* Botão Fechar Customizado - Fixo no topo esquerdo */}
+        <DialogContent className="max-w-[500px] w-[92vw] p-0 overflow-hidden bg-[#121214] border border-white/10 rounded-2xl md:rounded-3xl shadow-2xl flex flex-col animate-in zoom-in duration-500 max-h-[85svh]">
+          {/* Botão Fechar Customizado - Fixo no topo direito */}
           <button
             onClick={() => setIsDetailsOpen(false)}
-            className="absolute top-6 left-6 p-2 rounded-full bg-[#121214]/80 backdrop-blur-md border border-white/5 hover:bg-white/10 text-zinc-400 transition-all z-50 shadow-xl active:scale-95"
+            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full bg-[#121214]/80 backdrop-blur-md border border-white/5 hover:bg-white/10 text-zinc-400 transition-all z-50 shadow-xl active:scale-95"
           >
             <X size={20} />
           </button>
 
           {/* Container com Scroll */}
-          <div className="flex-1 overflow-y-auto p-8 pt-20 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto p-6 pt-16 md:p-8 md:pt-20 scrollbar-hide">
             {/* Topo: Imagem e Info básica */}
             <div className="flex flex-col md:flex-row gap-6 mb-8">
               {/* Imagem do Produto */}
-              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1">
+              <div className="w-full md:w-[180px] aspect-square md:h-[180px] shrink-0 relative order-2 md:order-1 overflow-hidden rounded-2xl md:rounded-[1.5rem]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentPhotoIndex}
@@ -301,13 +307,13 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                       <AdvancedImage
                         cldImg={getCldImage(productPhotos[currentPhotoIndex].publicId)!}
                         alt={product.name}
-                        className="w-full h-full object-cover rounded-[2rem] shadow-xl pointer-events-none"
+                        className="w-full h-full object-cover shadow-xl pointer-events-none"
                       />
                     ) : (
                       <img
                         src={productPhotos[currentPhotoIndex]?.url || product.image}
                         alt={product.name}
-                        className="w-full h-full object-cover rounded-[2rem] shadow-xl pointer-events-none"
+                        className="w-full h-full object-cover shadow-xl pointer-events-none"
                       />
                     )}
                   </motion.div>
@@ -377,29 +383,34 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
 
             {/* Descrição */}
             {product.description && (
-              <div className="mb-8">
+              <div className="mb-2">
                 <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary mb-3 ml-1 opacity-90">Sobre este produto</h4>
                 <p className="text-zinc-400 text-sm italic leading-relaxed pl-1 whitespace-pre-wrap">
                   "{product.description}"
                 </p>
               </div>
             )}
+          </div>
 
-            {/* Botão Adicionar ao Carrinho */}
-            <div className="pb-4">
-              <button 
-                onClick={handleAddToCart}
-                disabled={isSoldOut}
-                className="group w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_10px_30px_-5px_rgba(var(--primary),0.4)] disabled:opacity-50 disabled:grayscale"
-              >
-                <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
-                Adicionar ao Carrinho
-              </button>
-            </div>
+          {/* Botão Adicionar ao Carrinho - Fixo no rodapé */}
+          <div className="p-4 md:p-6 bg-[#121214]/90 backdrop-blur-xl border-t border-white/5 relative z-10">
+            <button 
+              onClick={handleAddToCart}
+              disabled={isSoldOut}
+              className="group w-full bg-primary hover:bg-primary/90 text-[#0a0a0b] py-4 rounded-2xl font-black text-xs md:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-[0_10px_30px_-5px_rgba(var(--primary),0.3)] disabled:opacity-50 disabled:grayscale"
+            >
+              {isSoldOut ? (
+                "Produto Esgotado"
+              ) : (
+                <>
+                  <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
+                  Adicionar ao Carrinho
+                </>
+              )}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
-
     </>
   );
 };
