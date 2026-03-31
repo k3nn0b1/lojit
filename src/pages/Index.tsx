@@ -70,8 +70,9 @@ const Index = () => {
   // Performance Optimization: Framer Motion for scroll tracking (bypasses React renders during scroll)
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
+    stiffness: 40,
+    damping: 15,
+    mass: 0.5,
     restDelta: 0.001
   });
 
@@ -324,9 +325,9 @@ const Index = () => {
   return (
     <div className="flex-1 w-full relative bg-transparent flex flex-col">
       {/* Mobile Scroll Progress Bar - Optmized with framer-motion to avoid re-rendering and lag */}
-      <div className="fixed top-0 left-0 w-full z-[100] md:hidden bg-transparent overflow-hidden pointer-events-none">
+      <div className="fixed top-0 left-0 w-full z-[100] md:hidden bg-transparent pointer-events-none">
         <motion.div 
-          className="h-[2px] bg-primary shadow-[0_0_10px_rgba(var(--primary),0.8)]"
+          className="h-[1.5px] bg-primary/90 shadow-[0_0_8px_rgba(var(--primary),1)]"
           style={{ scaleX, transformOrigin: "0% 50%" }}
         />
       </div>
