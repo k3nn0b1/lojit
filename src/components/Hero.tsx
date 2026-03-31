@@ -54,37 +54,37 @@ const Hero = () => {
           className="max-w-4xl mx-auto text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200 fill-mode-both"
         >
           <div className="space-y-4">
-            <h2 className="text-4xl md:text-7xl lg:text-8xl font-display font-black leading-[1.1] uppercase flex flex-col items-center justify-center">
-              <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <h2 className="text-[12vw] sm:text-[10vw] md:text-7xl lg:text-8xl font-display font-black leading-[1.1] uppercase flex flex-col items-center justify-center max-w-[100vw] text-center w-full px-2">
+              <span className="text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] max-w-full break-words">
                 {settings?.hero_title_l1 || "BEM-VINDO"}
               </span>
-              <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
+              <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)] max-w-full break-words">
                 {settings?.hero_title_l2 || "À NOSSA LOJA"}
               </span>
               {settings?.hero_title_l3 && (
-                <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
+                <span className="text-primary glow-neon drop-shadow-[0_0_20px_hsl(var(--primary)/0.5)] max-w-full break-words">
                   {settings?.hero_title_l3}
                 </span>
               )}
             </h2>
             
-            <p className="text-base md:text-xl text-muted-foreground/80 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-sm sm:text-base md:text-xl text-muted-foreground/80 max-w-[90%] md:max-w-2xl mx-auto font-medium leading-relaxed px-4 break-words">
               {heroPhrase || "Confira nossa coleção exclusiva de produtos com qualidade premium e atendimento personalizado."}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center pt-4 w-full px-4">
             <Button
               onClick={scrollToProducts}
               size="lg"
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-10 py-7 rounded-full glow-soft transition-smooth hover:scale-105 active:scale-95"
+              className="w-full max-w-[300px] sm:max-w-none sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-lg px-6 md:px-10 py-6 md:py-7 rounded-full glow-soft transition-smooth hover:scale-105 active:scale-95"
             >
               VER COLEÇÃO
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto border-primary/40 hover:border-primary bg-transparent text-foreground hover:text-primary hover:bg-transparent font-bold text-lg px-10 py-7 rounded-full transition-smooth hover:scale-105 active:scale-95"
+              className="w-full max-w-[300px] sm:max-w-none sm:w-auto border-primary/40 hover:border-primary bg-transparent text-foreground hover:text-primary hover:bg-transparent font-bold text-sm md:text-lg px-6 md:px-10 py-6 md:py-7 rounded-full transition-smooth hover:scale-105 active:scale-95"
               onClick={scrollToAbout}
             >
               SOBRE NÓS
