@@ -164,7 +164,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         className="h-full"
       >
         <Card 
-          className="group relative flex flex-col bg-[#111111] rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/5 transition-all duration-500 hover:border-primary/30 hover:shadow-[0_0_30px_rgba(var(--primary),0.15)] h-full w-full"
+          onClick={() => {
+            if (isMobile) setIsDetailsOpen(true);
+          }}
+          className={`group relative flex flex-col bg-[#111111] rounded-2xl md:rounded-[2.5rem] overflow-hidden border border-white/5 transition-all duration-500 h-full w-full ${!isMobile ? 'hover:border-primary/30 hover:shadow-[0_0_30px_rgba(var(--primary),0.15)]' : 'active:border-primary/30'}`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -265,14 +268,17 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           </div>
 
           <button 
-            onClick={() => setIsDetailsOpen(true)}
+            onClick={(e) => {
+              if (isMobile) e.stopPropagation();
+              setIsDetailsOpen(true);
+            }}
             disabled={isSoldOut}
-            className={`relative overflow-hidden w-full h-11 md:h-12 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${
+            className={`relative overflow-hidden w-full h-11 md:h-12 rounded-xl md:rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 transform disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed ${
               isAdded 
               ? 'bg-green-500 text-white' 
-              : isHovered 
-                ? 'bg-primary text-[#0a0a0b] shadow-[0_0_20px_rgba(var(--primary),0.4)]' 
-                : 'bg-white/5 text-primary border border-primary/20'
+              : isHovered && !isMobile
+                ? 'bg-primary text-[#0a0a0b] shadow-[0_0_20px_rgba(var(--primary),0.4)] hover:scale-105' 
+                : 'bg-white/5 text-primary border border-primary/20 active:scale-95'
             }`}
           >
             {isSoldOut ? (
@@ -284,11 +290,11 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               </>
             ) : (
               <>
-                <ShoppingCart size={18} className={isHovered ? 'animate-bounce' : ''} />
-                {isHovered ? "Comprar Agora" : "Comprar"}
+                <ShoppingCart size={18} className={isHovered && !isMobile ? 'animate-bounce' : ''} />
+                {isHovered && !isMobile ? "Comprar Agora" : "Comprar"}
               </>
             )}
-            <div className={`absolute top-0 -left-[100%] w-1/2 h-full bg-white/20 skew-x-[-30deg] transition-all duration-700 pointer-events-none ${isHovered ? 'left-[150%]' : ''}`} />
+            <div className={`absolute top-0 -left-[100%] w-1/2 h-full bg-white/20 skew-x-[-30deg] transition-all duration-700 pointer-events-none ${isHovered && !isMobile ? 'left-[150%]' : ''}`} />
           </button>
         </div>
       </Card>
