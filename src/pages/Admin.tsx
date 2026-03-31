@@ -189,7 +189,7 @@ const Admin = () => {
              <Button 
                 variant="outline" 
                 size="icon"
-                className="lg:hidden h-10 w-10 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl shrink-0 transition-colors" 
+                className="lg:hidden h-10 w-10 border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive rounded-xl shrink-0 transition-colors" 
                 onClick={handleLogout}
              >
                 <LogOut className="w-4 h-4" />
@@ -205,11 +205,11 @@ const Admin = () => {
                  </TabsTrigger>
                  <TabsTrigger value="catalogo" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
                    <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                   GESTÃO
+                   PRODUTOS
                  </TabsTrigger>
                  <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
                    <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                   CRM
+                   CLIENTES
                  </TabsTrigger>
                  <TabsTrigger value="dashboard" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
                    <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
@@ -217,7 +217,7 @@ const Admin = () => {
                  </TabsTrigger>
                  <TabsTrigger value="config" className="flex-1 md:flex-none py-2.5 px-3 md:px-5 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
                    <Settings2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                   SETUP
+                   CONFIG
                  </TabsTrigger>
                </TabsList>
              </Tabs>
@@ -226,7 +226,7 @@ const Admin = () => {
              <Button 
                 variant="outline"
                 size="icon" 
-                className="hidden lg:flex w-[46px] h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl transition-colors shrink-0" 
+                className="hidden lg:flex w-[46px] h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive rounded-xl transition-colors shrink-0" 
                 onClick={handleLogout}
              >
                 <LogOut className="w-5 h-5" />
