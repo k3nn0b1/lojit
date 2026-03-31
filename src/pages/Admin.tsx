@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ShoppingBag, LayoutGrid, Users, BarChart3, Settings2 } from "lucide-react";
 import {
   parseSupabaseError,
   normalizeProductStock,
@@ -15,6 +15,7 @@ import {
 import { uploadToCloudinary, removeFromCloudinary } from "@/lib/cloudinary";
 import { AdminProduct, Pedido, Color } from "@/lib/types";
 import { useTenant } from "@/hooks/use-tenant";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Tab Components
 import OrdersTab from "@/components/admin/tabs/OrdersTab";
@@ -183,36 +184,72 @@ const Admin = () => {
       />
       
       <main className="flex-1 container mx-auto px-4 py-6 md:py-8 mb-16 md:mb-12 max-w-7xl">
-        <div className="flex items-center justify-between mb-8 md:mb-10">
-          <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary">Painel Elite</h1>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10 md:mb-14">
+          <h1 className="text-xl md:text-3xl font-black uppercase tracking-[0.2em] text-primary shrink-0">Painel Elite</h1>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+            <TabsList className="w-full md:w-auto h-auto flex flex-wrap md:flex-nowrap justify-center items-center p-1 bg-muted/20 border border-white/5 rounded-xl md:rounded-2xl shadow-2xl gap-1">
+              <TabsTrigger value="pedidos" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                PEDIDOS
+              </TabsTrigger>
+              <TabsTrigger value="catalogo" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                GESTÃO
+              </TabsTrigger>
+              <TabsTrigger value="clientes" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                CRM
+              </TabsTrigger>
+              <TabsTrigger value="dashboard" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                RELATÓRIOS
+              </TabsTrigger>
+              <TabsTrigger value="config" className="flex-1 md:flex-none py-2.5 px-3 md:px-6 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black flex items-center gap-2">
+                <Settings2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                SETUP
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full h-auto flex flex-wrap md:flex-nowrap justify-center items-center p-1.5 bg-muted/20 border border-primary/5 rounded-2xl shadow-2xl mb-12 relative max-w-4xl mx-auto gap-1">
-            <TabsTrigger value="pedidos" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">PEDIDOS</TabsTrigger>
-            <TabsTrigger value="catalogo" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">GESTÃO</TabsTrigger>
-            <TabsTrigger value="clientes" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">CRM</TabsTrigger>
-            <TabsTrigger value="dashboard" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">RELATÓRIOS</TabsTrigger>
-            <TabsTrigger value="config" className="flex-1 py-3 px-2 md:px-4 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-black">SETUP</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="pedidos" className="mt-6">
-            <OrdersTab 
-              tenantId={tenantId}
-              pedidos={pedidos}
-              setPedidos={setPedidos}
-              storedProducts={storedProducts}
-              setStoredProducts={setStoredProducts}
-              refreshingOrders={refreshingOrders}
-              fetchPedidos={fetchPedidos}
-            />
-          </TabsContent>
+          <AnimatePresence mode="wait">
+            <TabsContent value="pedidos" className="mt-6 border-none ring-0 outline-none">
+              <motion.div
+                key="pedidos"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <OrdersTab 
+                  tenantId={tenantId}
+                  pedidos={pedidos}
+                  setPedidos={setPedidos}
+                  storedProducts={storedProducts}
+                  setStoredProducts={setStoredProducts}
+                  refreshingOrders={refreshingOrders}
+                  fetchPedidos={fetchPedidos}
+                />
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
 
-          <TabsContent value="catalogo" className="mt-0 space-y-6">
-            <Tabs value={activeCatalogTab} onValueChange={setActiveCatalogTab} className="w-full">
-              <div className="w-full relative mb-6">
-                 <div className="w-full overflow-x-auto scrollbar-hide pb-2 flex lg:justify-center px-1">
-                    <TabsList className="bg-muted/10 p-1.5 rounded-xl border border-primary/5 h-auto flex flex-nowrap !justify-start items-center py-1 px-2 gap-1 min-w-max">
+          <AnimatePresence mode="wait">
+            <TabsContent value="catalogo" className="mt-0 space-y-6 border-none ring-0 outline-none">
+              <motion.div
+                key="catalogo"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <Tabs value={activeCatalogTab} onValueChange={setActiveCatalogTab} className="w-full">
+                  <div className="w-full relative mb-6">
+                     <div className="w-full overflow-x-auto scrollbar-hide pb-2 flex lg:justify-center px-1">
+                        <TabsList className="bg-muted/10 p-1.5 rounded-xl border border-primary/5 h-auto flex flex-nowrap !justify-start items-center py-1 px-2 gap-1 min-w-max">
                        <TabsTrigger value="products" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Produtos</TabsTrigger>
                        <TabsTrigger value="stock" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Estoque</TabsTrigger>
                        <TabsTrigger value="sizes" className="py-2.5 px-4 whitespace-nowrap rounded-lg text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary/20 data-[state=active]:text-primary transition-all">Grades</TabsTrigger>
@@ -222,83 +259,162 @@ const Admin = () => {
                  </div>
               </div>
 
-              <TabsContent value="products">
-                <ProductsTab 
-                  tenantId={tenantId}
-                  storedProducts={storedProducts}
-                  setStoredProducts={setStoredProducts}
-                  tenant={tenant}
-                  categories={categories}
-                  setCategories={setCategories}
-                  globalSizes={globalSizes}
-                  setGlobalSizes={setGlobalSizes}
-                  globalColors={globalColors}
-                  setGlobalColors={setGlobalColors}
-                  uploadToCloudinary={uploadToCloudinary}
+              <AnimatePresence mode="wait">
+                <TabsContent value="products" className="border-none ring-0 outline-none">
+                  <motion.div
+                    key="products"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <ProductsTab 
+                      tenantId={tenantId}
+                      storedProducts={storedProducts}
+                      setStoredProducts={setStoredProducts}
+                      tenant={tenant}
+                      categories={categories}
+                      setCategories={setCategories}
+                      globalSizes={globalSizes}
+                      setGlobalSizes={setGlobalSizes}
+                      globalColors={globalColors}
+                      setGlobalColors={setGlobalColors}
+                      uploadToCloudinary={uploadToCloudinary}
+                      IS_SUPABASE_READY={IS_SUPABASE_READY}
+                      setActiveTab={(tab) => {
+                        if (['products', 'stock', 'sizes', 'categories', 'colors'].includes(tab)) {
+                          setActiveCatalogTab(tab);
+                          setActiveTab('catalogo');
+                        } else {
+                          setActiveTab(tab);
+                        }
+                      }}
+                    />
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <TabsContent value="stock" className="border-none ring-0 outline-none">
+                  <motion.div
+                    key="stock"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <StockTab 
+                      tenantId={tenantId}
+                      storedProducts={storedProducts}
+                      setStoredProducts={setStoredProducts}
+                      globalSizes={globalSizes}
+                      setGlobalSizes={setGlobalSizes}
+                      globalColors={globalColors}
+                      setGlobalColors={setGlobalColors}
+                      categories={categories}
+                      setCategories={setCategories}
+                      uploadToCloudinary={uploadToCloudinary}
+                      removeFromCloudinary={removeFromCloudinary}
+                    />
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <TabsContent value="sizes" className="border-none ring-0 outline-none">
+                  <motion.div
+                    key="sizes"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <TabsContent value="categories" className="border-none ring-0 outline-none">
+                  <motion.div
+                    key="categories"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                <TabsContent value="colors" className="border-none ring-0 outline-none">
+                  <motion.div
+                    key="colors"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+                </Tabs>
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <TabsContent value="clientes" className="mt-6 border-none ring-0 outline-none">
+              <motion.div
+                key="clientes"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <CustomersTab 
+                  tenantId={tenantId} 
+                  IS_SUPABASE_READY={IS_SUPABASE_READY} 
+                  pedidos={pedidos}
+                />
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
+            <TabsContent value="dashboard" className="mt-6 border-none ring-0 outline-none">
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <DashboardTab 
+                  tenantId={tenantId} 
                   IS_SUPABASE_READY={IS_SUPABASE_READY}
-                  setActiveTab={(tab) => {
-                    if (['products', 'stock', 'sizes', 'categories', 'colors'].includes(tab)) {
-                      setActiveCatalogTab(tab);
-                      setActiveTab('catalogo');
-                    } else {
-                      setActiveTab(tab);
-                    }
-                  }}
-                />
-              </TabsContent>
-
-              <TabsContent value="stock">
-                <StockTab 
-                  tenantId={tenantId}
                   storedProducts={storedProducts}
-                  setStoredProducts={setStoredProducts}
-                  globalSizes={globalSizes}
-                  setGlobalSizes={setGlobalSizes}
-                  globalColors={globalColors}
-                  setGlobalColors={setGlobalColors}
-                  categories={categories}
-                  setCategories={setCategories}
-                  uploadToCloudinary={uploadToCloudinary}
-                  removeFromCloudinary={removeFromCloudinary}
                 />
-              </TabsContent>
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
 
-              <TabsContent value="sizes">
-                <SizesTab tenantId={tenantId} globalSizes={globalSizes} setGlobalSizes={setGlobalSizes} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-              </TabsContent>
-
-              <TabsContent value="categories">
-                <CategoriesTab tenantId={tenantId} categories={categories} setCategories={setCategories} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-              </TabsContent>
-
-              <TabsContent value="colors">
-                <ColorsTab tenantId={tenantId} globalColors={globalColors} setGlobalColors={setGlobalColors} IS_SUPABASE_READY={IS_SUPABASE_READY} />
-              </TabsContent>
-
-
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="clientes" className="mt-6">
-            <CustomersTab 
-              tenantId={tenantId} 
-              IS_SUPABASE_READY={IS_SUPABASE_READY} 
-              pedidos={pedidos}
-            />
-          </TabsContent>
-
-          <TabsContent value="dashboard" className="mt-6">
-            <DashboardTab 
-              tenantId={tenantId} 
-              IS_SUPABASE_READY={IS_SUPABASE_READY}
-              storedProducts={storedProducts}
-            />
-          </TabsContent>
-
-
-          <TabsContent value="config" className="mt-6">
-            <SettingsTab tenantId={tenantId} />
-          </TabsContent>
+          <AnimatePresence mode="wait">
+            <TabsContent value="config" className="mt-6 border-none ring-0 outline-none">
+              <motion.div
+                key="config"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <SettingsTab tenantId={tenantId} />
+              </motion.div>
+            </TabsContent>
+          </AnimatePresence>
         </Tabs>
       </main>
 
