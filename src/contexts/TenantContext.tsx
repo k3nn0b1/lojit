@@ -9,6 +9,7 @@ export interface Tenant {
   active: boolean;
   plan: string;
   max_products: number;
+  max_photos_per_product: number;
   custom_domain: string | null;
   created_at: string;
   updated_at: string;

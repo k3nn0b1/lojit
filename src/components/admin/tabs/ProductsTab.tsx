@@ -66,8 +66,9 @@ const ProductsTab = ({
   });
   
   const [distribution, setDistribution] = useState<Record<string, number>>({});
-  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null]);
-  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>([null, null, null]);
+  const maxPhotos = tenant?.max_photos_per_product || 3;
+  const [imageFiles, setImageFiles] = useState<(File | null)[]>(Array(3).fill(null));
+  const [imagePreviews, setImagePreviews] = useState<(string | null)[]>(Array(3).fill(null));
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -155,7 +156,7 @@ const ProductsTab = ({
     let uploadedImages: { url: string; publicId: string }[] = [{ url: "", publicId: "" }, { url: "", publicId: "" }, { url: "", publicId: "" }];
 
     try {
-      const uploadPromises = imageFiles.map(async (file, idx) => {
+      const uploadPromises = imageFiles.slice(0, maxPhotos).map(async (file, idx) => {
           if (!file) return null;
           const result = await uploadToCloudinary(file);
           return { secure_url: result.secure_url, public_id: result.public_id, idx };
@@ -236,8 +237,8 @@ const ProductsTab = ({
           name: "", category: "", price: 0, sizes: [], colors: [], stock: 0, 
           imageUrl: "", imageUrl2: "", imageUrl3: "", publicId: "", publicId2: "", publicId3: "", description: "" 
         });
-        setImageFiles([null, null, null]);
-        setImagePreviews([null, null, null]);
+        setImageFiles(Array(3).fill(null));
+        setImagePreviews(Array(3).fill(null));
         setDistribution({});
       } catch (e: any) {
         toast.error("Erro ao salvar produto", { description: parseSupabaseError(e) });
@@ -315,7 +316,7 @@ const ProductsTab = ({
                   </Label>
                   
                   <div className="grid grid-cols-3 gap-3 md:gap-6">
-                      {[0, 1, 2].map((idx) => (
+                      {Array.from({ length: maxPhotos }).map((_, idx) => (
                           <div key={idx} className="group relative aspect-square rounded-2xl border-2 border-dashed border-primary/5 hover:border-primary/30 transition-all overflow-hidden bg-background/40 shadow-xl">
                               {imagePreviews[idx] ? (
                                   <>

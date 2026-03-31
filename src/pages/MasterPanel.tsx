@@ -18,12 +18,14 @@ interface Tenant {
   created_at: string;
   plan: string;
   max_products: number;
+  max_photos_per_product: number;
 }
 
 interface PlanConfig {
   plan_id: string;
   name: string;
   max_products: number;
+  max_photos_per_product: number;
 }
 
 interface AdminUser {
@@ -49,14 +51,17 @@ export default function MasterPanel() {
   const [editCustomDomain, setEditCustomDomain] = useState("");
   const [editPlan, setEditPlan] = useState("starter");
   const [editMaxProducts, setEditMaxProducts] = useState(30);
+  const [editMaxPhotos, setEditMaxPhotos] = useState(3);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Global Plan Configs
   const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [isPlanConfigsModalOpen, setIsPlanConfigsModalOpen] = useState(false);
+  const [isPlansPreviewOpen, setIsPlansPreviewOpen] = useState(false);
   const [isSavingPlanConfigs, setIsSavingPlanConfigs] = useState(false);
   const [newTenantPlan, setNewTenantPlan] = useState("starter");
   const [newMaxProducts, setNewMaxProducts] = useState(30);
+  const [newMaxPhotos, setNewMaxPhotos] = useState(3);
 
   // Admin Management state
   const [managingAdminsTenant, setManagingAdminsTenant] = useState<Tenant | null>(null);
@@ -134,14 +139,18 @@ export default function MasterPanel() {
     setIsCreating(true);
     try {
       // 1. Criar o Tenant
-      const planLimit = planConfigs.find(p => p.plan_id === newTenantPlan)?.max_products || 30;
+      const config = planConfigs.find(p => p.plan_id === newTenantPlan);
+      const planLimit = config?.max_products || 30;
+      const photoLimit = config?.max_photos_per_product || 3;
+
       const { data: tenantData, error: tenantError } = await supabase
         .from("tenants")
         .insert([{ 
           name: newTenantName, 
           slug: newTenantSlug, 
           plan: newTenantPlan, 
-          max_products: newTenantPlan === 'business' ? newMaxProducts : planLimit
+          max_products: newTenantPlan === 'business' ? newMaxProducts : planLimit,
+          max_photos_per_product: newTenantPlan === 'business' ? newMaxPhotos : photoLimit
         }])
         .select()
         .single();
@@ -203,6 +212,7 @@ export default function MasterPanel() {
         setNewTenantSlug("");
         setNewTenantPlan("starter");
         setNewMaxProducts(30);
+        setNewMaxPhotos(3);
       } catch (innerError: any) {
         // Erro críco ao criar blueprint: deletar o tenant para não deixar lixo e liberar o slug
         await supabase.from("tenants").delete().eq("id", newTenant.id);
@@ -227,13 +237,17 @@ export default function MasterPanel() {
     setEditCustomDomain(tenant.custom_domain || "");
     setEditPlan(tenant.plan || "starter");
     setEditMaxProducts(tenant.max_products || 30);
+    setEditMaxPhotos(tenant.max_photos_per_product || 3);
   };
 
   const handleUpdateTenant = async () => {
     if (!editingTenant) return;
     setIsUpdating(true);
     try {
-      const planLimit = planConfigs.find(p => p.plan_id === editPlan)?.max_products || 30;
+      const config = planConfigs.find(p => p.plan_id === editPlan);
+      const planLimit = config?.max_products || 30;
+      const photoLimit = config?.max_photos_per_product || 3;
+
       const { error } = await supabase
         .from("tenants")
         .update({
@@ -241,7 +255,8 @@ export default function MasterPanel() {
           slug: editSlug,
           custom_domain: editCustomDomain || null,
           plan: editPlan,
-          max_products: editPlan === 'business' ? editMaxProducts : planLimit
+          max_products: editPlan === 'business' ? editMaxProducts : planLimit,
+          max_photos_per_product: editPlan === 'business' ? editMaxPhotos : photoLimit
         })
         .eq("id", editingTenant.id);
 
@@ -400,7 +415,10 @@ export default function MasterPanel() {
       for (const config of planConfigs) {
         const { error } = await supabase
           .from("plan_configs")
-          .update({ max_products: config.max_products })
+          .update({ 
+            max_products: config.max_products,
+            max_photos_per_product: config.max_photos_per_product
+          })
           .eq("plan_id", config.plan_id);
         if (error) throw error;
       }
@@ -456,6 +474,13 @@ export default function MasterPanel() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="border-zinc-800 bg-zinc-900/50 hover:bg-primary/20 hover:text-primary transition-all text-xs font-bold"
+              onClick={() => setIsPlansPreviewOpen(true)}
+            >
+              <Eye className="w-4 h-4 mr-2" /> Visualizador de Planos
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -525,15 +550,17 @@ export default function MasterPanel() {
                   <div className="space-y-4 pt-4 border-t border-zinc-800">
                     <div className="space-y-2">
                         <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Plano da Assinatura</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {['starter', 'elite', 'business'].map((p) => (
+                        <div className="grid grid-cols-4 gap-2">
+                            {['lite', 'starter', 'elite', 'business'].map((p) => (
                                 <button
                                     key={p}
                                     type="button"
                                     onClick={() => {
                                         setNewTenantPlan(p);
-                                        const limit = planConfigs.find(pc => pc.plan_id === p)?.max_products || 30;
+                                        const limit = planConfigs.find(pc => pc.plan_id === p)?.max_products || 15;
+                                        const photos = planConfigs.find(pc => pc.plan_id === p)?.max_photos_per_product || 1;
                                         setNewMaxProducts(limit);
+                                        setNewMaxPhotos(photos);
                                     }}
                                     className={`h-10 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all shadow-xl`}
                                     style={{ 
@@ -549,14 +576,25 @@ export default function MasterPanel() {
                     </div>
 
                     {newTenantPlan === 'business' && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                            <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Limite Customizado de Produtos</Label>
-                            <Input 
-                                type="number"
-                                value={newMaxProducts}
-                                onChange={e => setNewMaxProducts(parseInt(e.target.value) || 0)}
-                                className="bg-black border-primary/20 text-primary font-bold h-12 text-center text-xl shadow-inner"
-                            />
+                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="space-y-2">
+                                <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest text-center block">Produtos</Label>
+                                <Input 
+                                    type="number"
+                                    value={newMaxProducts}
+                                    onChange={e => setNewMaxProducts(parseInt(e.target.value) || 0)}
+                                    className="bg-black border-primary/20 text-primary font-bold h-12 text-center text-xl shadow-inner"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest text-center block">Fotos/Prod</Label>
+                                <Input 
+                                    type="number"
+                                    value={newMaxPhotos}
+                                    onChange={e => setNewMaxPhotos(parseInt(e.target.value) || 0)}
+                                    className="bg-black border-primary/20 text-primary font-bold h-12 text-center text-xl shadow-inner"
+                                />
+                            </div>
                         </div>
                     )}
                   </div>
@@ -657,7 +695,10 @@ export default function MasterPanel() {
                              Plano {tenant.plan || 'starter'}
                            </span>
                            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-zinc-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
-                             {tenant.max_products || 0} PRODUTOS MAX
+                             {tenant.max_products || 0} PRODUTOS
+                           </span>
+                           <span className="text-[9px] font-black uppercase tracking-[0.15em] text-zinc-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
+                             {tenant.max_photos_per_product || 1} FOTOS/PROD
                            </span>
                         </div>
 
@@ -870,8 +911,8 @@ export default function MasterPanel() {
             <div className="space-y-4 pt-6 border-t border-zinc-900">
                 <div className="space-y-2">
                     <Label className="text-[10px] uppercase font-bold tracking-widest text-primary ml-2">Migração de Plano</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {['starter', 'elite', 'business'].map((p) => (
+                    <div className="grid grid-cols-4 gap-3">
+                        {['lite', 'starter', 'elite', 'business'].map((p) => (
                             <button
                                 key={p}
                                 type="button"
@@ -879,7 +920,10 @@ export default function MasterPanel() {
                                     setEditPlan(p);
                                     if (p !== 'business') {
                                         const config = planConfigs.find(pc => pc.plan_id === p);
-                                        if (config) setEditMaxProducts(config.max_products);
+                                        if (config) {
+                                            setEditMaxProducts(config.max_products);
+                                            setEditMaxPhotos(config.max_photos_per_product);
+                                        }
                                     }
                                 }}
                                 className={`h-14 rounded-xl flex flex-col items-center justify-center transition-all border shadow-xl shadow-primary/30`}
@@ -890,22 +934,40 @@ export default function MasterPanel() {
                                 }}
                             >
                                 <span className={`text-[10px] font-black uppercase tracking-widest ${editPlan === p ? '' : 'opacity-60'}`}>{p}</span>
-                                {p !== 'business' && <span className={`text-[8px] font-bold ${editPlan === p ? 'text-black/60' : 'opacity-30'}`}>Limit: {planConfigs.find(pc => pc.plan_id === p)?.max_products}</span>}
+                                {p !== 'business' && (
+                                    <div className="flex flex-col items-center">
+                                        <span className={`text-[7px] font-bold ${editPlan === p ? 'text-black/60' : 'opacity-30'}`}>Prod: {planConfigs.find(pc => pc.plan_id === p)?.max_products}</span>
+                                        <span className={`text-[7px] font-bold ${editPlan === p ? 'text-black/60' : 'opacity-30'}`}>Foto: {planConfigs.find(pc => pc.plan_id === p)?.max_photos_per_product}</span>
+                                    </div>
+                                )}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 {editPlan === 'business' && (
-                    <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10 animate-in zoom-in-95">
-                        <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/60 block text-center mb-4">Limite Customizado Progressivo</Label>
-                        <Input 
-                            type="number"
-                            value={editMaxProducts}
-                            onChange={e => setEditMaxProducts(parseInt(e.target.value) || 0)}
-                            className="bg-transparent border-none text-3xl font-black text-primary text-center h-auto p-0 focus:ring-0"
-                            autoFocus
-                        />
+                    <div className="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/10 animate-in zoom-in-95">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-primary/60 block text-center">Limites Customizados</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <Label className="text-[8px] uppercase font-bold text-center block opacity-50">Produtos</Label>
+                                <Input 
+                                    type="number"
+                                    value={editMaxProducts}
+                                    onChange={e => setEditMaxProducts(parseInt(e.target.value) || 0)}
+                                    className="bg-transparent border-none text-2xl font-black text-primary text-center h-auto p-0 focus:ring-0"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[8px] uppercase font-bold text-center block opacity-50">Fotos/Produto</Label>
+                                <Input 
+                                    type="number"
+                                    value={editMaxPhotos}
+                                    onChange={e => setEditMaxPhotos(parseInt(e.target.value) || 0)}
+                                    className="bg-transparent border-none text-2xl font-black text-primary text-center h-auto p-0 focus:ring-0"
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -1137,17 +1199,31 @@ export default function MasterPanel() {
                     <Label className="text-xs font-black uppercase tracking-widest text-primary">{config.name}</Label>
                     <span className="text-[10px] text-zinc-600 font-bold uppercase italic">Limite Atual</span>
                   </div>
-                  <div className="relative">
-                    <RotateCw className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-20 group-hover:rotate-180 transition-transform duration-700" />
-                    <Input 
-                      type="number"
-                      value={config.max_products}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        setPlanConfigs(prev => prev.map(pc => pc.plan_id === config.plan_id ? { ...pc, max_products: val } : pc));
-                      }}
-                      className="bg-black border-zinc-800 h-14 text-xl font-black font-mono text-white pl-6 pr-12 focus:border-primary transition-all rounded-xl"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-[9px] text-zinc-500 font-bold uppercase ml-1">Produtos</Label>
+                        <Input 
+                          type="number"
+                          value={config.max_products}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setPlanConfigs(prev => prev.map(pc => pc.plan_id === config.plan_id ? { ...pc, max_products: val } : pc));
+                          }}
+                          className="bg-black border-zinc-800 h-14 text-xl font-black font-mono text-white pl-4 focus:border-primary transition-all rounded-xl"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[9px] text-zinc-500 font-bold uppercase ml-1">Fotos/Prod</Label>
+                        <Input 
+                          type="number"
+                          value={config.max_photos_per_product}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            setPlanConfigs(prev => prev.map(pc => pc.plan_id === config.plan_id ? { ...pc, max_photos_per_product: val } : pc));
+                          }}
+                          className="bg-black border-zinc-800 h-14 text-xl font-black font-mono text-white pl-4 focus:border-primary transition-all rounded-xl"
+                        />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1178,6 +1254,196 @@ export default function MasterPanel() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+      {/* Modal de Visualização de Planos (Inspirado no Screenshot) */}
+      <Dialog open={isPlansPreviewOpen} onOpenChange={setIsPlansPreviewOpen}>
+        <DialogContent className="max-w-6xl bg-[#020202] border-zinc-800 text-white p-0 overflow-hidden md:rounded-[2.5rem]">
+           <div className="p-8 md:p-12 space-y-12">
+               <div className="text-center space-y-2">
+                   <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">Estrutura de <span className="text-primary">Planos</span> Lojit</h2>
+                   <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest opacity-60 italic">Confira os limites e recursos de cada nível de assinatura</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Plano Lite */}
+                  <div className="relative p-8 rounded-[2rem] bg-zinc-900/40 border-2 border-primary/40 shadow-2xl shadow-primary/10 space-y-10 group hover:border-primary transition-all duration-500">
+                      <div className="space-y-1">
+                          <h4 className="text-2xl font-black text-primary">Lite</h4>
+                          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest opacity-60">Ideal para começar</p>
+                      </div>
+                      <div className="space-y-1">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black italic">R$ 49,90</span>
+                            <span className="text-zinc-600 text-[10px] font-bold uppercase">/mês</span>
+                          </div>
+                      </div>
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-3">
+                              <div className="h-6 w-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+                                  <span className="text-[10px] font-black text-primary">15</span>
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">Até 15 produtos</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <div className="h-6 w-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20">
+                                  <span className="text-[10px] font-black text-primary">1</span>
+                              </div>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">1 foto por produto</span>
+                          </div>
+                          <div className="space-y-3 pt-2">
+                             <div className="flex items-center gap-3 opacity-100">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Catálogo Completo</span>
+                             </div>
+                             <div className="flex items-center gap-3 opacity-100">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Pedidos no WhatsApp</span>
+                             </div>
+                             <div className="flex items-center gap-3 opacity-100">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Gestão de Estoque</span>
+                             </div>
+                             <div className="flex items-center gap-3 opacity-40">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Suporte Exclusivo</span>
+                             </div>
+                          </div>
+                      </div>
+                      <Button className="w-full h-14 bg-primary text-black font-black uppercase rounded-2xl shadow-xl shadow-primary/20" disabled>PLANO ATIVO</Button>
+                  </div>
+
+                  {/* Plano Starter */}
+                  <div className="p-8 rounded-[2rem] bg-zinc-900 shadow-2xl border border-white/5 space-y-10 group hover:border-zinc-700 transition-all">
+                      <div className="space-y-1">
+                          <h4 className="text-2xl font-black text-white">Starter</h4>
+                          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest opacity-60">Para pequenos negócios</p>
+                      </div>
+                      <div className="space-y-1">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black italic">R$ 69,90</span>
+                            <span className="text-zinc-600 text-[10px] font-bold uppercase">/mês</span>
+                          </div>
+                      </div>
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">Até 30 produtos</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">2 fotos por produto</span>
+                          </div>
+                          <div className="space-y-3 pt-2">
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Catálogo Completo</span>
+                             </div>
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Pedidos no WhatsApp</span>
+                             </div>
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Gestão de Estoque</span>
+                             </div>
+                             <div className="flex items-center gap-3 opacity-40 text-zinc-500">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Suporte Exclusivo</span>
+                             </div>
+                          </div>
+                      </div>
+                      <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-400 hover:text-white font-bold uppercase rounded-2xl transition-all">Escolher Starter</Button>
+                  </div>
+
+                  {/* Plano Elite */}
+                  <div className="p-8 rounded-[2rem] bg-zinc-900 shadow-2xl border border-white/5 space-y-10 group hover:border-zinc-700 transition-all">
+                      <div className="space-y-1">
+                          <h4 className="text-2xl font-black text-white">Elite</h4>
+                          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest opacity-60">Para quem quer escala</p>
+                      </div>
+                      <div className="space-y-1">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-black italic">R$ 89,90</span>
+                            <span className="text-zinc-600 text-[10px] font-bold uppercase">/mês</span>
+                          </div>
+                      </div>
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">Até 50 produtos</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">3 fotos por produto</span>
+                          </div>
+                          <div className="space-y-3 pt-2">
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Catálogo Completo</span>
+                             </div>
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Pedidos no WhatsApp</span>
+                             </div>
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Gestão de Estoque</span>
+                             </div>
+                             <div className="flex items-center gap-3 text-zinc-400">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Suporte Exclusivo</span>
+                             </div>
+                          </div>
+                      </div>
+                      <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-400 hover:text-white font-bold uppercase rounded-2xl transition-all">Vou de Elite</Button>
+                  </div>
+
+                  {/* Plano Business */}
+                  <div className="p-8 rounded-[2rem] bg-zinc-900 shadow-2xl border border-white/5 space-y-10 group hover:border-zinc-700 transition-all">
+                      <div className="space-y-1">
+                          <h4 className="text-2xl font-black text-white">Business</h4>
+                          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest opacity-60">Para grandes catálogos</p>
+                      </div>
+                      <div className="space-y-1">
+                          <span className="text-3xl font-black italic">Sob demanda</span>
+                      </div>
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">Produtos ilimitados</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <Check className="w-4 h-4 text-emerald-500 mb-0.5" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-100">Fotos ilimitadas</span>
+                          </div>
+                          <div className="space-y-3 pt-2 text-zinc-400">
+                             <div className="flex items-center gap-3">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Catálogo Completo</span>
+                             </div>
+                             <div className="flex items-center gap-3">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Pedidos no WhatsApp</span>
+                             </div>
+                             <div className="flex items-center gap-3">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Gestão de Estoque</span>
+                             </div>
+                             <div className="flex items-center gap-3">
+                               <Check className="w-4 h-4 text-emerald-500" />
+                               <span className="text-[10px] font-black uppercase tracking-widest">Suporte Exclusivo</span>
+                             </div>
+                          </div>
+                      </div>
+                      <Button variant="outline" className="w-full h-14 border-zinc-800 text-zinc-400 hover:text-white font-bold uppercase rounded-2xl transition-all">WhatsApp Direto</Button>
+                  </div>
+               </div>
+               
+               <div className="pt-6 border-t border-zinc-900 flex justify-center">
+                   <Button variant="ghost" onClick={() => setIsPlansPreviewOpen(false)} className="text-zinc-500 hover:text-white font-black uppercase tracking-widest text-xs">Fechar Visualizador</Button>
+               </div>
+           </div>
         </DialogContent>
       </Dialog>
     </div>
