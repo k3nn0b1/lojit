@@ -245,7 +245,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     </motion.div>
   </div>
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-[500px] w-[95vw] p-8 overflow-hidden bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col gap-0 animate-in zoom-in duration-500">
+        <DialogContent className="max-w-[500px] w-[95vw] p-8 overflow-y-auto bg-[#121214] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col gap-0 animate-in zoom-in duration-500 scrollbar-hide max-h-[90vh]">
           {/* Botão Fechar Customizado */}
           <button
             onClick={() => setIsDetailsOpen(false)}
@@ -313,7 +313,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-bold uppercase tracking-wider">
                   <Package className="w-4 h-4 text-primary" />
                   <span>
-                    {(product.stockBySize ? Object.values(product.stockBySize).reduce((a, b) => Number(a) + Number(b), 0) : product.stock) || 0} unidades disponíveis
+                    {product.stockBySize 
+                      ? (Number(product.stockBySize[selectedSize] ?? product.stockBySize[selectedSize.trim()] ?? 0))
+                      : (product.stock || 0)
+                    } unidades disponíveis
                   </span>
                 </div>
                 
@@ -345,7 +348,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           {product.description && (
             <div className="mb-8">
               <h4 className="text-[10px] font-black uppercase tracking-[0.25em] text-primary/50 mb-3 ml-1">Sobre este produto</h4>
-              <p className="text-zinc-400 text-sm italic leading-relaxed pl-1">
+              <p className="text-zinc-400 text-sm italic leading-relaxed pl-1 whitespace-pre-wrap">
                 "{product.description}"
               </p>
             </div>
@@ -361,9 +364,6 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               <ShoppingCart size={18} className="group-hover:rotate-12 transition-transform" />
               Adicionar ao Carrinho
             </button>
-            <p className="text-center text-[9px] font-bold text-zinc-600 uppercase tracking-widest">
-              Pagamento via Pix ou Cartão na Entrega
-            </p>
           </div>
         </DialogContent>
       </Dialog>
