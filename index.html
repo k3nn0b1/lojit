@@ -42,16 +42,22 @@
 
   <body>
     <div id="root">
-      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #0d0d0d; color: #ffffff; font-family: sans-serif;">
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-          <div style="width: 50px; height: 50px; border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid #ffffff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #050505; color: #ffffff; font-family: 'Inter', sans-serif;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+          <div style="position: relative; width: 72px; height: 72px; display: flex; justify-content: center; align-items: center;">
+            <div style="position: absolute; inset: -20px; background: rgba(255, 255, 255, 0.1); filter: blur(20px); border-radius: 50%; animation: pulse-glow 2s ease-in-out infinite alternate;"></div>
+            <img src="/favicon.png" alt="Lojit" style="width: 100%; height: 100%; object-fit: contain; animation: pulse-scale 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate; position: relative; z-index: 10; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));" />
+          </div>
           <style>
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
+            @keyframes pulse-scale {
+              0% { transform: scale(0.95); opacity: 0.8; }
+              100% { transform: scale(1.05); opacity: 1; }
+            }
+            @keyframes pulse-glow {
+              0% { transform: scale(0.8); opacity: 0.3; }
+              100% { transform: scale(1.2); opacity: 0.8; }
             }
           </style>
-          <span style="letter-spacing: 2px; font-weight: bold; opacity: 0.8;">CARREGANDO</span>
         </div>
       </div>
     </div>
