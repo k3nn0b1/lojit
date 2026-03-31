@@ -614,14 +614,14 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
         </Card>
       </Tabs>
 
-      {/* Floating Save Button Bar Premium */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 md:p-6 bg-gradient-to-t from-black/95 to-transparent backdrop-blur-md pointer-events-none pb-6 md:pb-8">
-          <div className="container mx-auto max-w-7xl flex justify-center md:justify-end pointer-events-auto">
+      {/* Floating Save Button */}
+      <div className="fixed bottom-0 right-0 z-[100] p-4 md:p-6 pointer-events-none mb-4 md:mb-6">
+          <div className="flex justify-end pointer-events-auto">
               <Button 
                 onClick={handleSave} 
-                className="h-14 md:h-20 px-10 md:px-20 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] md:tracking-[0.4em] rounded-xl md:rounded-[2rem] shadow-[0_0_50px_rgba(var(--primary),0.5)] animate-pulse-subtle flex items-center gap-3 md:gap-5 active:scale-95 transition-all text-xs md:text-base border-2 md:border-4 border-black/10"
+                className="h-12 md:h-14 px-8 md:px-12 bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-xl md:rounded-2xl shadow-[0_0_30px_rgba(var(--primary),0.3)] flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-[10px] md:text-xs border-2 border-black/10"
               >
-                  <Save className="w-5 h-5 md:w-8 md:h-8" /> Sincronizar Tudo
+                  <Save className="w-4 h-4 md:w-5 md:h-5" /> Salvar
               </Button>
           </div>
       </div>
