@@ -177,8 +177,8 @@ const AppContent = () => {
   const { tenant, isMaster, tenantId, loading: tenantLoading, error: tenantError } = useTenantContext();
   const loading = settingsLoading || tenantLoading;
 
-  // 0. Se o lojista não for encontrado (URL inválida)
-  if (tenantError && !isMaster) {
+  // 0. Se o lojista não for encontrado (URL inválida) e já terminou de tentar carregar
+  if (tenantError && !isMaster && !tenantLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 text-center">
         <div className="max-w-md space-y-6">
@@ -206,17 +206,33 @@ const AppContent = () => {
      );
   }
 
+  // Bloqueia a exibição e evita falsos positivos ENQUANTO está carregando o Tenant ou Settings
+  if (!isMaster && (loading || !settings?.store_name)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="flex flex-col items-center gap-6">
+           <div className="relative w-16 h-16 flex justify-center items-center">
+             <div className="absolute inset-[-10px] bg-primary/20 blur-xl rounded-full animate-pulse" />
+             <img src="/favicon.png" alt="Lojit" className="w-full h-full object-contain animate-bounce relative z-10 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
+           </div>
+           <div className="flex flex-col items-center gap-2">
+             <span className="text-primary font-bold text-lg tracking-[0.2em] animate-pulse">CARREGANDO HUB LOJIT</span>
+             <div className="h-1 w-32 bg-primary/10 rounded-full overflow-hidden">
+               <div className="h-full bg-primary animate-progress-loading" />
+             </div>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
   // Se é o painel master, renderizar rotas do master
   if (isMaster) {
     return (
       <div className="relative min-h-screen flex flex-col overflow-x-hidden w-full max-w-[100vw]">
         <BackgroundManager forceType="bg4" />
         <BrowserRouter>
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-              <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            </div>
-          }>
+          <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/admin" element={<MasterGuard />} />
@@ -229,7 +245,7 @@ const AppContent = () => {
     );
   }
 
-  // Tenant não encontrado
+  // Tenant não encontrado (só cai aqui se já terminou de carregar)
   if (tenantError || !tenantId) {
     return (
       <Suspense fallback={null}>
@@ -238,38 +254,11 @@ const AppContent = () => {
     );
   }
 
-  // Bloqueia a exibição da LOJA até que o carregamento do Tenant e Settings finalize
-  // O Master Panel ignora essa trava.
-  if (!isMaster && (loading || !settings?.store_name)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="flex flex-col items-center gap-6">
-           {/* Lojit Logo Pulsing Initial Loader inside React */}
-           <div className="relative w-16 h-16 flex justify-center items-center">
-             <div className="absolute inset-[-10px] bg-primary/20 blur-xl rounded-full animate-pulse" />
-             <img src="/favicon.png" alt="Lojit" className="w-full h-full object-contain animate-bounce relative z-10 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
-           </div>
-           
-           <div className="flex flex-col items-center gap-2">
-             <span className="text-primary font-bold text-lg tracking-[0.2em] animate-pulse">CARREGANDO HUB LOJIT</span>
-             <div className="h-1 w-32 bg-primary/10 rounded-full overflow-hidden">
-               <div className="h-full bg-primary animate-progress-loading" />
-             </div>
-           </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen flex flex-col overflow-x-hidden w-full max-w-[100vw]">
       <BackgroundManager />
       <BrowserRouter>
-        <Suspense fallback={
-          <div className="flex-1 flex items-center justify-center bg-background">
-            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin glow-soft" />
-          </div>
-        }>
+        <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
           <div className="flex-1 flex flex-col">
             <Routes>
               <Route path="/" element={<Index />} />
