@@ -222,13 +222,14 @@ const Admin = () => {
                </TabsList>
              </Tabs>
 
-             {/* Logout Text Button on Desktop */}
+             {/* Logout Icon Button on Desktop */}
              <Button 
-                variant="outline" 
-                className="hidden lg:flex w-full md:w-auto h-12 md:h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive uppercase font-black text-[10px] tracking-widest rounded-xl transition-colors" 
+                variant="outline"
+                size="icon" 
+                className="hidden lg:flex w-[46px] h-[46px] border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive rounded-xl transition-colors shrink-0" 
                 onClick={handleLogout}
              >
-                Sair
+                <LogOut className="w-5 h-5" />
              </Button>
           </div>
         </div>
