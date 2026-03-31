@@ -339,7 +339,10 @@ const Index = () => {
           className="container mx-auto px-4 py-12 md:py-16 scroll-mt-24 md:scroll-mt-32"
           data-aos="fade-up"
         >
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Sobre nós</h2>
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Sobre nós</h2>
+            <div className="h-1 w-20 bg-primary mx-auto rounded-full" />
+          </div>
           <div className="max-w-3xl mx-auto text-muted-foreground text-center leading-relaxed space-y-4">
             {(settings?.about_us || "Seja bem-vindo à nossa loja! Estamos preparando o melhor conteúdo para você. Em breve, mais informações sobre nossa história e valores.").split('\n').filter(Boolean).map((text, i) => (
               <p key={i}>{text}</p>
@@ -349,11 +352,9 @@ const Index = () => {
 
 
         <section className="container mx-auto px-4 py-16 md:py-24" data-aos="fade-up">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white leading-none">
-              LOCALIZAÇÃO
-            </h2>
-            <div className="h-1 w-20 bg-primary mx-auto mt-4 rounded-full" />
+          <div className="text-center mb-10 md:mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Localização</h2>
+            <div className="h-1 w-20 bg-primary mx-auto rounded-full" />
           </div>
           <div className="relative w-full h-[400px] md:h-[600px] rounded-3xl shadow-2xl overflow-hidden border-2 border-primary/20 group">
             {/* Efeito de overlay para deixar o mapa com aspecto dark de verdade */}
