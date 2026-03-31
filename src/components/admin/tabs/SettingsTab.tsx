@@ -346,8 +346,8 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                       <Globe className="w-6 h-6 md:w-7 md:h-7" />
                     </div>
                     <div>
-                      <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Geral & Localização</h3>
-                      <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Base de dados institucionais</p>
+                      <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Geral</h3>
+                      <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Informações Gerais</p>
                     </div>
                   </div>
                </div>
@@ -355,19 +355,19 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
                   <div className="space-y-6 md:space-y-8">
                     <div className="space-y-2 md:space-y-3">
-                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Título Comercial da Loja</Label>
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Título da Loja</Label>
                         <Input value={formData.store_name} onChange={e => setFormData({...formData, store_name: e.target.value})} className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-base md:text-xl px-6 md:px-8 shadow-2xl focus:ring-primary/20" />
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Logotipo Master</Label>
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Logotipo</Label>
                         <div className="p-6 md:p-8 rounded-2xl md:rounded-[3rem] border border-primary/5 bg-background/40 flex flex-col items-center gap-6 md:gap-8 group hover:bg-background/60 transition-all shadow-3xl">
                              {formData.logo_url ? (
                                 <div className="relative group p-4 md:p-6 bg-white/5 rounded-2xl md:rounded-3xl shadow-inner border border-white/5">
                                      <img src={formData.logo_url} className="h-20 md:h-28 w-auto object-contain drop-shadow-[0_0_20px_rgba(var(--primary),0.3)] group-hover:scale-105 transition-transform duration-500" />
                                 </div>
                              ) : (
-                                <div className="h-20 w-20 md:h-28 md:w-28 rounded-2xl md:rounded-3xl border-2 border-dashed border-primary/20 flex items-center justify-center text-primary/20 italic font-black text-xs">NO_LOGO</div>
+                                <div className="h-20 w-20 md:h-28 md:w-28 rounded-2xl md:rounded-3xl border-2 border-dashed border-primary/20 flex items-center justify-center text-primary/20 italic font-black text-xs">LOGO</div>
                              )}
                              <Label htmlFor="logo-up" className="w-full flex items-center justify-center h-12 md:h-14 rounded-xl md:rounded-2xl bg-primary text-black hover:bg-primary/90 cursor-pointer transition-all gap-3 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 active:scale-95">
                                 <Upload className="w-4 h-4 md:w-5 md:h-5" /> {uploading ? "SINCRONIZANDO..." : "ATUALIZAR MARCA"}
@@ -379,7 +379,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
                   <div className="space-y-6 md:space-y-8">
                     <div className="space-y-2 md:space-y-3">
-                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Endereço de Operação</Label>
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Endereço</Label>
                         <Input value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-xs md:text-sm px-6 md:px-8 shadow-2xl" placeholder="EX: RUA DAS PALMEIRAS, 150 - CENTRO" />
                     </div>
                     <div className="space-y-2 md:space-y-3">
@@ -397,8 +397,8 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <Phone className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Canais de Contato</h3>
-                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Presença digital e suporte</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Contato</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Contato e Redes Sociais</p>
                   </div>
                </div>
 
@@ -420,7 +420,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                           <Label className="text-[7px] md:text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest ml-1">Protocolo de Link</Label>
+                           <Label className="text-[7px] md:text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest ml-1">Link ou número</Label>
                            {item.field === 'whatsapp' ? (
                              <Input 
                                   value={formatPhoneMask(formData[item.field] || "")} 
@@ -449,8 +449,8 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <Palette className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Branding & Estética</h3>
-                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Cromatismo e algoritmos visuais</p>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Personalização</h3>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Paletas de cores e Papel de Parede</p>
                   </div>
                </div>
 
@@ -480,7 +480,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-8 p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-primary/5 border border-primary/10 max-w-fit mx-auto shadow-3xl animate-pulse-subtle">
                         <div className="flex items-center gap-2 md:gap-3">
                            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                           <span className="text-[8px] md:text-[10px] font-black uppercase text-primary tracking-[0.2em] md:tracking-[0.3em]">IA SUGGESTION:</span>
+                           <span className="text-[8px] md:text-[10px] font-black uppercase text-primary tracking-[0.2em] md:tracking-[0.3em]">Sugestão com base na Logo</span>
                         </div>
                         <div className="flex gap-3 md:gap-4">
                             {suggestedColors.map(color => (
@@ -492,7 +492,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 pt-4 md:pt-6">
                     <div className="space-y-3 md:space-y-4">
-                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Algoritmo de Fundo</Label>
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Papel de parede</Label>
                         <Select value={formData.background_type || "solid"} onValueChange={v => setFormData({...formData, background_type: v})}>
                           <SelectTrigger className="h-12 md:h-16 bg-background/50 border-primary/5 rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-6 md:px-8 uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-2xl focus:ring-primary/20">
                             <SelectValue />
@@ -532,7 +532,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                     <Layout className="w-6 h-6 md:w-7 md:h-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Layout & Copys</h3>
+                    <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Textos Principais</h3>
                     <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Textos de impacto e vitrines</p>
                   </div>
                </div>
@@ -540,7 +540,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
                   <div className="space-y-6 md:space-y-8 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -z-10" />
-                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Header Hero <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
+                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Titulo Principal <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
                     <div className="space-y-3 md:space-y-4">
                         <Input value={formData.hero_title_l1} onChange={e => setFormData({...formData, hero_title_l1: e.target.value})} placeholder="ENTRADA..." className="h-10 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black px-5 md:px-6 shadow-xl text-xs" />
                         <Input value={formData.hero_title_l2} onChange={e => setFormData({...formData, hero_title_l2: e.target.value})} placeholder="FOCO PRINCIPAL..." className="h-12 md:h-16 bg-background border-none rounded-xl md:rounded-2xl font-black text-primary text-base md:text-xl px-6 md:px-8 shadow-2xl" />
@@ -554,7 +554,7 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
 
                   <div className="space-y-6 md:space-y-8 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 blur-3xl -z-10" />
-                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Vitrine <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
+                    <h4 className="text-[10px] md:text-[12px] font-black uppercase text-primary tracking-[0.3em] md:tracking-[0.4em] mb-4 md:mb-6 flex items-center gap-2 md:gap-3">Sessão dos Produtos <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-30" /></h4>
                     <div className="space-y-3 md:space-y-4">
                         <Input value={formData.collection_title_l1} onChange={e => setFormData({...formData, collection_title_l1: e.target.value})} placeholder="CHAMADA..." className="h-10 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black px-5 md:px-6 shadow-xl text-xs" />
                         <Input value={formData.collection_title_l2} onChange={e => setFormData({...formData, collection_title_l2: e.target.value})} placeholder="TÍTULO..." className="h-12 md:h-16 bg-background border-none rounded-xl md:rounded-2xl font-black text-primary text-base md:text-xl px-6 md:px-8 shadow-2xl" />
@@ -589,18 +589,18 @@ export default function SettingsTab({ tenantId }: SettingsTabProps) {
                   </div>
                   <div>
                     <h3 className="font-black text-xl md:text-2xl uppercase tracking-[0.2em] text-primary leading-tight">Avançado</h3>
-                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Institucional & SEO</p>
+                    <p className="text-[9px] md:text-[10px] uppercase font-black text-muted-foreground opacity-60 tracking-widest">Institucional e Informações Relevantes</p>
                   </div>
                </div>
 
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
                   <div className="space-y-3 md:space-y-4">
-                    <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Manifesto da Marca</Label>
+                    <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Sobre Nós</Label>
                     <Textarea value={formData.about_us} onChange={e => setFormData({...formData, about_us: e.target.value})} className="min-h-[200px] md:min-h-[300px] bg-background/50 border-primary/5 rounded-2xl md:rounded-[3rem] p-6 md:p-10 text-xs md:text-base leading-relaxed shadow-3xl focus:ring-primary/20" placeholder="A jornada..." />
                   </div>
                   <div className="space-y-6 md:space-y-10">
                     <div className="space-y-3 md:space-y-4 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
-                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Copyright Rodapé</Label>
+                        <Label className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 ml-2">Informação do Rodapé</Label>
                         <Input value={formData.footer_info} onChange={e => setFormData({...formData, footer_info: e.target.value})} className="h-12 md:h-14 bg-background border-none rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs px-5 md:px-6 shadow-inner focus:ring-primary/20" />
                     </div>
                     <div className="space-y-3 md:space-y-4 p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-muted/10 border border-primary/5 shadow-2xl group hover:border-primary/20 transition-all">
